@@ -15,4 +15,14 @@ class AccountModel {
   bool isArchived = false;
 
   DateTime createdAt = DateTime.now();
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'type': type,
+      'currentBalance':
+          currentBalance,
+    };
+  }
 }

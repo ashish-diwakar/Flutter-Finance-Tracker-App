@@ -17,4 +17,13 @@ class CategoryModel {
   bool isDefault = false;
 
   DateTime createdAt = DateTime.now();
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'type': type,
+      'isDefault': isDefault,
+    };
+  }
 }

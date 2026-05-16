@@ -21,4 +21,17 @@ class TransactionModel {
   DateTime createdAt = DateTime.now();
 
   DateTime updatedAt = DateTime.now();
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'amount': amount,
+      'type': type,
+      'categoryId': categoryId,
+      'accountId': accountId,
+      'notes': notes,
+      'transactionDate':
+          transactionDate.toIso8601String(),
+    };
+  }
 }

@@ -9,6 +9,8 @@ import 'providers/balance_provider.dart';
 import 'providers/expense_provider.dart';
 import 'providers/income_provider.dart';
 import '../../reports/presentation/screens/reports_screen.dart';
+import '../../backup/presentation/screens/backup_screen.dart';
+
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -37,7 +39,6 @@ class DashboardScreen extends ConsumerWidget {
         actions: [
 
           IconButton(
-
             onPressed: () {
 
               Navigator.push(
@@ -48,9 +49,24 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               );
             },
-
             icon: const Icon(
               Icons.bar_chart,
+            ),
+          ),
+
+          IconButton(
+            onPressed: () {
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const BackupScreen(),
+                ),
+              );
+            },
+            icon: const Icon(
+              Icons.backup,
             ),
           ),
         ],
