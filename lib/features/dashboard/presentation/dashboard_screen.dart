@@ -8,6 +8,7 @@ import '../../transactions/presentation/screens/transaction_list_screen.dart';
 import 'providers/balance_provider.dart';
 import 'providers/expense_provider.dart';
 import 'providers/income_provider.dart';
+import '../../reports/presentation/screens/reports_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -27,7 +28,32 @@ class DashboardScreen extends ConsumerWidget {
     return Scaffold(
 
       appBar: AppBar(
-        title: const Text('Finance Tracker'),
+        centerTitle: false,
+
+        title: const Text(
+          'Finance Tracker',
+        ),
+
+        actions: [
+
+          IconButton(
+
+            onPressed: () {
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const ReportsScreen(),
+                ),
+              );
+            },
+
+            icon: const Icon(
+              Icons.bar_chart,
+            ),
+          ),
+        ],
       ),
 
       body: Column(
