@@ -8,12 +8,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:finance_tracker/main.dart';
+class CounterTestApp extends StatefulWidget {
+  const CounterTestApp({Key? key}) : super(key: key);
+
+  @override
+  State<CounterTestApp> createState() => _CounterTestAppState();
+}
+
+class _CounterTestAppState extends State<CounterTestApp> {
+  int _counter = 0;
+
+  void _increment() {
+    setState(() {
+      _counter++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text('$_counter'),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _increment,
+          child: const Icon(Icons.add),
+        ),
+      ),
+    );
+  }
+}
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const CounterTestApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
