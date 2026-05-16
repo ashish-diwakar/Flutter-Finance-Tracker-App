@@ -3,68 +3,110 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../dashboard/presentation/providers/transactions_provider.dart';
+import 'transaction_details_screen.dart';
 
-class TransactionListScreen extends ConsumerWidget {
-  const TransactionListScreen({super.key});
+class TransactionListScreen
+    extends ConsumerWidget {
+
+  const TransactionListScreen({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
 
     final transactionsAsync =
-        ref.watch(transactionsStreamProvider);
+        ref.watch(
+          transactionsStreamProvider,
+        );
 
     return transactionsAsync.when(
 
       data: (transactions) {
 
         if (transactions.isEmpty) {
+
           return const Center(
             child: Text('No Transactions'),
           );
         }
 
         return ListView.builder(
+
           itemCount: transactions.length,
 
           itemBuilder: (context, index) {
 
-            final transaction = transactions[index];
+            final transaction =
+                transactions[index];
 
-            return ListTile(
+            return Card(
 
-              leading: CircleAvatar(
-                child: Icon(
-                  transaction.type == 'income'
-                      ? Icons.arrow_downward
-                      : Icons.arrow_upward,
+              margin:
+                  const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 4,
+              ),
+
+              child: ListTile(
+
+                onTap: () {
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          TransactionDetailsScreen(
+                        transaction:
+                            transaction,
+                      ),
+                    ),
+                  );
+                },
+
+                leading: CircleAvatar(
+
+                  child: Icon(
+                    transaction.type ==
+                            'income'
+                        ? Icons.arrow_downward
+                        : Icons.arrow_upward,
+                  ),
                 ),
-              ),
 
-              title: Text(
-                CurrencyFormatter.format(
-                  transaction.amount,
+                title: Text(
+                  CurrencyFormatter.format(
+                    transaction.amount,
+                  ),
                 ),
-              ),
 
-              subtitle: Text(
-                transaction.notes ?? '',
-              ),
+                subtitle: Text(
+                  transaction.notes ?? '',
+                ),
 
-              trailing: Text(
-                transaction.type.toUpperCase(),
+                trailing: Text(
+                  transaction.type
+                      .toUpperCase(),
+                ),
               ),
             );
           },
         );
       },
 
-      error: (e, s) => Center(
-        child: Text(e.toString()),
-      ),
+      error: (e, s) =>
+          Center(
+            child: Text(e.toString()),
+          ),
 
-      loading: () => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      loading: () =>
+          const Center(
+            child:
+                CircularProgressIndicator(),
+          ),
     );
   }
 }

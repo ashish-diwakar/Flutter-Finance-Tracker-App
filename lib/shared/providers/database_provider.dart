@@ -5,9 +5,10 @@ import '../../core/database/database_initializer.dart';
 import '../../core/database/isar_service.dart';
 
 final isarProvider = FutureProvider<Isar>((ref) async {
+
   final isar = await IsarService.openIsar();
 
-  await DatabaseInitializer.seedDefaultCategories(isar);
+  await DatabaseInitializer.seedDatabase(isar);
 
   return isar;
 });
