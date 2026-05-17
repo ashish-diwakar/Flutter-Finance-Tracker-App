@@ -8,6 +8,7 @@ import '../../../../shared/models/transaction_model.dart';
 import '../../../accounts/presentation/providers/accounts_provider.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
 import '../providers/transaction_repository_provider.dart';
+import '../../../sync/presentation/providers/sync_provider.dart';
 
 class AddTransactionScreen
     extends ConsumerStatefulWidget {
@@ -306,12 +307,22 @@ class _AddTransactionScreenState
                                 .id
                         ..notes =
                             notesController
-                                .text;
+                                .text
+                        ..isSynced = false
+                        ..updatedAt =
+                            DateTime.now();
 
                   await repository
                       .addTransaction(
                     transaction,
                   );
+
+                  final syncService =
+                      await ref.read(
+                    syncServiceProvider.future,
+                  );
+
+                  await syncService.syncAll();
 
                   if (mounted) {
                     Navigator.pop(context);

@@ -32,15 +32,25 @@ const AccountModelSchema = CollectionSchema(
       name: r'isArchived',
       type: IsarType.bool,
     ),
-    r'name': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 3,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'name': PropertySchema(
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'type',
       type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 6,
+      name: r'updatedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _accountModelEstimateSize,
@@ -77,8 +87,10 @@ void _accountModelSerialize(
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeLong(offsets[1], object.currentBalance);
   writer.writeBool(offsets[2], object.isArchived);
-  writer.writeString(offsets[3], object.name);
-  writer.writeString(offsets[4], object.type);
+  writer.writeBool(offsets[3], object.isSynced);
+  writer.writeString(offsets[4], object.name);
+  writer.writeString(offsets[5], object.type);
+  writer.writeDateTime(offsets[6], object.updatedAt);
 }
 
 AccountModel _accountModelDeserialize(
@@ -92,8 +104,10 @@ AccountModel _accountModelDeserialize(
   object.currentBalance = reader.readLong(offsets[1]);
   object.id = id;
   object.isArchived = reader.readBool(offsets[2]);
-  object.name = reader.readString(offsets[3]);
-  object.type = reader.readString(offsets[4]);
+  object.isSynced = reader.readBool(offsets[3]);
+  object.name = reader.readString(offsets[4]);
+  object.type = reader.readString(offsets[5]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[6]);
   return object;
 }
 
@@ -111,9 +125,13 @@ P _accountModelDeserializeProp<P>(
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -388,6 +406,16 @@ extension AccountModelQueryFilter
     });
   }
 
+  QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition>
+      isSyncedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition> nameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -655,6 +683,80 @@ extension AccountModelQueryFilter
       ));
     });
   }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition>
+      updatedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'updatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition>
+      updatedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'updatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition>
+      updatedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition>
+      updatedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition>
+      updatedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition>
+      updatedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'updatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension AccountModelQueryObject
@@ -704,6 +806,18 @@ extension AccountModelQuerySortBy
     });
   }
 
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -725,6 +839,18 @@ extension AccountModelQuerySortBy
   QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -782,6 +908,18 @@ extension AccountModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -803,6 +941,18 @@ extension AccountModelQuerySortThenBy
   QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -828,6 +978,12 @@ extension AccountModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AccountModel, AccountModel, QDistinct> distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
+    });
+  }
+
   QueryBuilder<AccountModel, AccountModel, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -839,6 +995,12 @@ extension AccountModelQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'type', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QDistinct> distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'updatedAt');
     });
   }
 }
@@ -869,6 +1031,12 @@ extension AccountModelQueryProperty
     });
   }
 
+  QueryBuilder<AccountModel, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
+    });
+  }
+
   QueryBuilder<AccountModel, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
@@ -878,6 +1046,12 @@ extension AccountModelQueryProperty
   QueryBuilder<AccountModel, String, QQueryOperations> typeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'type');
+    });
+  }
+
+  QueryBuilder<AccountModel, DateTime?, QQueryOperations> updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'updatedAt');
     });
   }
 }

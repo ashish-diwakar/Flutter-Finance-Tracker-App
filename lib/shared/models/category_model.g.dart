@@ -37,15 +37,25 @@ const CategoryModelSchema = CollectionSchema(
       name: r'isDefault',
       type: IsarType.bool,
     ),
-    r'name': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 4,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'name': PropertySchema(
+      id: 5,
       name: r'name',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'type',
       type: IsarType.string,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 7,
+      name: r'updatedAt',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _categoryModelEstimateSize,
@@ -89,8 +99,10 @@ void _categoryModelSerialize(
   writer.writeDateTime(offsets[1], object.createdAt);
   writer.writeString(offsets[2], object.icon);
   writer.writeBool(offsets[3], object.isDefault);
-  writer.writeString(offsets[4], object.name);
-  writer.writeString(offsets[5], object.type);
+  writer.writeBool(offsets[4], object.isSynced);
+  writer.writeString(offsets[5], object.name);
+  writer.writeString(offsets[6], object.type);
+  writer.writeDateTime(offsets[7], object.updatedAt);
 }
 
 CategoryModel _categoryModelDeserialize(
@@ -105,8 +117,10 @@ CategoryModel _categoryModelDeserialize(
   object.icon = reader.readStringOrNull(offsets[2]);
   object.id = id;
   object.isDefault = reader.readBool(offsets[3]);
-  object.name = reader.readString(offsets[4]);
-  object.type = reader.readString(offsets[5]);
+  object.isSynced = reader.readBool(offsets[4]);
+  object.name = reader.readString(offsets[5]);
+  object.type = reader.readString(offsets[6]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[7]);
   return object;
 }
 
@@ -126,9 +140,13 @@ P _categoryModelDeserializeProp<P>(
     case 3:
       return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
       return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -577,6 +595,16 @@ extension CategoryModelQueryFilter
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      isSyncedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition> nameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -846,6 +874,80 @@ extension CategoryModelQueryFilter
       ));
     });
   }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      updatedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'updatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      updatedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'updatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      updatedAtEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      updatedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      updatedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'updatedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      updatedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'updatedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension CategoryModelQueryObject
@@ -907,6 +1009,19 @@ extension CategoryModelQuerySortBy
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -928,6 +1043,19 @@ extension CategoryModelQuerySortBy
   QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> sortByTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> sortByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      sortByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -997,6 +1125,19 @@ extension CategoryModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1018,6 +1159,19 @@ extension CategoryModelQuerySortThenBy
   QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> thenByTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> thenByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      thenByUpdatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
 }
@@ -1049,6 +1203,12 @@ extension CategoryModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QDistinct> distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1060,6 +1220,12 @@ extension CategoryModelQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'type', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QDistinct> distinctByUpdatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'updatedAt');
     });
   }
 }
@@ -1096,6 +1262,12 @@ extension CategoryModelQueryProperty
     });
   }
 
+  QueryBuilder<CategoryModel, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
+    });
+  }
+
   QueryBuilder<CategoryModel, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
@@ -1105,6 +1277,12 @@ extension CategoryModelQueryProperty
   QueryBuilder<CategoryModel, String, QQueryOperations> typeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'type');
+    });
+  }
+
+  QueryBuilder<CategoryModel, DateTime?, QQueryOperations> updatedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'updatedAt');
     });
   }
 }

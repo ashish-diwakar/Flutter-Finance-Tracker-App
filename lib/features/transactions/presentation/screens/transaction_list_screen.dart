@@ -87,9 +87,25 @@ class TransactionListScreen
                   transaction.notes ?? '',
                 ),
 
-                trailing: Text(
-                  transaction.type
-                      .toUpperCase(),
+                trailing: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+
+                  children: [
+
+                    Text(
+                      transaction.type
+                          .toUpperCase(),
+                    ),
+
+                    Icon(
+                      transaction.isSynced
+                          ? Icons.cloud_done
+                          : Icons.cloud_off,
+
+                      size: 16,
+                    ),
+                  ],
                 ),
               ),
             );

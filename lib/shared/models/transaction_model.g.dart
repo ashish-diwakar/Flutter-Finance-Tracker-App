@@ -37,23 +37,28 @@ const TransactionModelSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'notes': PropertySchema(
+    r'isSynced': PropertySchema(
       id: 4,
+      name: r'isSynced',
+      type: IsarType.bool,
+    ),
+    r'notes': PropertySchema(
+      id: 5,
       name: r'notes',
       type: IsarType.string,
     ),
     r'transactionDate': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'transactionDate',
       type: IsarType.dateTime,
     ),
     r'type': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'type',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -98,10 +103,11 @@ void _transactionModelSerialize(
   writer.writeLong(offsets[1], object.amount);
   writer.writeLong(offsets[2], object.categoryId);
   writer.writeDateTime(offsets[3], object.createdAt);
-  writer.writeString(offsets[4], object.notes);
-  writer.writeDateTime(offsets[5], object.transactionDate);
-  writer.writeString(offsets[6], object.type);
-  writer.writeDateTime(offsets[7], object.updatedAt);
+  writer.writeBool(offsets[4], object.isSynced);
+  writer.writeString(offsets[5], object.notes);
+  writer.writeDateTime(offsets[6], object.transactionDate);
+  writer.writeString(offsets[7], object.type);
+  writer.writeDateTime(offsets[8], object.updatedAt);
 }
 
 TransactionModel _transactionModelDeserialize(
@@ -116,10 +122,11 @@ TransactionModel _transactionModelDeserialize(
   object.categoryId = reader.readLong(offsets[2]);
   object.createdAt = reader.readDateTime(offsets[3]);
   object.id = id;
-  object.notes = reader.readStringOrNull(offsets[4]);
-  object.transactionDate = reader.readDateTime(offsets[5]);
-  object.type = reader.readString(offsets[6]);
-  object.updatedAt = reader.readDateTime(offsets[7]);
+  object.isSynced = reader.readBool(offsets[4]);
+  object.notes = reader.readStringOrNull(offsets[5]);
+  object.transactionDate = reader.readDateTime(offsets[6]);
+  object.type = reader.readString(offsets[7]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
   return object;
 }
 
@@ -139,13 +146,15 @@ P _transactionModelDeserializeProp<P>(
     case 3:
       return (reader.readDateTime(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
-    case 7:
       return (reader.readDateTime(offset)) as P;
+    case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -526,6 +535,16 @@ extension TransactionModelQueryFilter
   }
 
   QueryBuilder<TransactionModel, TransactionModel, QAfterFilterCondition>
+      isSyncedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isSynced',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterFilterCondition>
       notesIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -872,7 +891,25 @@ extension TransactionModelQueryFilter
   }
 
   QueryBuilder<TransactionModel, TransactionModel, QAfterFilterCondition>
-      updatedAtEqualTo(DateTime value) {
+      updatedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'updatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterFilterCondition>
+      updatedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'updatedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterFilterCondition>
+      updatedAtEqualTo(DateTime? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'updatedAt',
@@ -883,7 +920,7 @@ extension TransactionModelQueryFilter
 
   QueryBuilder<TransactionModel, TransactionModel, QAfterFilterCondition>
       updatedAtGreaterThan(
-    DateTime value, {
+    DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -897,7 +934,7 @@ extension TransactionModelQueryFilter
 
   QueryBuilder<TransactionModel, TransactionModel, QAfterFilterCondition>
       updatedAtLessThan(
-    DateTime value, {
+    DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -911,8 +948,8 @@ extension TransactionModelQueryFilter
 
   QueryBuilder<TransactionModel, TransactionModel, QAfterFilterCondition>
       updatedAtBetween(
-    DateTime lower,
-    DateTime upper, {
+    DateTime? lower,
+    DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -989,6 +1026,20 @@ extension TransactionModelQuerySortBy
       sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
+      sortByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
+      sortByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
     });
   }
 
@@ -1118,6 +1169,20 @@ extension TransactionModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
+      thenByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
+      thenByIsSyncedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
   QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy> thenByNotes() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'notes', Sort.asc);
@@ -1203,6 +1268,13 @@ extension TransactionModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<TransactionModel, TransactionModel, QDistinct>
+      distinctByIsSynced() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isSynced');
+    });
+  }
+
   QueryBuilder<TransactionModel, TransactionModel, QDistinct> distinctByNotes(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1265,6 +1337,12 @@ extension TransactionModelQueryProperty
     });
   }
 
+  QueryBuilder<TransactionModel, bool, QQueryOperations> isSyncedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isSynced');
+    });
+  }
+
   QueryBuilder<TransactionModel, String?, QQueryOperations> notesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'notes');
@@ -1284,7 +1362,7 @@ extension TransactionModelQueryProperty
     });
   }
 
-  QueryBuilder<TransactionModel, DateTime, QQueryOperations>
+  QueryBuilder<TransactionModel, DateTime?, QQueryOperations>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'updatedAt');

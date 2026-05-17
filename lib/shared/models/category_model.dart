@@ -18,12 +18,18 @@ class CategoryModel {
 
   DateTime createdAt = DateTime.now();
 
+  DateTime? updatedAt;
+
+  bool isSynced = false;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
       'type': type,
       'isDefault': isDefault,
+      'updatedAt': updatedAt?.toIso8601String(),
+      'isSynced': isSynced,
     };
   }
 }

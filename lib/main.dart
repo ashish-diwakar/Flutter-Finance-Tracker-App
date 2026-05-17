@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:logger/logger.dart';
 
 import 'core/config/supabase_config.dart';
 import 'features/dashboard/presentation/dashboard_screen.dart';
+
+final logger = Logger();
 
 Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load(
+    fileName: '.env'
+  );
+
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
-    anonKey:
-        SupabaseConfig.supabaseAnonKey,
+    anonKey: SupabaseConfig.supabaseAnonKey,
   );
 
   runApp(

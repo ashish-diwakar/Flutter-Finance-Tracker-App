@@ -15,6 +15,10 @@ class AccountModel {
   bool isArchived = false;
 
   DateTime createdAt = DateTime.now();
+  
+  DateTime? updatedAt;
+
+  bool isSynced = false;
 
   Map<String, dynamic> toJson() {
     return {
@@ -23,6 +27,8 @@ class AccountModel {
       'type': type,
       'currentBalance':
           currentBalance,
+      'updatedAt': updatedAt?.toIso8601String(),
+      'isSynced': isSynced,
     };
   }
 }

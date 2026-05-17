@@ -20,7 +20,9 @@ class TransactionModel {
 
   DateTime createdAt = DateTime.now();
 
-  DateTime updatedAt = DateTime.now();
+  DateTime? updatedAt = DateTime.now();
+
+  bool isSynced = false;
 
   Map<String, dynamic> toJson() {
     return {
@@ -32,6 +34,8 @@ class TransactionModel {
       'notes': notes,
       'transactionDate':
           transactionDate.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'isSynced': isSynced,
     };
   }
 }
