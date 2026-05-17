@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'core/routes/app_router.dart';
-import 'core/theme/app_theme.dart';
+import 'core/config/supabase_config.dart';
+import 'features/dashboard/presentation/dashboard_screen.dart';
 
-void main() {
+Future<void> main() async {
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: SupabaseConfig.supabaseUrl,
+    anonKey:
+        SupabaseConfig.supabaseAnonKey,
+  );
+
   runApp(
     const ProviderScope(
       child: FinanceTrackerApp(),
@@ -12,16 +22,26 @@ void main() {
   );
 }
 
-class FinanceTrackerApp extends StatelessWidget {
-  const FinanceTrackerApp({super.key});
+class FinanceTrackerApp
+    extends StatelessWidget {
+
+  const FinanceTrackerApp({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Finance Tracker',
+
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      routerConfig: appRouter,
+
+      title: 'Finance Tracker',
+
+      theme: ThemeData(
+        useMaterial3: true,
+      ),
+
+      home: const DashboardScreen(),
     );
   }
 }
