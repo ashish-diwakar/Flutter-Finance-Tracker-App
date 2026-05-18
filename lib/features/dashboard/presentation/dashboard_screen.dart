@@ -10,6 +10,8 @@ import 'providers/expense_provider.dart';
 import 'providers/income_provider.dart';
 import '../../reports/presentation/screens/reports_screen.dart';
 import '../../backup/presentation/screens/backup_screen.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
+import '../../auth/presentation/screens/login_screen.dart';
 
 
 class DashboardScreen extends ConsumerWidget {
@@ -69,9 +71,36 @@ class DashboardScreen extends ConsumerWidget {
               Icons.backup,
             ),
           ),
+
+          IconButton(
+            onPressed: () async {
+
+              final auth =
+                  ref.read(
+                authServiceProvider,
+              );
+
+              await auth.signOut();
+
+              if (context.mounted) {
+
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const LoginScreen(),
+                  ),
+                  (route) => false,
+                );
+              }
+            },
+            icon: const Icon(
+              Icons.logout,
+            ),
+          ),
+
         ],
       ),
-
       body: Column(
         children: [
 

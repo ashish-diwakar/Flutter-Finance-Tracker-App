@@ -21,10 +21,30 @@ class AuthService {
     required String password,
   }) async {
 
-    await supabase.auth.signInWithPassword(
+    final response =
+        await supabase.auth
+            .signInWithPassword(
       email: email,
       password: password,
     );
+
+    final user = response.user;
+
+    if (user == null) {
+      throw Exception(
+        'Login failed',
+      );
+    }
+
+    if (user.emailConfirmedAt ==
+        null) {
+
+      await supabase.auth.signOut();
+
+      throw Exception(
+        'Please verify your email before login.',
+      );
+    }
   }
 
   Future<void> signOut() async {

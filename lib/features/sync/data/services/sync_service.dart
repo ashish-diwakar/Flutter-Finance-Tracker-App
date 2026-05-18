@@ -21,6 +21,8 @@ class SyncService {
     await syncAccounts();
 
     await syncTransactions();
+
+    await pullTransactions();
   }
 
   Future<void> syncCategories() async {
@@ -123,6 +125,106 @@ class SyncService {
     }
   }
 
+  Future<void> pullTransactions()
+      async {
+
+    final user =
+        client.auth.currentUser;
+
+    if (user == null) {
+      return;
+    }
+
+    final response =
+        await client
+            .from('transactions')
+            .select()
+            .eq('user_id', user.id);
+
+    for (final item in response) {
+
+      final existing =
+          await isar.transactionModels
+              .get(item['id']);
+
+      final cloudUpdated =
+          DateTime.parse(
+        item['updated_at'],
+      );
+
+      if (existing == null) {
+
+        final transaction =
+            TransactionModel()
+
+              ..id = item['id']
+              ..amount =
+                  item['amount']
+              ..type =
+                  item['type']
+              ..categoryId =
+                  item['category_id']
+              ..accountId =
+                  item['account_id']
+              ..notes =
+                  item['notes']
+              ..transactionDate =
+                  DateTime.parse(
+                item['transaction_date'],
+              )
+              ..updatedAt =
+                  cloudUpdated
+              ..isSynced = true;
+
+        await isar.writeTxn(() async {
+
+          await isar.transactionModels
+              .put(transaction);
+        });
+
+      } else {
+
+        final localUpdated =
+            existing.updatedAt ??
+                DateTime(2000);
+
+        if (cloudUpdated
+            .isAfter(localUpdated)) {
+
+          existing.amount =
+              item['amount'];
+
+          existing.type =
+              item['type'];
+
+          existing.categoryId =
+              item['category_id'];
+
+          existing.accountId =
+              item['account_id'];
+
+          existing.notes =
+              item['notes'];
+
+          existing.transactionDate =
+              DateTime.parse(
+            item['transaction_date'],
+          );
+
+          existing.updatedAt =
+              cloudUpdated;
+
+          existing.isSynced = true;
+
+          await isar.writeTxn(() async {
+
+            await isar.transactionModels
+                .put(existing);
+          });
+        }
+      }
+    }
+  }
   Future<void> syncTransactions()
       async {
 
