@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../../core/utils/transaction_validator.dart';
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
@@ -9,6 +9,8 @@ import '../../../accounts/presentation/providers/accounts_provider.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
 import '../providers/transaction_repository_provider.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
+import '../../../../core/providers/connectivity_provider.dart';
+
 
 class AddTransactionScreen
     extends ConsumerStatefulWidget {
@@ -322,7 +324,26 @@ class _AddTransactionScreenState
                     syncServiceProvider.future,
                   );
 
-                  await syncService.syncAll();
+                  final connectivity =
+                      ref.read(
+                        connectivityProvider,
+                      );
+
+                  connectivity.whenData(
+                    (result) async {
+
+                      final connected =
+                          result.any(
+                        (e) =>
+                            e != ConnectivityResult.none,
+                      );
+
+                      if (connected) {
+
+                        await syncService.syncAll();
+                      }
+                    },
+                  );
 
                   if (mounted) {
                     Navigator.pop(context);

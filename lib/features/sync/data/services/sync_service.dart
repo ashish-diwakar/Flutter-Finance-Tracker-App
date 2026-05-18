@@ -4,6 +4,7 @@ import '../../../../core/services/supabase_service.dart';
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
+import '../../../../core/services/logger_service.dart';
 
 class SyncService {
 
@@ -16,13 +17,21 @@ class SyncService {
 
   Future<void> syncAll() async {
 
-    await syncCategories();
+    await executeSafely(
+      syncCategories,
+    );
 
-    await syncAccounts();
+    await executeSafely(
+      syncAccounts,
+    );
 
-    await syncTransactions();
+    await executeSafely(
+      syncTransactions,
+    );
 
-    await pullTransactions();
+    await executeSafely(
+      pullTransactions,
+    );
   }
 
   Future<void> syncCategories() async {
@@ -288,4 +297,23 @@ class SyncService {
       });
     }
   }
+
+
+  Future<void> executeSafely(
+    Future<void> Function() action,
+  ) async {
+
+    try {
+
+      await action();
+
+    } catch (e) {
+
+      LoggerService.error(
+        e.toString(),
+      );
+    }
+  }
+
+
 }

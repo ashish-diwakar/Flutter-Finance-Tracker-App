@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../dashboard/presentation/dashboard_screen.dart';
+// import '../../../dashboard/presentation/dashboard_screen.dart';
 import 'login_screen.dart';
+import '../../../security/presentation/screens/biometric_lock_screen.dart';
 
 class AuthGate
     extends StatelessWidget {
@@ -19,7 +20,8 @@ class AuthGate
             .currentSession;
 
     if (session != null) {
-      return const DashboardScreen();
+      // return const DashboardScreen();
+      return const BiometricLockScreen();
     }
 
     return const LoginScreen();
