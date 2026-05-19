@@ -10,10 +10,24 @@ class AuthService {
     required String password,
   }) async {
 
-    await supabase.auth.signUp(
+    final response =
+        await supabase.auth.signUp(
       email: email,
       password: password,
     );
+
+    final user = response.user;
+
+    if (user != null) {
+
+      await supabase
+          .from('profiles')
+          .upsert({
+
+        'id': user.id,
+        'email': user.email,
+      });
+    }
   }
 
   Future<void> signIn({

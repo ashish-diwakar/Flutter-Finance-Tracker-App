@@ -118,38 +118,138 @@ class _AddTransactionScreenState
 
               const SizedBox(height: 16),
 
+              // categoriesAsync.when(
+
+              //   data: (categories) {
+
+              //     return DropdownButtonFormField<
+              //         CategoryModel>(
+
+              //       value: selectedCategory,
+
+              //       menuMaxHeight: 300,
+
+              //       decoration:
+              //           const InputDecoration(
+              //         labelText: 'Category',
+              //         border:
+              //             OutlineInputBorder(),
+              //       ),
+
+              //       items: categories.map((e) {
+
+              //         return DropdownMenuItem(
+              //           value: e,
+              //           child: Text(e.name),
+              //         );
+              //       }).toList(),
+
+              //       onChanged: (value) {
+
+              //         setState(() {
+
+              //           selectedCategory =
+              //               value;
+              //         });
+              //       },
+              //     );
+              //   },
+
+              //   error: (e, s) =>
+              //       Text(e.toString()),
+
+              //   loading: () =>
+              //       const CircularProgressIndicator(),
+              // ),
+
               categoriesAsync.when(
 
                 data: (categories) {
 
-                  return DropdownButtonFormField<
-                      CategoryModel>(
+                  return InkWell(
 
-                    value: selectedCategory,
+                    onTap: () async {
 
-                    decoration:
-                        const InputDecoration(
-                      labelText: 'Category',
-                      border:
-                          OutlineInputBorder(),
-                    ),
+                      final result =
+                          await showModalBottomSheet<
+                              CategoryModel>(
+                        context: context,
 
-                    items: categories.map((e) {
+                        isScrollControlled: true,
 
-                      return DropdownMenuItem(
-                        value: e,
-                        child: Text(e.name),
+                        builder: (_) {
+
+                          return SafeArea(
+
+                            child: SizedBox(
+
+                              height: 400,
+
+                              child: ListView.builder(
+
+                                itemCount:
+                                    categories.length,
+
+                                itemBuilder:
+                                    (context, index) {
+
+                                  final category =
+                                      categories[index];
+
+                                  return ListTile(
+
+                                    title: Text(
+                                      category.name,
+                                    ),
+
+                                    onTap: () {
+
+                                      Navigator.pop(
+                                        context,
+                                        category,
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       );
-                    }).toList(),
 
-                    onChanged: (value) {
+                      if (result != null) {
 
-                      setState(() {
+                        setState(() {
 
-                        selectedCategory =
-                            value;
-                      });
+                          selectedCategory =
+                              result;
+                        });
+                      }
                     },
+
+                    child: InputDecorator(
+
+                      decoration:
+                          const InputDecoration(
+                        labelText: 'Category',
+                        border:
+                            OutlineInputBorder(),
+                      ),
+
+                      child: Text(
+
+                        selectedCategory?.name ??
+                            'Select Category',
+
+                        style: TextStyle(
+
+                          color:
+                              selectedCategory == null
+                                  ? Colors.grey
+                                  : Colors.black,
+                        ),
+                      ),
+                    ),
                   );
                 },
 
@@ -162,38 +262,137 @@ class _AddTransactionScreenState
 
               const SizedBox(height: 16),
 
+              // accountsAsync.when(
+
+              //   data: (accounts) {
+
+              //     return DropdownButtonFormField<
+              //         AccountModel>(
+
+              //       value: selectedAccount,
+
+              //       menuMaxHeight: 300,
+              //       decoration:
+              //           const InputDecoration(
+              //         labelText: 'Account',
+              //         border:
+              //             OutlineInputBorder(),
+              //       ),
+
+              //       items: accounts.map((e) {
+
+              //         return DropdownMenuItem(
+              //           value: e,
+              //           child: Text(e.name),
+              //         );
+              //       }).toList(),
+
+              //       onChanged: (value) {
+
+              //         setState(() {
+
+              //           selectedAccount =
+              //               value;
+              //         });
+              //       },
+              //     );
+              //   },
+
+              //   error: (e, s) =>
+              //       Text(e.toString()),
+
+              //   loading: () =>
+              //       const CircularProgressIndicator(),
+              // ),
+
               accountsAsync.when(
 
                 data: (accounts) {
 
-                  return DropdownButtonFormField<
-                      AccountModel>(
+                  return InkWell(
 
-                    value: selectedAccount,
+                    onTap: () async {
 
-                    decoration:
-                        const InputDecoration(
-                      labelText: 'Account',
-                      border:
-                          OutlineInputBorder(),
-                    ),
+                      final result =
+                          await showModalBottomSheet<
+                              AccountModel>(
+                        context: context,
 
-                    items: accounts.map((e) {
+                        isScrollControlled: true,
 
-                      return DropdownMenuItem(
-                        value: e,
-                        child: Text(e.name),
+                        builder: (_) {
+
+                          return SafeArea(
+
+                            child: SizedBox(
+
+                              height: 400,
+
+                              child: ListView.builder(
+
+                                itemCount:
+                                    accounts.length,
+
+                                itemBuilder:
+                                    (context, index) {
+
+                                  final account =
+                                      accounts[index];
+
+                                  return ListTile(
+
+                                    title: Text(
+                                      account.name,
+                                    ),
+
+                                    onTap: () {
+
+                                      Navigator.pop(
+                                        context,
+                                        account,
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       );
-                    }).toList(),
 
-                    onChanged: (value) {
+                      if (result != null) {
 
-                      setState(() {
+                        setState(() {
 
-                        selectedAccount =
-                            value;
-                      });
+                          selectedAccount =
+                              result;
+                        });
+                      }
                     },
+
+                    child: InputDecorator(
+
+                      decoration:
+                          const InputDecoration(
+                        labelText: 'Account',
+                        border:
+                            OutlineInputBorder(),
+                      ),
+
+                      child: Text(
+
+                        selectedAccount?.name ??
+                            'Select Account',
+
+                        style: TextStyle(
+
+                          color:
+                              selectedAccount == null
+                                  ? Colors.grey
+                                  : Colors.black,
+                        ),
+                      ),
+                    ),
                   );
                 },
 
