@@ -2,7 +2,7 @@ import 'package:finance_tracker/main.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/services/biometric_service.dart';
-import '../../../dashboard/presentation/dashboard_screen.dart';
+import '../../../navigation/presentation/screens/main_navigation_screen.dart';
 
 class BiometricLockScreen
     extends StatefulWidget {
@@ -41,7 +41,8 @@ class _BiometricLockScreenState
         context,
         MaterialPageRoute(
           builder: (_) =>
-              const DashboardScreen(),
+              //const DashboardScreen(),
+              const MainNavigationScreen(),
         ),
       );
     }

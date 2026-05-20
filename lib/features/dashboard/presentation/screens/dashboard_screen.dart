@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/utils/currency_formatter.dart';
-import '../../../core/widgets/summary_card.dart';
-import '../../transactions/presentation/screens/add_transaction_screen.dart';
-import '../../transactions/presentation/screens/transaction_list_screen.dart';
-import 'providers/balance_provider.dart';
-import 'providers/expense_provider.dart';
-import 'providers/income_provider.dart';
-import '../../reports/presentation/screens/reports_screen.dart';
-import '../../backup/presentation/screens/backup_screen.dart';
-import '../../auth/presentation/providers/auth_provider.dart';
-import '../../auth/presentation/screens/login_screen.dart';
-import '../../sync/presentation/providers/sync_provider.dart';
-import '../../settings/presentation/screens/settings_screen.dart';
-import 'providers/transaction_filter_provider.dart';
-import 'providers/transactions_provider.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/summary_card.dart';
+import '../../../transactions/presentation/screens/add_transaction_screen.dart';
+import '../../../transactions/presentation/screens/transaction_list_screen.dart';
+import '../providers/balance_provider.dart';
+import '../providers/expense_provider.dart';
+import '../providers/income_provider.dart';
+//import '../../../reports/presentation/screens/reports_screen.dart';
+//import '../../../backup/presentation/screens/backup_screen.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../sync/presentation/providers/sync_provider.dart';
+//import '../../../settings/presentation/screens/settings_screen.dart';
+//import '../providers/transaction_filter_provider.dart';
+import '../providers/transactions_provider.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -101,34 +102,35 @@ class _DashboardScreenState
 
     final balance =
         ref.watch(totalBalanceProvider);
-        
+    
+    final appName = dotenv.env['APP_NAME'] ?? 'Finance Tracker';
 
     return Scaffold(
 
       appBar: AppBar(
         centerTitle: false,
 
-        title: const Text(
-          'Finance Tracker',
+        title: Text(
+          appName,
         ),
 
         actions: [
 
-          IconButton(
-            onPressed: () {
+          // IconButton(
+          //   onPressed: () {
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const ReportsScreen(),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.bar_chart,
-            ),
-          ),
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (_) =>
+          //             const ReportsScreen(),
+          //       ),
+          //     );
+          //   },
+          //   icon: const Icon(
+          //     Icons.bar_chart,
+          //   ),
+          // ),
 
           IconButton(
 
@@ -153,21 +155,21 @@ class _DashboardScreenState
                   ),
           ),
 
-          IconButton(
-            onPressed: () {
+          // IconButton(
+          //   onPressed: () {
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const SettingsScreen(),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.settings,
-            ),
-          ),
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (_) =>
+          //             const SettingsScreen(),
+          //       ),
+          //     );
+          //   },
+          //   icon: const Icon(
+          //     Icons.settings,
+          //   ),
+          // ),
 
           IconButton(
             onPressed: () async {
@@ -262,44 +264,37 @@ class _DashboardScreenState
 
           const SizedBox(height: 16),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(
+          const Padding(
+            padding: EdgeInsets.symmetric(
               horizontal: 16,
             ),
-
             child: Row(
-
-              mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
-
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-
-                const Text(
+                Text(
                   'Recent Transactions',
-                  style: TextStyle(
+                  style: TextStyle( // Removed redundant 'const' here
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
-                _LimitDropdown(),
               ],
             ),
           ),
 
-          const SizedBox(height: 8),
+          // const SizedBox(height: 8),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 12,
-            ),
-            child: _TypeFilterChips(),
-          ),
+          // const Padding(
+          //   padding: EdgeInsets.symmetric(
+          //     horizontal: 12,
+          //   ),
+          //   child: _TypeFilterChips(),
+          // ),
 
           const SizedBox(height: 8),
 
           const Expanded(
-            child: TransactionListScreen(),
+            child: TransactionListScreen(defaultLimit: 3,),
           ),
         ],
       ),
@@ -320,99 +315,99 @@ class _DashboardScreenState
   }
 }
 
-class _LimitDropdown extends ConsumerWidget {
+// class _LimitDropdown extends ConsumerWidget {
 
-  @override
-  Widget build(
-    BuildContext context,
-    WidgetRef ref,
-  ) {
+//   @override
+//   Widget build(
+//     BuildContext context,
+//     WidgetRef ref,
+//   ) {
 
-    final filter =
-        ref.watch(transactionFilterProvider);
+//     final filter =
+//         ref.watch(transactionFilterProvider);
 
-    return DropdownButton<TransactionLimit>(
+//     return DropdownButton<TransactionLimit>(
 
-      value: filter.limit,
+//       value: filter.limit,
 
-      underline: const SizedBox.shrink(),
+//       underline: const SizedBox.shrink(),
 
-      isDense: true,
+//       isDense: true,
 
-      icon: const Icon(
-        Icons.arrow_drop_down,
-      ),
+//       icon: const Icon(
+//         Icons.arrow_drop_down,
+//       ),
 
-      onChanged: (value) {
+//       onChanged: (value) {
 
-        if (value == null) {
-          return;
-        }
+//         if (value == null) {
+//           return;
+//         }
 
-        ref
-            .read(
-              transactionFilterProvider.notifier,
-            )
-            .setLimit(value);
-      },
+//         ref
+//             .read(
+//               transactionFilterProvider.notifier,
+//             )
+//             .setLimit(value);
+//       },
 
-      items: TransactionLimit.values
-          .map(
-            (TransactionLimit l) =>
-                DropdownMenuItem<TransactionLimit>(
-              value: l,
-              child: Text(l.label),
-            ),
-          )
-          .toList(),
-    );
-  }
-}
+//       items: TransactionLimit.values
+//           .map(
+//             (TransactionLimit l) =>
+//                 DropdownMenuItem<TransactionLimit>(
+//               value: l,
+//               child: Text(l.label),
+//             ),
+//           )
+//           .toList(),
+//     );
+//   }
+// }
 
-class _TypeFilterChips extends ConsumerWidget {
+// class _TypeFilterChips extends ConsumerWidget {
 
-  const _TypeFilterChips();
+//   const _TypeFilterChips();
 
-  @override
-  Widget build(
-    BuildContext context,
-    WidgetRef ref,
-  ) {
+//   @override
+//   Widget build(
+//     BuildContext context,
+//     WidgetRef ref,
+//   ) {
 
-    final filter =
-        ref.watch(transactionFilterProvider);
+//     final filter =
+//         ref.watch(transactionFilterProvider);
 
-    return Row(
+//     return Row(
 
-      children: TransactionTypeFilter.values.map(
-        (TransactionTypeFilter t) {
+//       children: TransactionTypeFilter.values.map(
+//         (TransactionTypeFilter t) {
 
-          final selected = filter.type == t;
+//           final selected = filter.type == t;
 
-          return Padding(
+//           return Padding(
 
-            padding: const EdgeInsets.symmetric(
-              horizontal: 4,
-            ),
+//             padding: const EdgeInsets.symmetric(
+//               horizontal: 4,
+//             ),
 
-            child: ChoiceChip(
+//             child: ChoiceChip(
 
-              label: Text(t.label),
+//               label: Text(t.label),
 
-              selected: selected,
+//               selected: selected,
 
-              onSelected: (_) {
+//               onSelected: (_) {
 
-                ref
-                    .read(
-                      transactionFilterProvider.notifier,
-                    )
-                    .setType(t);
-              },
-            ),
-          );
-        },
-      ).toList(),
-    );
-  }
-}
+//                 ref
+//                     .read(
+//                       transactionFilterProvider.notifier,
+//                     )
+//                     .setType(t);
+//               },
+//             ),
+//           );
+//         },
+//       ).toList(),
+//     );
+//   }
+// }

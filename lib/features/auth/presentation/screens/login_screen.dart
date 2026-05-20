@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../dashboard/presentation/dashboard_screen.dart';
+//import '../../../dashboard/presentation/screens/dashboard_screen.dart';
+import '../../../navigation/presentation/screens/main_navigation_screen.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
@@ -114,7 +115,8 @@ class _LoginScreenState
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
-                                    const DashboardScreen(),
+                                    //const DashboardScreen(),
+                                    const MainNavigationScreen(),
                               ),
                             );
                           }

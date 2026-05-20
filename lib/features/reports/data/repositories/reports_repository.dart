@@ -66,6 +66,7 @@ class ReportsRepository {
     final transactions =
         await isar.transactionModels
             .filter()
+            .isDeletedEqualTo(false)
             .typeEqualTo('expense')
             .transactionDateBetween(
               start,

@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(flutter analyze *)"
+      "Bash(flutter analyze *)",
+      "Bash(ls -la \"C:/Ashish/Projects/Mobile Apps/Financial Tracker App/Images\" 2>&1)",
+      "Read(//c/Ashish/Projects/Mobile Apps/Financial Tracker App/Images/**)"
     ]
   }
 }

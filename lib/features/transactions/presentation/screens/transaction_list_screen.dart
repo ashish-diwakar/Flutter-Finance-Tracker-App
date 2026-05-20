@@ -14,8 +14,10 @@ import 'transaction_details_screen.dart';
 class TransactionListScreen
     extends ConsumerWidget {
 
+  final int? defaultLimit;
   const TransactionListScreen({
     super.key,
+    this.defaultLimit,
   });
 
   Future<void> deleteTransaction({
@@ -147,6 +149,10 @@ class TransactionListScreen
     WidgetRef ref,
   ) {
 
+    final limit = (defaultLimit != null)
+        ? defaultLimit
+        : 5;
+
     final transactionsAsync =
         ref.watch(
       filteredTransactionsProvider,
@@ -189,7 +195,9 @@ class TransactionListScreen
         return ListView.builder(
 
           itemCount:
-              transactions.length,
+              (limit != null && limit < transactions.length)
+                  ? limit
+                  : transactions.length,
 
           itemBuilder:
               (context, index) {
