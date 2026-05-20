@@ -14,6 +14,7 @@ import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/screens/login_screen.dart';
 import '../../sync/presentation/providers/sync_provider.dart';
 import '../../settings/presentation/screens/settings_screen.dart';
+import 'providers/transaction_filter_provider.dart';
 import 'providers/transactions_provider.dart';
 
 
@@ -261,20 +262,38 @@ class _DashboardScreenState
 
           const SizedBox(height: 16),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(
+          Padding(
+            padding: const EdgeInsets.symmetric(
               horizontal: 16,
             ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Recent Transactions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+
+            child: Row(
+
+              mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween,
+
+              children: [
+
+                const Text(
+                  'Recent Transactions',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+
+                _LimitDropdown(),
+              ],
             ),
+          ),
+
+          const SizedBox(height: 8),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: 12,
+            ),
+            child: _TypeFilterChips(),
           ),
 
           const SizedBox(height: 8),
@@ -297,6 +316,103 @@ class _DashboardScreenState
         },
         child: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class _LimitDropdown extends ConsumerWidget {
+
+  @override
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+
+    final filter =
+        ref.watch(transactionFilterProvider);
+
+    return DropdownButton<TransactionLimit>(
+
+      value: filter.limit,
+
+      underline: const SizedBox.shrink(),
+
+      isDense: true,
+
+      icon: const Icon(
+        Icons.arrow_drop_down,
+      ),
+
+      onChanged: (value) {
+
+        if (value == null) {
+          return;
+        }
+
+        ref
+            .read(
+              transactionFilterProvider.notifier,
+            )
+            .setLimit(value);
+      },
+
+      items: TransactionLimit.values
+          .map(
+            (TransactionLimit l) =>
+                DropdownMenuItem<TransactionLimit>(
+              value: l,
+              child: Text(l.label),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _TypeFilterChips extends ConsumerWidget {
+
+  const _TypeFilterChips();
+
+  @override
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+
+    final filter =
+        ref.watch(transactionFilterProvider);
+
+    return Row(
+
+      children: TransactionTypeFilter.values.map(
+        (TransactionTypeFilter t) {
+
+          final selected = filter.type == t;
+
+          return Padding(
+
+            padding: const EdgeInsets.symmetric(
+              horizontal: 4,
+            ),
+
+            child: ChoiceChip(
+
+              label: Text(t.label),
+
+              selected: selected,
+
+              onSelected: (_) {
+
+                ref
+                    .read(
+                      transactionFilterProvider.notifier,
+                    )
+                    .setType(t);
+              },
+            ),
+          );
+        },
+      ).toList(),
     );
   }
 }

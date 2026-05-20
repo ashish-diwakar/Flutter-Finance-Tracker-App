@@ -5,6 +5,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../dashboard/presentation/providers/balance_provider.dart';
 import '../../../dashboard/presentation/providers/expense_provider.dart';
 import '../../../dashboard/presentation/providers/income_provider.dart';
+import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
 import '../../../dashboard/presentation/providers/transactions_provider.dart';
 import '../providers/transaction_repository_provider.dart';
 import 'add_transaction_screen.dart';
@@ -148,7 +149,7 @@ class TransactionListScreen
 
     final transactionsAsync =
         ref.watch(
-      transactionsStreamProvider,
+      filteredTransactionsProvider,
     );
 
     return transactionsAsync.when(
@@ -237,7 +238,6 @@ class TransactionListScreen
                       ),
 
                   // child: Icon(
-
                   //   isIncome
                   //       ? Icons.money
                   //       : Icons.money_off,
