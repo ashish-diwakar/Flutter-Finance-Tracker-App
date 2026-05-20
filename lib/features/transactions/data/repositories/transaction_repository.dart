@@ -91,7 +91,6 @@ class TransactionRepository {
             .filter()
             .isDeletedEqualTo(false)
             .typeEqualTo('income')
-            .isDeletedEqualTo(false)
             .findAll();
 
     return transactions.fold<int>(
@@ -107,7 +106,6 @@ class TransactionRepository {
             .filter()
             .isDeletedEqualTo(false)
             .typeEqualTo('expense')
-            .isDeletedEqualTo(false)
             .findAll();
 
     return transactions.fold<int>(

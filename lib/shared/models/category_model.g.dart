@@ -37,23 +37,28 @@ const CategoryModelSchema = CollectionSchema(
       name: r'isDefault',
       type: IsarType.bool,
     ),
-    r'isSynced': PropertySchema(
+    r'isDeleted': PropertySchema(
       id: 4,
+      name: r'isDeleted',
+      type: IsarType.bool,
+    ),
+    r'isSynced': PropertySchema(
+      id: 5,
       name: r'isSynced',
       type: IsarType.bool,
     ),
     r'name': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'name',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'type',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -99,10 +104,11 @@ void _categoryModelSerialize(
   writer.writeDateTime(offsets[1], object.createdAt);
   writer.writeString(offsets[2], object.icon);
   writer.writeBool(offsets[3], object.isDefault);
-  writer.writeBool(offsets[4], object.isSynced);
-  writer.writeString(offsets[5], object.name);
-  writer.writeString(offsets[6], object.type);
-  writer.writeDateTime(offsets[7], object.updatedAt);
+  writer.writeBool(offsets[4], object.isDeleted);
+  writer.writeBool(offsets[5], object.isSynced);
+  writer.writeString(offsets[6], object.name);
+  writer.writeString(offsets[7], object.type);
+  writer.writeDateTime(offsets[8], object.updatedAt);
 }
 
 CategoryModel _categoryModelDeserialize(
@@ -117,10 +123,11 @@ CategoryModel _categoryModelDeserialize(
   object.icon = reader.readStringOrNull(offsets[2]);
   object.id = id;
   object.isDefault = reader.readBool(offsets[3]);
-  object.isSynced = reader.readBool(offsets[4]);
-  object.name = reader.readString(offsets[5]);
-  object.type = reader.readString(offsets[6]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[7]);
+  object.isDeleted = reader.readBool(offsets[4]);
+  object.isSynced = reader.readBool(offsets[5]);
+  object.name = reader.readString(offsets[6]);
+  object.type = reader.readString(offsets[7]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
   return object;
 }
 
@@ -142,10 +149,12 @@ P _categoryModelDeserializeProp<P>(
     case 4:
       return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
       return (reader.readString(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -596,6 +605,16 @@ extension CategoryModelQueryFilter
   }
 
   QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      isDeletedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isDeleted',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
       isSyncedEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1009,6 +1028,19 @@ extension CategoryModelQuerySortBy
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> sortByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
@@ -1125,6 +1157,19 @@ extension CategoryModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> thenByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
@@ -1203,6 +1248,12 @@ extension CategoryModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QDistinct> distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isDeleted');
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QDistinct> distinctByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isSynced');
@@ -1259,6 +1310,12 @@ extension CategoryModelQueryProperty
   QueryBuilder<CategoryModel, bool, QQueryOperations> isDefaultProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isDefault');
+    });
+  }
+
+  QueryBuilder<CategoryModel, bool, QQueryOperations> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isDeleted');
     });
   }
 

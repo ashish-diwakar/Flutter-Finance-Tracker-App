@@ -22,6 +22,8 @@ class CategoryModel {
 
   bool isSynced = false;
 
+  bool isDeleted = false;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -30,6 +32,7 @@ class CategoryModel {
       'isDefault': isDefault,
       'updatedAt': updatedAt?.toIso8601String(),
       'isSynced': isSynced,
+      'isDeleted': isDeleted,
     };
   }
 }

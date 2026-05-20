@@ -32,23 +32,33 @@ const AccountModelSchema = CollectionSchema(
       name: r'isArchived',
       type: IsarType.bool,
     ),
-    r'isSynced': PropertySchema(
+    r'isDefault': PropertySchema(
       id: 3,
+      name: r'isDefault',
+      type: IsarType.bool,
+    ),
+    r'isDeleted': PropertySchema(
+      id: 4,
+      name: r'isDeleted',
+      type: IsarType.bool,
+    ),
+    r'isSynced': PropertySchema(
+      id: 5,
       name: r'isSynced',
       type: IsarType.bool,
     ),
     r'name': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'name',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'type',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -87,10 +97,12 @@ void _accountModelSerialize(
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeLong(offsets[1], object.currentBalance);
   writer.writeBool(offsets[2], object.isArchived);
-  writer.writeBool(offsets[3], object.isSynced);
-  writer.writeString(offsets[4], object.name);
-  writer.writeString(offsets[5], object.type);
-  writer.writeDateTime(offsets[6], object.updatedAt);
+  writer.writeBool(offsets[3], object.isDefault);
+  writer.writeBool(offsets[4], object.isDeleted);
+  writer.writeBool(offsets[5], object.isSynced);
+  writer.writeString(offsets[6], object.name);
+  writer.writeString(offsets[7], object.type);
+  writer.writeDateTime(offsets[8], object.updatedAt);
 }
 
 AccountModel _accountModelDeserialize(
@@ -104,10 +116,12 @@ AccountModel _accountModelDeserialize(
   object.currentBalance = reader.readLong(offsets[1]);
   object.id = id;
   object.isArchived = reader.readBool(offsets[2]);
-  object.isSynced = reader.readBool(offsets[3]);
-  object.name = reader.readString(offsets[4]);
-  object.type = reader.readString(offsets[5]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[6]);
+  object.isDefault = reader.readBool(offsets[3]);
+  object.isDeleted = reader.readBool(offsets[4]);
+  object.isSynced = reader.readBool(offsets[5]);
+  object.name = reader.readString(offsets[6]);
+  object.type = reader.readString(offsets[7]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
   return object;
 }
 
@@ -127,10 +141,14 @@ P _accountModelDeserializeProp<P>(
     case 3:
       return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -401,6 +419,26 @@ extension AccountModelQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isArchived',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition>
+      isDefaultEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isDefault',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterFilterCondition>
+      isDeletedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isDeleted',
         value: value,
       ));
     });
@@ -806,6 +844,30 @@ extension AccountModelQuerySortBy
     });
   }
 
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByIsDefault() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDefault', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByIsDefaultDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDefault', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
+    });
+  }
+
   QueryBuilder<AccountModel, AccountModel, QAfterSortBy> sortByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
@@ -908,6 +970,30 @@ extension AccountModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByIsDefault() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDefault', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByIsDefaultDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDefault', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
+    });
+  }
+
   QueryBuilder<AccountModel, AccountModel, QAfterSortBy> thenByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
@@ -978,6 +1064,18 @@ extension AccountModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AccountModel, AccountModel, QDistinct> distinctByIsDefault() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isDefault');
+    });
+  }
+
+  QueryBuilder<AccountModel, AccountModel, QDistinct> distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isDeleted');
+    });
+  }
+
   QueryBuilder<AccountModel, AccountModel, QDistinct> distinctByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isSynced');
@@ -1028,6 +1126,18 @@ extension AccountModelQueryProperty
   QueryBuilder<AccountModel, bool, QQueryOperations> isArchivedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isArchived');
+    });
+  }
+
+  QueryBuilder<AccountModel, bool, QQueryOperations> isDefaultProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isDefault');
+    });
+  }
+
+  QueryBuilder<AccountModel, bool, QQueryOperations> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isDeleted');
     });
   }
 

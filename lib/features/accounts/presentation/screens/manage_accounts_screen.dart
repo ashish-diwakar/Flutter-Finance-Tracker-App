@@ -302,44 +302,63 @@ class _ManageAccountsScreenState
 
                     children: [
 
-                      IconButton(
+                      if (!account.isDefault)
+                        IconButton(
+                          onPressed: () {
+                            showAccountDialog(
+                              account:
+                                  account,
+                            );
+                          },
 
-                        onPressed: () {
-
-                          showAccountDialog(
-                            account:
-                                account,
-                          );
-                        },
-
-                        icon: const Icon(
-                          Icons.edit,
+                          icon: const Icon(
+                            Icons.edit,
+                          ),
                         ),
-                      ),
 
-                      IconButton(
 
-                        onPressed:
-                            () async {
+                      if (!account.isDefault)
+                        IconButton(
+                          onPressed:
+                              () async {
+                            final messenger =
+                                ScaffoldMessenger.of(
+                              context,
+                            );
 
-                          final repository =
-                              await ref.read(
-                            accountRepositoryProvider
-                                .future,
-                          );
+                            final repository =
+                                await ref.read(
+                              accountRepositoryProvider
+                                  .future,
+                            );
 
-                          await repository
-                              .deleteAccount(
-                            account.id,
-                          );
+                            try {
 
-                          await loadAccounts();
-                        },
+                              await repository
+                                  .deleteAccount(
+                                account.id,
+                              );
 
-                        icon: const Icon(
-                          Icons.delete,
+                              await loadAccounts();
+
+                            } catch (e) {
+
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    e is StateError
+                                        ? e.message
+                                        : 'Unable to delete account',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+
+                          icon: const Icon(
+                            Icons.delete,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 );

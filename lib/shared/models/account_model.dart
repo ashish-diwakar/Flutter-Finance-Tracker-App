@@ -14,11 +14,15 @@ class AccountModel {
 
   bool isArchived = false;
 
+  bool isDefault = false;
+
   DateTime createdAt = DateTime.now();
-  
+
   DateTime? updatedAt;
 
   bool isSynced = false;
+
+  bool isDeleted = false;
 
   Map<String, dynamic> toJson() {
     return {
@@ -27,8 +31,10 @@ class AccountModel {
       'type': type,
       'currentBalance':
           currentBalance,
+      'isDefault': isDefault,
       'updatedAt': updatedAt?.toIso8601String(),
       'isSynced': isSynced,
+      'isDeleted': isDeleted,
     };
   }
 }

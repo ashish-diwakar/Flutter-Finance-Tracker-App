@@ -24,6 +24,19 @@ class SyncService {
     logger.d('--------------------------------------------------------------------');
     logger.d('--------------------------------------------------------------------');
 
+    final sessionReady = await ensureValidSession();
+
+    if (!sessionReady) {
+
+      logger.e(
+        'Aborting sync: no valid Supabase session. User must sign in again.',
+      );
+
+      throw StateError(
+        'No valid Supabase session. Please sign in again.',
+      );
+    }
+
     await executeSafely(
       syncCategories,
     );
@@ -76,6 +89,9 @@ class SyncService {
         'is_default':
             category.isDefault,
 
+        'is_deleted':
+            category.isDeleted,
+
         'updated_at':
             DateTime.now()
                 .toIso8601String(),
@@ -126,6 +142,12 @@ class SyncService {
         'current_balance':
             account.currentBalance,
 
+        'is_default':
+            account.isDefault,
+
+        'is_deleted':
+            account.isDeleted,
+
         'updated_at':
             DateTime.now()
                 .toIso8601String(),
@@ -171,7 +193,15 @@ class SyncService {
         item['updated_at'],
       );
 
+      final cloudDeleted =
+          (item['is_deleted'] as bool?) ??
+              false;
+
       if (existing == null) {
+
+        if (cloudDeleted) {
+          continue;
+        }
 
         final transaction =
             TransactionModel()
@@ -193,7 +223,8 @@ class SyncService {
               )
               ..updatedAt =
                   cloudUpdated
-              ..isSynced = true;
+              ..isSynced = true
+              ..isDeleted = cloudDeleted;
 
         await isar.writeTxn(() async {
 
@@ -234,6 +265,8 @@ class SyncService {
               cloudUpdated;
 
           existing.isSynced = true;
+
+          existing.isDeleted = cloudDeleted;
 
           await isar.writeTxn(() async {
 
@@ -290,6 +323,9 @@ class SyncService {
                 .transactionDate
                 .toIso8601String(),
 
+        'is_deleted':
+            transaction.isDeleted,
+
         'updated_at':
             DateTime.now()
                 .toIso8601String(),
@@ -325,5 +361,52 @@ class SyncService {
     }
   }
 
+  Future<bool> ensureValidSession() async {
+
+    final user = client.auth.currentUser;
+
+    if (user == null) {
+
+      logger.e('ensureValidSession: no currentUser');
+
+      return false;
+    }
+
+    final session = client.auth.currentSession;
+
+    if (session == null) {
+
+      logger.e(
+        'ensureValidSession: currentUser present but session is null',
+      );
+
+      return false;
+    }
+
+    if (!session.isExpired) {
+      return true;
+    }
+
+    logger.d(
+      'ensureValidSession: session expired, attempting refresh',
+    );
+
+    try {
+
+      final response =
+          await client.auth.refreshSession();
+
+      return response.session != null &&
+          !response.session!.isExpired;
+
+    } catch (e) {
+
+      logger.e(
+        'ensureValidSession: refresh failed: $e',
+      );
+
+      return false;
+    }
+  }
 
 }

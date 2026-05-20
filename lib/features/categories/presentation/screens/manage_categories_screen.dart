@@ -298,20 +298,23 @@ class _ManageCategoriesScreenState
 
                     children: [
 
-                      IconButton(
+                      if (!category
+                          .isDefault)
+                          
+                        IconButton(
 
-                        onPressed: () {
+                          onPressed: () {
 
-                          showCategoryDialog(
-                            category:
-                                category,
-                          );
-                        },
+                            showCategoryDialog(
+                              category:
+                                  category,
+                            );
+                          },
 
-                        icon: const Icon(
-                          Icons.edit,
+                          icon: const Icon(
+                            Icons.edit,
+                          ),
                         ),
-                      ),
 
                       if (!category
                           .isDefault)

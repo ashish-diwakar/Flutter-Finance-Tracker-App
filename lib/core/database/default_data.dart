@@ -54,6 +54,7 @@ class DefaultData {
       ..name = 'Cash'
       ..type = 'cash'
       ..currentBalance = 0
+      ..isDefault = true
       ..isSynced = false
       ..updatedAt = DateTime.now(),
 
@@ -61,6 +62,7 @@ class DefaultData {
       ..name = 'Bank Account'
       ..type = 'bank'
       ..currentBalance = 0
+      ..isDefault = true
       ..isSynced = false
       ..updatedAt = DateTime.now(),
   ];

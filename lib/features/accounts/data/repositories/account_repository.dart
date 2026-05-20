@@ -49,6 +49,17 @@ class AccountRepository {
     int id,
   ) async {
 
+    final account =
+        await isar.accountModels.get(id);
+
+    if (account != null &&
+        account.isDefault) {
+
+      throw StateError(
+        'Default accounts cannot be deleted.',
+      );
+    }
+
     await isar.writeTxn(() async {
 
       await isar.accountModels.delete(
