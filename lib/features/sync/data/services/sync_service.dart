@@ -1,3 +1,4 @@
+import 'package:finance_tracker/main.dart';
 import 'package:isar/isar.dart';
 
 import '../../../../core/services/supabase_service.dart';
@@ -16,6 +17,12 @@ class SyncService {
       SupabaseService.client;
 
   Future<void> syncAll() async {
+
+    logger.d('--------------------------------------------------------------------');
+    logger.d('--------------------------------------------------------------------');
+    logger.d('Starting full sync for user: ${client.auth.currentUser?.id}');
+    logger.d('--------------------------------------------------------------------');
+    logger.d('--------------------------------------------------------------------');
 
     await executeSafely(
       syncCategories,
@@ -39,7 +46,10 @@ class SyncService {
     final user =
         client.auth.currentUser;
 
+    logger.d('Starting category sync for user: ${user?.id}');
+
     if (user == null) {
+      logger.e('User is null');
       return;
     }
 

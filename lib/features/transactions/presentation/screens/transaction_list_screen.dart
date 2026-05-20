@@ -226,12 +226,22 @@ class TransactionListScreen
 
                 leading: CircleAvatar(
 
-                  child: Icon(
+                  child: isIncome
+                    ? const Icon(
+                        Icons.attach_money,
+                        color: Colors.green,
+                      )
+                    : const Icon(
+                        Icons.money_off,
+                        color: Colors.red,
+                      ),
 
-                    isIncome
-                        ? Icons.arrow_downward
-                        : Icons.arrow_upward,
-                  ),
+                  // child: Icon(
+
+                  //   isIncome
+                  //       ? Icons.money
+                  //       : Icons.money_off,
+                  // ),
                 ),
 
                 title: Text(

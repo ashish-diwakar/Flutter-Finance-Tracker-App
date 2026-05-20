@@ -67,7 +67,6 @@ class TransactionRepository {
     return isar.transactionModels
         .filter()
         .isDeletedEqualTo(false)
-        .typeEqualTo('income')
         .sortByTransactionDateDesc()
         .watch(
           fireImmediately: true,

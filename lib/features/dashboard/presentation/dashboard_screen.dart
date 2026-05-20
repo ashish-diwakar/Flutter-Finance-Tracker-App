@@ -12,14 +12,85 @@ import '../../reports/presentation/screens/reports_screen.dart';
 import '../../backup/presentation/screens/backup_screen.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/screens/login_screen.dart';
+import '../../sync/presentation/providers/sync_provider.dart';
 import '../../settings/presentation/screens/settings_screen.dart';
+import 'providers/transactions_provider.dart';
 
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() =>
+      _DashboardScreenState();
+}
+
+class _DashboardScreenState
+    extends ConsumerState<DashboardScreen> {
+  bool syncing = false;
+
+  Future<void> syncData() async {
+    setState(() {
+      syncing = true;
+    });
+
+    try {
+      final syncService = await ref.read(
+        syncServiceProvider.future,
+      );
+
+      await syncService.syncAll();
+
+      ref.invalidate(
+        transactionsStreamProvider,
+      );
+
+      ref.invalidate(
+        totalIncomeProvider,
+      );
+
+      ref.invalidate(
+        totalExpenseProvider,
+      );
+
+      ref.invalidate(
+        totalBalanceProvider,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Sync completed',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to sync. Please try again.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          syncing = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
 
     final income =
         ref.watch(totalIncomeProvider).value ?? 0;
@@ -29,6 +100,7 @@ class DashboardScreen extends ConsumerWidget {
 
     final balance =
         ref.watch(totalBalanceProvider);
+        
 
     return Scaffold(
 
@@ -57,21 +129,28 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
 
-          // IconButton(
-          //   onPressed: () {
+          IconButton(
 
-          //     Navigator.push(
-          //       context,
-          //       MaterialPageRoute(
-          //         builder: (_) =>
-          //             const BackupScreen(),
-          //       ),
-          //     );
-          //   },
-          //   icon: const Icon(
-          //     Icons.backup,
-          //   ),
-          // ),
+            onPressed:
+                syncing
+                    ? null
+                    : syncData,
+
+            icon: syncing
+                ? const SizedBox(
+
+                    height: 20,
+                    width: 20,
+
+                    child:
+                        CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(
+                    Icons.sync,
+                  ),
+          ),
 
           IconButton(
             onPressed: () {
