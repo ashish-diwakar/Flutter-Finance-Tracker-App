@@ -25,6 +25,7 @@ class ReportsRepository {
     final transactions =
         await isar.transactionModels
             .filter()
+            .isDeletedEqualTo(false)
             .transactionDateBetween(
               start,
               end,

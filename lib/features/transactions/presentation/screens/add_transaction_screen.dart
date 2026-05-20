@@ -1,38 +1,40 @@
+import 'package:finance_tracker/features/dashboard/presentation/providers/balance_provider.dart';
+import 'package:finance_tracker/features/dashboard/presentation/providers/expense_provider.dart';
+import 'package:finance_tracker/features/dashboard/presentation/providers/income_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import '../../../../core/utils/transaction_validator.dart';
+
+import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../accounts/presentation/providers/accounts_provider.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
-import '../providers/transaction_repository_provider.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
-import '../../../../core/providers/connectivity_provider.dart';
+import '../providers/transaction_repository_provider.dart';
 
+class AddTransactionScreen extends ConsumerStatefulWidget {
+  final TransactionModel?
+      transaction;
 
-class AddTransactionScreen
-    extends ConsumerStatefulWidget {
-
-  const AddTransactionScreen({super.key});
+  const AddTransactionScreen({
+    super.key,
+    this.transaction,
+  });
 
   @override
-  ConsumerState<AddTransactionScreen>
-      createState() =>
-          _AddTransactionScreenState();
+  ConsumerState<AddTransactionScreen> createState() =>
+      _AddTransactionScreenState();
 }
 
-class _AddTransactionScreenState
-    extends ConsumerState<AddTransactionScreen> {
-
+class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   final formKey = GlobalKey<FormState>();
 
-  final amountController =
-      TextEditingController();
+  final amountController = TextEditingController();
 
-  final notesController =
-      TextEditingController();
+  final notesController = TextEditingController();
 
   String transactionType = 'expense';
 
@@ -42,517 +44,528 @@ class _AddTransactionScreenState
 
   DateTime selectedDate = DateTime.now();
 
+  bool saving = false;
+
+  String? categoryError;
+
+  String? accountError;
+
+  String? dateError;
+
+  @override
+  void initState() {
+
+    super.initState();
+
+    final transaction = widget.transaction;
+
+    if (transaction != null) {
+
+      amountController.text =
+          (transaction.amount / 100)
+              .toString();
+
+      notesController.text =
+          transaction.notes ?? '';
+
+      transactionType =
+          transaction.type;
+
+      selectedDate =
+          transaction.transactionDate;
+    }
+  }
+
+  @override
+  void dispose() {
+    amountController.dispose();
+    notesController.dispose();
+    super.dispose();
+  }
+
+  void showMessage(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final categoriesAsync = ref.watch(
+      categoriesProvider(
+        transactionType,
+      ),
+    );
 
-    final categoriesAsync =
-        ref.watch(
-          categoriesProvider(transactionType),
-        );
-
-    final accountsAsync =
-        ref.watch(accountsProvider);
+    final accountsAsync = ref.watch(
+      accountsProvider,
+    );
 
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text('Add Transaction'),
+        title: const Text(
+          'Add Transaction',
+        ),
       ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-
-        child: Form(
-          key: formKey,
-
-          child: ListView(
-            children: [
-
-              DropdownButtonFormField<String>(
-                value: transactionType,
-
-                items: const [
-
-                  DropdownMenuItem(
-                    value: 'income',
-                    child: Text('Income'),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: formKey,
+            child: ListView(
+              children: [
+                DropdownButtonFormField<String>(
+                  value: transactionType,
+                  decoration: const InputDecoration(
+                    labelText: 'Transaction Type',
+                    border: OutlineInputBorder(),
                   ),
-
-                  DropdownMenuItem(
-                    value: 'expense',
-                    child: Text('Expense'),
-                  ),
-                ],
-
-                onChanged: (value) {
-
-                  setState(() {
-
-                    transactionType = value!;
-
-                    selectedCategory = null;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: amountController,
-
-                keyboardType:
-                    TextInputType.number,
-
-                validator: (value) =>
-                    TransactionValidator
-                        .validateAmount(
-                          value ?? '',
-                        ),
-
-                decoration:
-                    const InputDecoration(
-                  labelText: 'Amount',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // categoriesAsync.when(
-
-              //   data: (categories) {
-
-              //     return DropdownButtonFormField<
-              //         CategoryModel>(
-
-              //       value: selectedCategory,
-
-              //       menuMaxHeight: 300,
-
-              //       decoration:
-              //           const InputDecoration(
-              //         labelText: 'Category',
-              //         border:
-              //             OutlineInputBorder(),
-              //       ),
-
-              //       items: categories.map((e) {
-
-              //         return DropdownMenuItem(
-              //           value: e,
-              //           child: Text(e.name),
-              //         );
-              //       }).toList(),
-
-              //       onChanged: (value) {
-
-              //         setState(() {
-
-              //           selectedCategory =
-              //               value;
-              //         });
-              //       },
-              //     );
-              //   },
-
-              //   error: (e, s) =>
-              //       Text(e.toString()),
-
-              //   loading: () =>
-              //       const CircularProgressIndicator(),
-              // ),
-
-              categoriesAsync.when(
-
-                data: (categories) {
-
-                  return InkWell(
-
-                    onTap: () async {
-
-                      final result =
-                          await showModalBottomSheet<
-                              CategoryModel>(
-                        context: context,
-
-                        isScrollControlled: true,
-
-                        builder: (_) {
-
-                          return SafeArea(
-
-                            child: SizedBox(
-
-                              height: 400,
-
-                              child: ListView.builder(
-
-                                itemCount:
-                                    categories.length,
-
-                                itemBuilder:
-                                    (context, index) {
-
-                                  final category =
-                                      categories[index];
-
-                                  return ListTile(
-
-                                    title: Text(
-                                      category.name,
-                                    ),
-
-                                    onTap: () {
-
-                                      Navigator.pop(
-                                        context,
-                                        category,
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                      );
-
-                      if (result != null) {
-
-                        setState(() {
-
-                          selectedCategory =
-                              result;
-                        });
-                      }
-                    },
-
-                    child: InputDecorator(
-
-                      decoration:
-                          const InputDecoration(
-                        labelText: 'Category',
-                        border:
-                            OutlineInputBorder(),
-                      ),
-
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'income',
                       child: Text(
-
-                        selectedCategory?.name ??
-                            'Select Category',
-
-                        style: TextStyle(
-
-                          color:
-                              selectedCategory == null
-                                  ? Colors.grey
-                                  : Colors.black,
-                        ),
+                        'Income',
                       ),
                     ),
-                  );
-                },
-
-                error: (e, s) =>
-                    Text(e.toString()),
-
-                loading: () =>
-                    const CircularProgressIndicator(),
-              ),
-
-              const SizedBox(height: 16),
-
-              // accountsAsync.when(
-
-              //   data: (accounts) {
-
-              //     return DropdownButtonFormField<
-              //         AccountModel>(
-
-              //       value: selectedAccount,
-
-              //       menuMaxHeight: 300,
-              //       decoration:
-              //           const InputDecoration(
-              //         labelText: 'Account',
-              //         border:
-              //             OutlineInputBorder(),
-              //       ),
-
-              //       items: accounts.map((e) {
-
-              //         return DropdownMenuItem(
-              //           value: e,
-              //           child: Text(e.name),
-              //         );
-              //       }).toList(),
-
-              //       onChanged: (value) {
-
-              //         setState(() {
-
-              //           selectedAccount =
-              //               value;
-              //         });
-              //       },
-              //     );
-              //   },
-
-              //   error: (e, s) =>
-              //       Text(e.toString()),
-
-              //   loading: () =>
-              //       const CircularProgressIndicator(),
-              // ),
-
-              accountsAsync.when(
-
-                data: (accounts) {
-
-                  return InkWell(
-
-                    onTap: () async {
-
-                      final result =
-                          await showModalBottomSheet<
-                              AccountModel>(
-                        context: context,
-
-                        isScrollControlled: true,
-
-                        builder: (_) {
-
-                          return SafeArea(
-
-                            child: SizedBox(
-
-                              height: 400,
-
-                              child: ListView.builder(
-
-                                itemCount:
-                                    accounts.length,
-
-                                itemBuilder:
-                                    (context, index) {
-
-                                  final account =
-                                      accounts[index];
-
-                                  return ListTile(
-
-                                    title: Text(
-                                      account.name,
-                                    ),
-
-                                    onTap: () {
-
-                                      Navigator.pop(
-                                        context,
-                                        account,
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                      );
-
-                      if (result != null) {
-
-                        setState(() {
-
-                          selectedAccount =
-                              result;
-                        });
-                      }
-                    },
-
-                    child: InputDecorator(
-
-                      decoration:
-                          const InputDecoration(
-                        labelText: 'Account',
-                        border:
-                            OutlineInputBorder(),
-                      ),
-
+                    DropdownMenuItem(
+                      value: 'expense',
                       child: Text(
-
-                        selectedAccount?.name ??
-                            'Select Account',
-
-                        style: TextStyle(
-
-                          color:
-                              selectedAccount == null
-                                  ? Colors.grey
-                                  : Colors.black,
-                        ),
+                        'Expense',
                       ),
                     ),
-                  );
-                },
+                  ],
+                  onChanged: saving
+                      ? null
+                      : (value) {
+                          if (value == null || transactionType == value) {
+                            return;
+                          }
 
-                error: (e, s) =>
-                    Text(e.toString()),
-
-                loading: () =>
-                    const CircularProgressIndicator(),
-              ),
-
-              const SizedBox(height: 16),
-
-              ListTile(
-
-                shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(8),
-                  side: const BorderSide(),
+                          setState(() {
+                            transactionType = value;
+                            selectedCategory = null;
+                            categoryError = null;
+                            selectedAccount = null;
+                            accountError = null;
+                          });
+                        },
                 ),
 
-                title: const Text('Date'),
-
-                subtitle:
-                    Text(selectedDate.toString()),
-
-                trailing:
-                    const Icon(Icons.calendar_today),
-
-                onTap: () async {
-
-                  final picked =
-                      await showDatePicker(
-                    context: context,
-                    initialDate: selectedDate,
-                    firstDate:
-                        DateTime(2020),
-                    lastDate:
-                        DateTime(2100),
-                  );
-
-                  if (picked != null) {
-
-                    setState(() {
-
-                      selectedDate = picked;
-                    });
-                  }
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: notesController,
-
-                maxLines: 3,
-
-                decoration:
-                    const InputDecoration(
-                  labelText: 'Notes',
-                  border: OutlineInputBorder(),
+                const SizedBox(
+                  height: 16,
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                TextFormField(
+                  controller: amountController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(
+                        r'^\d*\.?\d{0,2}',
+                      ),
+                    ),
+                  ],
+                  validator: (value) {
+                    final amount = double.tryParse(
+                      value?.trim() ?? '',
+                    );
 
-              ElevatedButton(
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Amount is required';
+                    }
 
-                onPressed: () async {
+                    if (amount == null) {
+                      return 'Enter valid amount';
+                    }
 
-                  if (!formKey.currentState!
-                      .validate()) {
-                    return;
-                  }
+                    if (amount <= 0) {
+                      return 'Amount must be greater than zero';
+                    }
 
-                  if (selectedCategory ==
-                      null) {
-                    return;
-                  }
+                    if (amount > 999999999) {
+                      return 'Amount is too large';
+                    }
 
-                  if (selectedAccount ==
-                      null) {
-                    return;
-                  }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Amount',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
 
-                  final repository =
-                      await ref.read(
-                    transactionRepositoryProvider
-                        .future,
-                  );
+                const SizedBox(
+                  height: 16,
+                ),
 
-                  final amount =
-                      (double.parse(
-                                amountController
-                                    .text,
-                              ) *
-                              100)
-                          .toInt();
+                categoriesAsync.when(
+                  data: (categories) {
+                    return InkWell(
+                      onTap: saving
+                          ? null
+                          : () async {
+                              final result =
+                                  await showModalBottomSheet<CategoryModel>(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (_) {
+                                  return SafeArea(
+                                    child: SizedBox(
+                                      height: 400,
+                                      child: ListView.builder(
+                                        itemCount: categories.length,
+                                        itemBuilder: (
+                                          context,
+                                          index,
+                                        ) {
+                                          final category = categories[index];
 
-                  final transaction =
-                      TransactionModel()
+                                          return ListTile(
+                                            title: Text(
+                                              category.name,
+                                            ),
+                                            onTap: () {
+                                              Navigator.pop(
+                                                context,
+                                                category,
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
 
-                        ..amount = amount
-                        ..type =
-                            transactionType
-                        ..transactionDate =
-                            selectedDate
-                        ..categoryId =
-                            selectedCategory!
-                                .id
-                        ..accountId =
-                            selectedAccount!
-                                .id
-                        ..notes =
-                            notesController
-                                .text
-                        ..isSynced = false
-                        ..updatedAt =
-                            DateTime.now();
+                              if (result != null) {
+                                setState(() {
+                                  selectedCategory = result;
+                                  categoryError = null;
+                                });
+                              }
+                            },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Category',
+                          border: const OutlineInputBorder(),
+                          errorText: categoryError,
+                        ),
+                        child: Text(
+                          selectedCategory?.name ?? 'Select Category',
+                          style: TextStyle(
+                            color: selectedCategory == null
+                                ? Colors.grey
+                                : Colors.black,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  error: (e, s) => const Text(
+                    'Unable to load categories',
+                  ),
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
 
-                  await repository
-                      .addTransaction(
-                    transaction,
-                  );
+                const SizedBox(
+                  height: 16,
+                ),
 
-                  final syncService =
-                      await ref.read(
-                    syncServiceProvider.future,
-                  );
+                accountsAsync.when(
+                  data: (accounts) {
+                    return InkWell(
+                      onTap: saving
+                          ? null
+                          : () async {
+                              final result =
+                                  await showModalBottomSheet<AccountModel>(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (_) {
+                                  return SafeArea(
+                                    child: SizedBox(
+                                      height: 400,
+                                      child: ListView.builder(
+                                        itemCount: accounts.length,
+                                        itemBuilder: (
+                                          context,
+                                          index,
+                                        ) {
+                                          final account = accounts[index];
 
-                  final connectivity =
-                      ref.read(
-                        connectivityProvider,
-                      );
+                                          return ListTile(
+                                            title: Text(
+                                              account.name,
+                                            ),
+                                            onTap: () {
+                                              Navigator.pop(
+                                                context,
+                                                account,
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
 
-                  connectivity.whenData(
-                    (result) async {
+                              if (result != null) {
+                                setState(() {
+                                  selectedAccount = result;
+                                  accountError = null;
+                                });
+                              }
+                            },
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Account',
+                          border: const OutlineInputBorder(),
+                          errorText: accountError,
+                        ),
+                        child: Text(
+                          selectedAccount?.name ?? 'Select Account',
+                          style: TextStyle(
+                            color: selectedAccount == null
+                                ? Colors.grey
+                                : Colors.black,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  error: (e, s) => const Text(
+                    'Unable to load accounts',
+                  ),
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
 
-                      final connected =
-                          result.any(
-                        (e) =>
-                            e != ConnectivityResult.none,
-                      );
+                const SizedBox(
+                  height: 16,
+                ),
 
-                      if (connected) {
+                InkWell(
+                  onTap: saving
+                      ? null
+                      : () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                          );
 
-                        await syncService.syncAll();
-                      }
-                    },
-                  );
+                          if (picked != null) {
+                            setState(() {
+                              selectedDate = picked;
+                              dateError = null;
+                            });
+                          }
+                        },
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Date',
+                      border: const OutlineInputBorder(),
+                      errorText: dateError,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          selectedDate.toLocal().toString().split(' ')[0],
+                        ),
+                        const Icon(
+                          Icons.calendar_today,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
-                  if (mounted) {
-                    Navigator.pop(context);
-                  }
-                },
+                const SizedBox(
+                  height: 16,
+                ),
 
-                child:
-                    const Text('Save'),
-              ),
-            ],
+                TextFormField(
+                  controller: notesController,
+                  maxLines: 3,
+                  maxLength: 250,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Notes',
+                    hintText: 'Optional notes',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 24,
+                ),
+
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: saving
+                        ? null
+                        : () async {
+                            FocusScope.of(context).unfocus();
+
+                            setState(() {
+                              categoryError = selectedCategory == null
+                                  ? 'Please select a category'
+                                  : null;
+
+                              accountError = selectedAccount == null
+                                  ? 'Please select an account'
+                                  : null;
+
+                              dateError = selectedDate.isAfter(DateTime.now())
+                                  ? 'Future dates are not allowed'
+                                  : null;
+                            });
+
+                            final validForm = formKey.currentState!.validate();
+
+                            if (!validForm ||
+                                categoryError != null ||
+                                accountError != null ||
+                                dateError != null) {
+                              return;
+                            }
+
+                            final parsedAmount = double.tryParse(
+                              amountController.text.trim(),
+                            );
+
+                            if (parsedAmount == null) {
+                              showMessage(
+                                'Invalid amount',
+                              );
+
+                              return;
+                            }
+
+                            setState(() {
+                              saving = true;
+                            });
+
+                            try {
+                              final repository = await ref.read(
+                                transactionRepositoryProvider.future,
+                              );
+
+                              final amount = (parsedAmount * 100).toInt();
+
+                              final transaction = TransactionModel()
+                                ..amount = amount
+                                ..type = transactionType
+                                ..transactionDate = selectedDate
+                                ..categoryId = selectedCategory!.id
+                                ..accountId = selectedAccount!.id
+                                ..notes = notesController.text.trim()
+                                ..isSynced = false
+                                ..updatedAt = DateTime.now();
+
+                              if (widget.transaction == null) {
+
+                                await repository.addTransaction(
+                                  transaction,
+                                );
+
+                              } else {
+
+                                transaction.id = widget.transaction!.id;
+
+                                await repository.updateTransaction(
+                                  transaction,
+                                );
+                              }
+
+                              ref.invalidate(
+                                totalBalanceProvider,
+                              );
+
+                              ref.invalidate(
+                                totalIncomeProvider,
+                              );
+
+                              ref.invalidate(
+                                totalExpenseProvider,
+                              );
+
+                              final syncService = await ref.read(
+                                syncServiceProvider.future,
+                              );
+
+                              final connectivity = ref.read(
+                                connectivityProvider,
+                              );
+
+                              connectivity.whenData(
+                                (
+                                  result,
+                                ) async {
+                                  final connected = result.any(
+                                    (
+                                      e,
+                                    ) =>
+                                        e != ConnectivityResult.none,
+                                  );
+
+                                  if (connected) {
+                                    await syncService.syncAll();
+                                  }
+                                },
+                              );
+
+                              if (mounted) {
+                                Navigator.pop(
+                                  context,
+                                );
+                              }
+                            } catch (e) {
+                              showMessage(
+                                'Unable to save transaction. Please try again.',
+                              );
+                            } finally {
+                              if (mounted) {
+                                setState(() {
+                                  saving = false;
+                                });
+                              }
+                            }
+                          },
+                    child: saving
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Save',
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -7,8 +7,10 @@ import 'package:logger/logger.dart';
 
 import 'core/config/supabase_config.dart';
 // import 'features/dashboard/presentation/dashboard_screen.dart';
+import 'core/services/deep_link_service.dart';
 
 final logger = Logger();
+final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
 
@@ -21,6 +23,10 @@ Future<void> main() async {
   await Supabase.initialize(
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
+  );
+
+  DeepLinkService.initialize(
+    navigatorKey: navigatorKey,
   );
 
   runApp(
@@ -51,6 +57,8 @@ class FinanceTrackerApp
 
       // home: const DashboardScreen(),
       home: const AuthGate(),
+
+      navigatorKey: navigatorKey,
     );
   }
 }

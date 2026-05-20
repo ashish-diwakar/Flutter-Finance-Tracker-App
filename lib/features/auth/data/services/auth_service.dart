@@ -7,26 +7,27 @@ class AuthService {
 
   Future<void> signUp({
     required String email,
-    required String password,
+    required String password
   }) async {
+
 
     final response =
         await supabase.auth.signUp(
       email: email,
       password: password,
+      emailRedirectTo: 'finance-tracker://login-callback',
     );
 
     final user = response.user;
 
     if (user != null) {
-
-      await supabase
-          .from('profiles')
-          .upsert({
-
-        'id': user.id,
-        'email': user.email,
-      });
+      // Commented to avoid creating duplicate profiles BEFORE the user's authenticated session becomes fully usable for RLS.
+      // await supabase
+      //     .from('profiles')
+      //     .upsert({
+      //   'id': user.id,
+      //   'email': user.email,
+      // });
     }
   }
 

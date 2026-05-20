@@ -37,28 +37,33 @@ const TransactionModelSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'isSynced': PropertySchema(
+    r'isDeleted': PropertySchema(
       id: 4,
+      name: r'isDeleted',
+      type: IsarType.bool,
+    ),
+    r'isSynced': PropertySchema(
+      id: 5,
       name: r'isSynced',
       type: IsarType.bool,
     ),
     r'notes': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'notes',
       type: IsarType.string,
     ),
     r'transactionDate': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'transactionDate',
       type: IsarType.dateTime,
     ),
     r'type': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'type',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -103,11 +108,12 @@ void _transactionModelSerialize(
   writer.writeLong(offsets[1], object.amount);
   writer.writeLong(offsets[2], object.categoryId);
   writer.writeDateTime(offsets[3], object.createdAt);
-  writer.writeBool(offsets[4], object.isSynced);
-  writer.writeString(offsets[5], object.notes);
-  writer.writeDateTime(offsets[6], object.transactionDate);
-  writer.writeString(offsets[7], object.type);
-  writer.writeDateTime(offsets[8], object.updatedAt);
+  writer.writeBool(offsets[4], object.isDeleted);
+  writer.writeBool(offsets[5], object.isSynced);
+  writer.writeString(offsets[6], object.notes);
+  writer.writeDateTime(offsets[7], object.transactionDate);
+  writer.writeString(offsets[8], object.type);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 TransactionModel _transactionModelDeserialize(
@@ -122,11 +128,12 @@ TransactionModel _transactionModelDeserialize(
   object.categoryId = reader.readLong(offsets[2]);
   object.createdAt = reader.readDateTime(offsets[3]);
   object.id = id;
-  object.isSynced = reader.readBool(offsets[4]);
-  object.notes = reader.readStringOrNull(offsets[5]);
-  object.transactionDate = reader.readDateTime(offsets[6]);
-  object.type = reader.readString(offsets[7]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
+  object.isDeleted = reader.readBool(offsets[4]);
+  object.isSynced = reader.readBool(offsets[5]);
+  object.notes = reader.readStringOrNull(offsets[6]);
+  object.transactionDate = reader.readDateTime(offsets[7]);
+  object.type = reader.readString(offsets[8]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[9]);
   return object;
 }
 
@@ -148,12 +155,14 @@ P _transactionModelDeserializeProp<P>(
     case 4:
       return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -530,6 +539,16 @@ extension TransactionModelQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterFilterCondition>
+      isDeletedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isDeleted',
+        value: value,
       ));
     });
   }
@@ -1030,6 +1049,20 @@ extension TransactionModelQuerySortBy
   }
 
   QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
+      sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
+      sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
       sortByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
@@ -1170,6 +1203,20 @@ extension TransactionModelQuerySortThenBy
   }
 
   QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
+      thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
+      thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QAfterSortBy>
       thenByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.asc);
@@ -1269,6 +1316,13 @@ extension TransactionModelQueryWhereDistinct
   }
 
   QueryBuilder<TransactionModel, TransactionModel, QDistinct>
+      distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isDeleted');
+    });
+  }
+
+  QueryBuilder<TransactionModel, TransactionModel, QDistinct>
       distinctByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isSynced');
@@ -1334,6 +1388,12 @@ extension TransactionModelQueryProperty
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<TransactionModel, bool, QQueryOperations> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isDeleted');
     });
   }
 

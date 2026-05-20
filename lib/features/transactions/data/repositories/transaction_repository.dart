@@ -26,6 +26,8 @@ class TransactionRepository {
 
     transaction.updatedAt = DateTime.now();
 
+    transaction.isSynced = false;
+
     await isar.writeTxn(() async {
 
       await isar.transactionModels.put(
@@ -34,11 +36,28 @@ class TransactionRepository {
     });
   }
 
-  Future<void> deleteTransaction(Id id) async {
+  // Future<void> deleteTransaction(Id id) async {
+
+  //   await isar.writeTxn(() async {
+
+  //     await isar.transactionModels.delete(id);
+  //   });
+  // }
+
+  Future<void> deleteTransaction(
+    TransactionModel transaction,
+  ) async {
+
+    transaction.isDeleted = true;
+
+    transaction.isSynced = false;
+
+    transaction.updatedAt =
+        DateTime.now();
 
     await isar.writeTxn(() async {
-
-      await isar.transactionModels.delete(id);
+      await isar.transactionModels
+          .put(transaction);
     });
   }
 
@@ -46,7 +65,9 @@ class TransactionRepository {
       watchTransactions() {
 
     return isar.transactionModels
-        .where()
+        .filter()
+        .isDeletedEqualTo(false)
+        .typeEqualTo('income')
         .sortByTransactionDateDesc()
         .watch(
           fireImmediately: true,
@@ -57,7 +78,9 @@ class TransactionRepository {
       getTransactions() async {
 
     return await isar.transactionModels
-        .where()
+        .filter()
+        .isDeletedEqualTo(false)
+        .typeEqualTo('income')
         .sortByTransactionDateDesc()
         .findAll();
   }
@@ -67,7 +90,9 @@ class TransactionRepository {
     final transactions =
         await isar.transactionModels
             .filter()
+            .isDeletedEqualTo(false)
             .typeEqualTo('income')
+            .isDeletedEqualTo(false)
             .findAll();
 
     return transactions.fold<int>(
@@ -81,7 +106,9 @@ class TransactionRepository {
     final transactions =
         await isar.transactionModels
             .filter()
+            .isDeletedEqualTo(false)
             .typeEqualTo('expense')
+            .isDeletedEqualTo(false)
             .findAll();
 
     return transactions.fold<int>(

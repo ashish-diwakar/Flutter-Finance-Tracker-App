@@ -24,6 +24,8 @@ class TransactionModel {
 
   bool isSynced = false;
 
+  bool isDeleted = false;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -36,6 +38,7 @@ class TransactionModel {
           transactionDate.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'isSynced': isSynced,
+      'isDeleted': isDeleted,
     };
   }
 }

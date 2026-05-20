@@ -8,10 +8,52 @@ class AccountRepository {
 
   AccountRepository(this.isar);
 
-  Future<List<AccountModel>> getAccounts() async {
+  Future<List<AccountModel>>
+      getAccounts() async {
 
     return await isar.accountModels
         .where()
         .findAll();
+  }
+
+  Future<void> addAccount(
+    AccountModel account,
+  ) async {
+
+    await isar.writeTxn(() async {
+
+      await isar.accountModels.put(
+        account,
+      );
+    });
+  }
+
+  Future<void> updateAccount(
+    AccountModel account,
+  ) async {
+
+    account.updatedAt =
+        DateTime.now();
+
+    account.isSynced = false;
+
+    await isar.writeTxn(() async {
+
+      await isar.accountModels.put(
+        account,
+      );
+    });
+  }
+
+  Future<void> deleteAccount(
+    int id,
+  ) async {
+
+    await isar.writeTxn(() async {
+
+      await isar.accountModels.delete(
+        id,
+      );
+    });
   }
 }

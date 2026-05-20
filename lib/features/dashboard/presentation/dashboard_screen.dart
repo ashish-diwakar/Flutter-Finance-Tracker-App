@@ -12,6 +12,7 @@ import '../../reports/presentation/screens/reports_screen.dart';
 import '../../backup/presentation/screens/backup_screen.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/presentation/screens/login_screen.dart';
+import '../../settings/presentation/screens/settings_screen.dart';
 
 
 class DashboardScreen extends ConsumerWidget {
@@ -56,6 +57,22 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
 
+          // IconButton(
+          //   onPressed: () {
+
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (_) =>
+          //             const BackupScreen(),
+          //       ),
+          //     );
+          //   },
+          //   icon: const Icon(
+          //     Icons.backup,
+          //   ),
+          // ),
+
           IconButton(
             onPressed: () {
 
@@ -63,12 +80,12 @@ class DashboardScreen extends ConsumerWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) =>
-                      const BackupScreen(),
+                      const SettingsScreen(),
                 ),
               );
             },
             icon: const Icon(
-              Icons.backup,
+              Icons.settings,
             ),
           ),
 
@@ -99,7 +116,9 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
 
+
         ],
+        
       ),
       body: Column(
         children: [

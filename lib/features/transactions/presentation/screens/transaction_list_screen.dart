@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../dashboard/presentation/providers/balance_provider.dart';
+import '../../../dashboard/presentation/providers/expense_provider.dart';
+import '../../../dashboard/presentation/providers/income_provider.dart';
 import '../../../dashboard/presentation/providers/transactions_provider.dart';
+import '../providers/transaction_repository_provider.dart';
+import 'add_transaction_screen.dart';
 import 'transaction_details_screen.dart';
 
 class TransactionListScreen
@@ -12,6 +17,129 @@ class TransactionListScreen
     super.key,
   });
 
+  Future<void> deleteTransaction({
+    required BuildContext context,
+    required WidgetRef ref,
+    required dynamic transaction,
+  }) async {
+
+    final confirm =
+        await showDialog<bool>(
+      context: context,
+
+      builder: (_) {
+
+        return AlertDialog(
+
+          title: const Text(
+            'Delete Transaction',
+          ),
+
+          content: const Text(
+            'Are you sure you want to delete this transaction?',
+          ),
+
+          actions: [
+
+            TextButton(
+
+              onPressed: () {
+
+                Navigator.pop(
+                  context,
+                  false,
+                );
+              },
+
+              child: const Text(
+                'Cancel',
+              ),
+            ),
+
+            ElevatedButton(
+
+              onPressed: () {
+
+                Navigator.pop(
+                  context,
+                  true,
+                );
+              },
+
+              child: const Text(
+                'Delete',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    try {
+
+      final repository =
+          await ref.read(
+        transactionRepositoryProvider
+            .future,
+      );
+
+      await repository
+          .deleteTransaction(
+        transaction,
+      );
+
+      ref.invalidate(
+        totalBalanceProvider,
+      );
+
+      ref.invalidate(
+        totalIncomeProvider,
+      );
+
+      ref.invalidate(
+        totalExpenseProvider,
+      );
+
+      ref.invalidate(
+        transactionsStreamProvider,
+      );
+
+      if (context.mounted) {
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(
+
+          const SnackBar(
+            content: Text(
+              'Transaction deleted',
+            ),
+          ),
+        );
+      }
+
+    } catch (_) {
+
+      if (context.mounted) {
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(
+
+          const SnackBar(
+            content: Text(
+              'Unable to delete transaction',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(
     BuildContext context,
@@ -20,8 +148,8 @@ class TransactionListScreen
 
     final transactionsAsync =
         ref.watch(
-          transactionsStreamProvider,
-        );
+      transactionsStreamProvider,
+    );
 
     return transactionsAsync.when(
 
@@ -30,18 +158,47 @@ class TransactionListScreen
         if (transactions.isEmpty) {
 
           return const Center(
-            child: Text('No Transactions'),
+
+            child: Column(
+
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+
+              children: [
+
+                Icon(
+                  Icons.receipt_long,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+
+                SizedBox(height: 12),
+
+                Text(
+                  'No Transactions',
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
           );
         }
 
         return ListView.builder(
 
-          itemCount: transactions.length,
+          itemCount:
+              transactions.length,
 
-          itemBuilder: (context, index) {
+          itemBuilder:
+              (context, index) {
 
             final transaction =
                 transactions[index];
+
+            final isIncome =
+                transaction.type ==
+                    'income';
 
             return Card(
 
@@ -70,8 +227,8 @@ class TransactionListScreen
                 leading: CircleAvatar(
 
                   child: Icon(
-                    transaction.type ==
-                            'income'
+
+                    isIncome
                         ? Icons.arrow_downward
                         : Icons.arrow_upward,
                   ),
@@ -83,28 +240,124 @@ class TransactionListScreen
                   ),
                 ),
 
-                subtitle: Text(
-                  transaction.notes ?? '',
-                ),
+                subtitle: Column(
 
-                trailing: Column(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
 
                   children: [
 
-                    Text(
-                      transaction.type
-                          .toUpperCase(),
+                    if ((transaction.notes ??
+                            '')
+                        .trim()
+                        .isNotEmpty)
+
+                      Text(
+                        transaction.notes!,
+                      ),
+
+                    const SizedBox(
+                      height: 4,
                     ),
+
+                    Text(
+                      transaction
+                          .transactionDate
+                          .toLocal()
+                          .toString()
+                          .split(' ')[0],
+
+                      style: const TextStyle(
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+
+                trailing: Row(
+
+                  mainAxisSize:
+                      MainAxisSize.min,
+
+                  children: [
 
                     Icon(
                       transaction.isSynced
                           ? Icons.cloud_done
                           : Icons.cloud_off,
 
-                      size: 16,
+                      size: 18,
                     ),
+
+
+                    PopupMenuButton<String>(
+
+                      padding: EdgeInsets.zero,
+
+                      constraints:
+                          const BoxConstraints(),
+
+                      onSelected:
+                          (value) async {
+
+                        if (value == 'edit') {
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  AddTransactionScreen(
+                                transaction:
+                                    transaction,
+                              ),
+                            ),
+                          );
+                        }
+
+                        if (value == 'delete') {
+
+                          await deleteTransaction(
+                            context: context,
+                            ref: ref,
+                            transaction: transaction,
+                          );
+                        }
+                      },
+
+                      itemBuilder: (_) => [
+
+                        const PopupMenuItem(
+
+                          value: 'edit',
+
+                          child: Text(
+                            'Edit',
+                          ),
+                        ),
+
+                        const PopupMenuItem(
+
+                          value: 'delete',
+
+                          child: Text(
+                            'Delete',
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // const SizedBox(
+                    //   height: 2,
+                    // ),
+
+                    // Icon(
+
+                    //   transaction.isSynced
+                    //       ? Icons.cloud_done
+                    //       : Icons.cloud_off,
+
+                    //   size: 14,
+                    // ),
                   ],
                 ),
               ),
@@ -113,12 +366,16 @@ class TransactionListScreen
         );
       },
 
-      error: (e, s) =>
-          Center(
-            child: Text(e.toString()),
+      error: (_, __) =>
+
+          const Center(
+            child: Text(
+              'Unable to load transactions',
+            ),
           ),
 
       loading: () =>
+
           const Center(
             child:
                 CircularProgressIndicator(),
