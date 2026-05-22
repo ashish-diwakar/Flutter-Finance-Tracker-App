@@ -8,6 +8,8 @@ import '../widgets/expense_pie_chart.dart';
 import '../widgets/monthly_summary_card.dart';
 import '../providers/monthly_chart_provider.dart';
 import '../widgets/monthly_grouped_bar_chart.dart';
+import '../providers/budget_progress_provider.dart';
+import '../widgets/budget_progress_chart.dart';
 
 enum ReportChartType {
 
@@ -16,6 +18,8 @@ enum ReportChartType {
   donut,
 
   groupedBar,
+
+  progress,
 }
 
 class ReportsScreen
@@ -61,6 +65,12 @@ class _ReportsScreenState
     final monthlyChartAsync =
         ref.watch(
       monthlyChartProvider,
+    );
+
+
+    final budgetAsync =
+        ref.watch(
+      budgetProgressProvider,
     );
 
     return Scaffold(
@@ -244,6 +254,21 @@ class _ReportsScreenState
                 ),
               ),
 
+              ButtonSegment(
+
+                value:
+                    ReportChartType
+                        .progress,
+
+                label: Text(
+                  'Budget',
+                ),
+
+                icon: Icon(
+                  Icons.linear_scale,
+                ),
+              ),
+
             ],
 
             selected: {
@@ -325,6 +350,34 @@ class _ReportsScreenState
 
                       const Text(
                         'Unable to load Monthly grouped bar chart',
+                      ),
+
+                  loading: () =>
+
+                      const Center(
+                        child:
+                            CircularProgressIndicator(),
+                      ),
+                );
+              }
+
+              if (selectedChart ==
+                  ReportChartType
+                      .progress) {
+
+                return budgetAsync.when(
+
+                  data: (budgetData) {
+
+                    return BudgetProgressChart(
+                      data: budgetData,
+                    );
+                  },
+
+                  error: (_, __) =>
+
+                      const Text(
+                        'Unable to load budget chart',
                       ),
 
                   loading: () =>

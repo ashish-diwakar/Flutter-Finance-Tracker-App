@@ -1,0 +1,190 @@
+import 'package:flutter/material.dart';
+
+import '../../../../core/utils/currency_formatter.dart';
+import '../../domain/models/budget_progress_data.dart';
+
+class BudgetProgressChart
+    extends StatelessWidget {
+
+  final List<BudgetProgressData>
+      data;
+
+  const BudgetProgressChart({
+    super.key,
+    required this.data,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+
+    if (data.isEmpty) {
+
+      return const Center(
+        child: Text(
+          'No budget data',
+        ),
+      );
+    }
+
+    return Column(
+
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+
+      children: [
+
+        const Text(
+
+          'Budget Progress',
+
+          style: TextStyle(
+
+            fontSize: 18,
+
+            fontWeight:
+                FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(
+          height: 20,
+        ),
+
+        ...data.map((item) {
+
+          final progress =
+              item.progress
+                  .clamp(0.0, 1.0);
+
+          final percentage =
+              (progress * 100)
+                  .toStringAsFixed(0);
+
+          Color progressColor;
+
+          if (progress < 0.5) {
+
+            progressColor =
+                Colors.green;
+
+          } else if (progress <
+              0.8) {
+
+            progressColor =
+                Colors.orange;
+
+          } else {
+
+            progressColor =
+                Colors.red;
+          }
+
+          return Padding(
+
+            padding:
+                const EdgeInsets.only(
+              bottom: 20,
+            ),
+
+            child: Column(
+
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
+              children: [
+
+                Row(
+
+                  children: [
+
+                    Expanded(
+
+                      child: Text(
+
+                        item.category,
+
+                        style:
+                            const TextStyle(
+                          fontWeight:
+                              FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    Text(
+                      '$percentage%',
+                    ),
+                  ],
+                ),
+
+                const SizedBox(
+                  height: 8,
+                ),
+
+                ClipRRect(
+
+                  borderRadius:
+                      BorderRadius.circular(
+                    8,
+                  ),
+
+                  child:
+                      LinearProgressIndicator(
+
+                    value:
+                        progress,
+
+                    minHeight:
+                        14,
+
+                    backgroundColor:
+                        Colors.grey.shade300,
+
+                    valueColor:
+                        AlwaysStoppedAnimation(
+                      progressColor,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 6,
+                ),
+
+                Row(
+
+                  mainAxisAlignment:
+                      MainAxisAlignment
+                          .spaceBetween,
+
+                  children: [
+
+                    Text(
+
+                      'Spent: ${CurrencyFormatter.format((item.spent * 100).toInt())}',
+
+                      style:
+                          const TextStyle(
+                        fontSize: 12,
+                      ),
+                    ),
+
+                    Text(
+
+                      'Budget: ${CurrencyFormatter.format((item.budget * 100).toInt())}',
+
+                      style:
+                          const TextStyle(
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
