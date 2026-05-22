@@ -133,7 +133,7 @@ class ExpenseDonutChart
 
                     CurrencyFormatter
                         .format(
-                      (total * 100)
+                      (total)
                           .toInt(),
                     ),
 
@@ -213,8 +213,7 @@ class ExpenseDonutChart
                   Text(
                     CurrencyFormatter
                         .format(
-                      (item.amount *
-                              100)
+                      (item.amount)
                           .toInt(),
                     ),
                   ),

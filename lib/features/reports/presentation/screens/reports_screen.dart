@@ -6,12 +6,16 @@ import '../providers/monthly_summary_provider.dart';
 import '../widgets/expense_donut_chart.dart';
 import '../widgets/expense_pie_chart.dart';
 import '../widgets/monthly_summary_card.dart';
+import '../providers/monthly_chart_provider.dart';
+import '../widgets/monthly_grouped_bar_chart.dart';
 
 enum ReportChartType {
 
   pie,
 
   donut,
+
+  groupedBar,
 }
 
 class ReportsScreen
@@ -52,6 +56,11 @@ class _ReportsScreenState
       categoryAnalyticsProvider(
         selectedMonth,
       ),
+    );
+
+    final monthlyChartAsync =
+        ref.watch(
+      monthlyChartProvider,
     );
 
     return Scaffold(
@@ -220,6 +229,21 @@ class _ReportsScreenState
                   Icons.pie_chart,
                 ),
               ),
+
+              ButtonSegment(
+                value:
+                    ReportChartType
+                        .groupedBar,
+
+                label: Text(
+                  'Bar',
+                ),
+
+                icon: Icon(
+                  Icons.bar_chart,
+                ),
+              ),
+
             ],
 
             selected: {
@@ -283,6 +307,34 @@ class _ReportsScreenState
 
                 Colors.pink,
               ];
+
+              if (selectedChart ==
+                  ReportChartType
+                      .groupedBar) {
+
+                return monthlyChartAsync.when(
+
+                  data: (monthlyData) {
+
+                    return MonthlyGroupedBarChart(
+                      data: monthlyData,
+                    );
+                  },
+
+                  error: (_, __) =>
+
+                      const Text(
+                        'Unable to load Monthly grouped bar chart',
+                      ),
+
+                  loading: () =>
+
+                      const Center(
+                        child:
+                            CircularProgressIndicator(),
+                      ),
+                );
+              }
 
               if (selectedChart ==
                   ReportChartType
