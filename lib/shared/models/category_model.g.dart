@@ -47,18 +47,23 @@ const CategoryModelSchema = CollectionSchema(
       name: r'isSynced',
       type: IsarType.bool,
     ),
-    r'name': PropertySchema(
+    r'monthlyBudget': PropertySchema(
       id: 6,
+      name: r'monthlyBudget',
+      type: IsarType.long,
+    ),
+    r'name': PropertySchema(
+      id: 7,
       name: r'name',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'type',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -106,9 +111,10 @@ void _categoryModelSerialize(
   writer.writeBool(offsets[3], object.isDefault);
   writer.writeBool(offsets[4], object.isDeleted);
   writer.writeBool(offsets[5], object.isSynced);
-  writer.writeString(offsets[6], object.name);
-  writer.writeString(offsets[7], object.type);
-  writer.writeDateTime(offsets[8], object.updatedAt);
+  writer.writeLong(offsets[6], object.monthlyBudget);
+  writer.writeString(offsets[7], object.name);
+  writer.writeString(offsets[8], object.type);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 CategoryModel _categoryModelDeserialize(
@@ -125,9 +131,10 @@ CategoryModel _categoryModelDeserialize(
   object.isDefault = reader.readBool(offsets[3]);
   object.isDeleted = reader.readBool(offsets[4]);
   object.isSynced = reader.readBool(offsets[5]);
-  object.name = reader.readString(offsets[6]);
-  object.type = reader.readString(offsets[7]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
+  object.monthlyBudget = reader.readLongOrNull(offsets[6]);
+  object.name = reader.readString(offsets[7]);
+  object.type = reader.readString(offsets[8]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[9]);
   return object;
 }
 
@@ -151,10 +158,12 @@ P _categoryModelDeserializeProp<P>(
     case 5:
       return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 7:
       return (reader.readString(offset)) as P;
     case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -624,6 +633,80 @@ extension CategoryModelQueryFilter
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      monthlyBudgetIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'monthlyBudget',
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      monthlyBudgetIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'monthlyBudget',
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      monthlyBudgetEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'monthlyBudget',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      monthlyBudgetGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'monthlyBudget',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      monthlyBudgetLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'monthlyBudget',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition>
+      monthlyBudgetBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'monthlyBudget',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QAfterFilterCondition> nameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1054,6 +1137,20 @@ extension CategoryModelQuerySortBy
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      sortByMonthlyBudget() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'monthlyBudget', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      sortByMonthlyBudgetDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'monthlyBudget', Sort.desc);
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1183,6 +1280,20 @@ extension CategoryModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      thenByMonthlyBudget() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'monthlyBudget', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy>
+      thenByMonthlyBudgetDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'monthlyBudget', Sort.desc);
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1260,6 +1371,13 @@ extension CategoryModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CategoryModel, CategoryModel, QDistinct>
+      distinctByMonthlyBudget() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'monthlyBudget');
+    });
+  }
+
   QueryBuilder<CategoryModel, CategoryModel, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1322,6 +1440,12 @@ extension CategoryModelQueryProperty
   QueryBuilder<CategoryModel, bool, QQueryOperations> isSyncedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isSynced');
+    });
+  }
+
+  QueryBuilder<CategoryModel, int?, QQueryOperations> monthlyBudgetProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'monthlyBudget');
     });
   }
 

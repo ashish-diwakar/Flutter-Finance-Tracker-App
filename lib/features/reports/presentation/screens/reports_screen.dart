@@ -373,8 +373,8 @@ class _ReportsScreenState
                   },
                   error: (error, stackTrace) {
                     // This prints the error and full stack trace to the console
-                    print('Budget chart error: $error');
-                    print(stackTrace); 
+                    // print('Budget chart error: $error');
+                    // print(stackTrace); 
                     
                     // Remove 'const' because the string is now dynamic
                     return Text(

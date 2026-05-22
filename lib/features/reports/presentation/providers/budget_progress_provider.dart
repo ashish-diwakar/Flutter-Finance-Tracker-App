@@ -1,5 +1,5 @@
 import 'package:isar/isar.dart';
-import 'dart:convert';
+//import 'dart:convert';
 import 'package:finance_tracker/shared/providers/database_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:finance_tracker/shared/models/transaction_model.dart';
@@ -54,9 +54,9 @@ final budgetProgressProvider =
       (sum, transaction) => sum + (transaction.amount ?? 0.0),
     );
 
-    if(totalIncome > 0.0) {
-      totalIncome = totalIncome / 100;
-    }
+    // if(totalIncome > 0.0) {
+    //   totalIncome = totalIncome / 100;
+    // }
     
     for (final transaction
         in expenseTransactions) {
@@ -92,7 +92,17 @@ final budgetProgressProvider =
       // final simulatedBudget =
       //     e.value * 1.2;
 
-      final simulatedBudget = totalIncome;
+      final category =
+          categories.firstWhere(
+        (c) =>
+            c.name == e.key,
+      );
+
+      final simulatedBudget =
+          (category.monthlyBudget ??
+                  totalIncome) /
+              100;
+      //final simulatedBudget = totalIncome;
       
 
       var budgetData = BudgetProgressData(

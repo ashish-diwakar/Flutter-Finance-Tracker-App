@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/category_model.dart';
 import '../providers/category_repository_provider.dart';
+import '../../../sync/presentation/providers/sync_provider.dart';
 
 class ManageCategoriesScreen
     extends ConsumerStatefulWidget {
@@ -35,40 +38,99 @@ class _ManageCategoriesScreenState
   }
 
   Future<void> loadCategories()
-      async {
+  async {
 
-    final repository =
-        await ref.read(
-      categoryRepositoryProvider.future,
-    );
+    if (mounted) {
 
-    final result =
-        await repository
-            .getAllCategories();
+      setState(() {
+        loading = true;
+      });
+    }
 
-    setState(() {
+    try {
 
-      categories = result;
+      final repository =
+          await ref.read(
+        categoryRepositoryProvider
+            .future,
+      );
 
-      loading = false;
-    });
+      final result =
+          await repository
+              .getAllCategories();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+
+        categories = result;
+
+        loading = false;
+      });
+
+    } catch (_) {
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        loading = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+
+        const SnackBar(
+          content: Text(
+            'Unable to load categories',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> showCategoryDialog({
     CategoryModel? category,
   }) async {
 
+    final formKey =
+        GlobalKey<FormState>();
+
     final nameController =
         TextEditingController(
       text: category?.name ?? '',
     );
 
+    final budgetController =
+        TextEditingController(
+      text:
+          category?.monthlyBudget !=
+                  null
+              ? (category!
+                          .monthlyBudget! /
+                      100)
+                  .toString()
+              : '',
+    );
+
     String type =
-        category?.type ?? 'expense';
+        category?.type ??
+            'expense';
+
+    bool saving = false;
 
     final repository =
         await ref.read(
-      categoryRepositoryProvider.future,
+      categoryRepositoryProvider
+          .future,
+    );
+    
+    final syncService = await ref.read(
+        syncServiceProvider.future,
     );
 
     if (!mounted) {
@@ -76,9 +138,14 @@ class _ManageCategoriesScreenState
     }
 
     await showDialog(
+
       context: context,
 
-      builder: (_) {
+      barrierDismissible:
+          false,
+
+      builder:
+          (dialogContext) {
 
         return StatefulBuilder(
 
@@ -86,6 +153,174 @@ class _ManageCategoriesScreenState
             context,
             setDialogState,
           ) {
+
+            Future<void>
+                saveCategory()
+            async {
+
+              FocusScope.of(
+                context,
+              ).unfocus();
+
+              if (!formKey
+                  .currentState!
+                  .validate()) {
+
+                return;
+              }
+
+              if (saving) {
+                return;
+              }
+              setDialogState(() {
+                saving = true;
+              });
+
+              try {
+
+                final parsedBudget =
+                    double.tryParse(
+                  budgetController.text
+                      .trim(),
+                );
+
+
+                final budget =
+                    parsedBudget !=
+                            null
+                        ? (parsedBudget *
+                                100)
+                            .toInt()
+                        : null;
+
+
+                if (category ==
+                    null) {
+
+                  final newCategory =
+                      CategoryModel()
+
+                        ..name =
+                            nameController
+                                .text
+                                .trim()
+
+                        ..type =
+                            type
+
+                        ..monthlyBudget =
+                            budget
+
+                        ..isDefault =
+                            false
+
+                        ..isDeleted =
+                            false
+
+                        ..isSynced =
+                            false
+
+                        ..updatedAt =
+                            DateTime.now();
+
+                  await repository
+                      .addCategory(
+                    newCategory,
+                  );
+
+                  //await syncService.syncAll();
+
+                } else {
+
+                  final updatedCategory =
+                    CategoryModel()
+
+                      ..id = category.id
+
+                      ..name =
+                          nameController.text
+                              .trim()
+
+                      ..type = type
+
+                      ..monthlyBudget =
+                          budget
+
+                      ..isDefault =
+                          category.isDefault
+
+                      ..isDeleted =
+                          category.isDeleted
+
+                      ..isSynced = false
+
+                      ..updatedAt =
+                          DateTime.now();
+
+                  await repository
+                      .updateCategory(
+                    updatedCategory,
+                  );
+
+                  //await syncService.syncAll();
+                }
+
+                if (!mounted) {
+                  return;
+                }
+
+                await loadCategories();
+
+                if (!mounted) {
+                  return;
+                }
+
+                Navigator.of(
+                  dialogContext,
+                ).pop();
+
+                ScaffoldMessenger.of(
+                  this.context,
+                ).showSnackBar(
+
+                  SnackBar(
+
+                    content: Text(
+                      category == null
+                          ? 'Category added successfully'
+                          : 'Category updated successfully',
+                    ),
+                  ),
+                );
+
+              } catch (_) {
+
+                if (!mounted) {
+                  return;
+                }
+
+                try {
+
+                  setDialogState(() {
+                    saving = false;
+                  });
+
+                } catch (_) {}
+                
+                ScaffoldMessenger.of(
+                  this.context,
+                ).showSnackBar(
+
+                  const SnackBar(
+
+                    content: Text(
+                      'Unable to save category',
+                    ),
+                  ),
+                );
+              }
+            }
+
 
             return AlertDialog(
 
@@ -95,74 +330,225 @@ class _ManageCategoriesScreenState
                     : 'Edit Category',
               ),
 
-              content: Column(
-                mainAxisSize:
-                    MainAxisSize.min,
+              content:
+                  SingleChildScrollView(
 
-                children: [
+                child: Form(
 
-                  TextField(
-                    controller:
-                        nameController,
+                  key: formKey,
 
-                    decoration:
-                        const InputDecoration(
-                      labelText:
-                          'Category Name',
-                    ),
-                  ),
+                  child: Column(
 
-                  const SizedBox(
-                    height: 16,
-                  ),
+                    mainAxisSize:
+                        MainAxisSize.min,
 
-                  DropdownButton<String>(
+                    children: [
 
-                    value: type,
+                      TextFormField(
 
-                    isExpanded: true,
+                        controller:
+                            nameController,
 
-                    items: const [
+                        enabled:
+                            !saving,
 
-                      DropdownMenuItem(
-                        value:
-                            'expense',
-                        child:
-                            Text(
-                          'Expense',
+                        textCapitalization:
+                            TextCapitalization
+                                .words,
+
+                        validator:
+                            (value) {
+
+                          if (value ==
+                                  null ||
+                              value
+                                  .trim()
+                                  .isEmpty) {
+
+                            return 'Category name is required';
+                          }
+
+                          if (value
+                                  .trim()
+                                  .length <
+                              2) {
+
+                            return 'Minimum 2 characters required';
+                          }
+
+                          return null;
+                        },
+
+                        decoration:
+                            const InputDecoration(
+
+                          labelText:
+                              'Category Name',
+
+                          border:
+                              OutlineInputBorder(),
                         ),
                       ),
 
-                      DropdownMenuItem(
-                        value:
-                            'income',
-                        child:
-                            Text(
-                          'Income',
+                      const SizedBox(
+                        height: 16,
+                      ),
+
+                      DropdownButtonFormField<
+                          String>(
+
+                        value: type,
+
+                        decoration:
+                            const InputDecoration(
+
+                          labelText:
+                              'Category Type',
+
+                          border:
+                              OutlineInputBorder(),
+                        ),
+
+                        items: const [
+
+                          DropdownMenuItem(
+
+                            value:
+                                'expense',
+
+                            child: Text(
+                              'Expense',
+                            ),
+                          ),
+
+                          DropdownMenuItem(
+
+                            value:
+                                'income',
+
+                            child: Text(
+                              'Income',
+                            ),
+                          ),
+                        ],
+
+                        onChanged:
+                            saving
+                                ? null
+                                : (value) {
+
+                                    if (value ==
+                                        null) {
+                                      return;
+                                    }
+
+                                    setDialogState(() {
+                                      type =
+                                          value;
+                                    });
+                                  },
+                      ),
+
+                      const SizedBox(
+                        height: 16,
+                      ),
+
+                      TextFormField(
+
+                        controller:
+                            budgetController,
+
+                        enabled:
+                            !saving,
+
+                        keyboardType:
+                            const TextInputType
+                                .numberWithOptions(
+                          decimal: true,
+                        ),
+
+                        inputFormatters: [
+
+                          FilteringTextInputFormatter
+                              .allow(
+                            RegExp(
+                              r'^\d*\.?\d{0,2}',
+                            ),
+                          ),
+                        ],
+
+                        validator:
+                            (value) {
+
+                          if (value ==
+                                  null ||
+                              value
+                                  .trim()
+                                  .isEmpty) {
+
+                            return null;
+                          }
+
+                          final amount =
+                              double.tryParse(
+                            value.trim(),
+                          );
+
+                          if (amount ==
+                              null) {
+
+                            return 'Enter valid budget';
+                          }
+
+                          if (amount <
+                              0) {
+
+                            return 'Budget cannot be negative';
+                          }
+
+                          if (amount >
+                              999999999) {
+
+                            return 'Budget is too large';
+                          }
+
+                          return null;
+                        },
+
+                        decoration:
+                            const InputDecoration(
+
+                          labelText:
+                              'Monthly Budget',
+
+                          hintText:
+                              'Optional',
+
+                          prefixText:
+                              '₹ ',
+
+                          border:
+                              OutlineInputBorder(),
                         ),
                       ),
                     ],
-
-                    onChanged: (value) {
-
-                      setDialogState(() {
-
-                        type = value!;
-                      });
-                    },
                   ),
-                ],
+                ),
               ),
 
               actions: [
 
                 TextButton(
-                  onPressed: () {
 
-                    Navigator.pop(
-                      context,
-                    );
-                  },
+                  onPressed:
+                      saving
+                          ? null
+                          : () {
+                              Navigator.of(
+                                dialogContext,
+                              ).pop();
+                            },
+
                   child: const Text(
                     'Cancel',
                   ),
@@ -170,71 +556,30 @@ class _ManageCategoriesScreenState
 
                 ElevatedButton(
 
-                  onPressed: () async {
+                  onPressed:
+                      saving
+                          ? null
+                          : () {
+                            saveCategory();                            
+                          },
 
-                    if (nameController
-                        .text
-                        .trim()
-                        .isEmpty) {
-                      return;
-                    }
+                  child: saving
 
-                    if (category ==
-                        null) {
+                      ? const SizedBox(
 
-                      final newCategory =
-                          CategoryModel()
+                          height: 20,
+                          width: 20,
 
-                            ..name =
-                                nameController
-                                    .text
-                                    .trim()
+                          child:
+                              CircularProgressIndicator(
+                            strokeWidth:
+                                2,
+                          ),
+                        )
 
-                            ..type = type
-
-                            ..isDefault =
-                                false
-
-                            ..isSynced =
-                                false
-
-                            ..updatedAt =
-                                DateTime.now();
-
-                      await repository
-                          .addCategory(
-                        newCategory,
-                      );
-
-                    } else {
-
-                      category.name =
-                          nameController
-                              .text
-                              .trim();
-
-                      category.type =
-                          type;
-
-                      await repository
-                          .updateCategory(
-                        category,
-                      );
-                    }
-
-                    if (mounted) {
-
-                      Navigator.pop(
-                        context,
-                      );
-
-                      await loadCategories();
-                    }
-                  },
-
-                  child: const Text(
-                    'Save',
-                  ),
+                      : const Text(
+                          'Save',
+                        ),
                 ),
               ],
             );
@@ -242,14 +587,130 @@ class _ManageCategoriesScreenState
         );
       },
     );
+
+    //nameController.dispose();
+
+    //budgetController.dispose();
+  }
+
+  Future<void> deleteCategory(
+    CategoryModel category,
+  ) async {
+
+    final confirm =
+        await showDialog<bool>(
+
+      context: context,
+
+      builder:
+          (dialogContext) {
+
+        return AlertDialog(
+
+          title: const Text(
+            'Delete Category',
+          ),
+
+          content: Text(
+            'Delete "${category.name}"?',
+          ),
+
+          actions: [
+
+            TextButton(
+
+              onPressed: () {
+
+                Navigator.of(
+                  dialogContext,
+                ).pop(false);
+              },
+
+              child: const Text(
+                'Cancel',
+              ),
+            ),
+
+            ElevatedButton(
+
+              onPressed: () {
+
+                Navigator.of(
+                  dialogContext,
+                ).pop(true);
+              },
+
+              child: const Text(
+                'Delete',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    try {
+
+      final repository =
+          await ref.read(
+        categoryRepositoryProvider
+            .future,
+      );
+
+      await repository
+          .deleteCategory(
+        category.id,
+      );
+
+      await loadCategories();
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+
+        const SnackBar(
+          content: Text(
+            'Category deleted',
+          ),
+        ),
+      );
+
+    } catch (_) {
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+
+        const SnackBar(
+          content: Text(
+            'Unable to delete category',
+          ),
+        ),
+      );
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
 
     return Scaffold(
 
       appBar: AppBar(
+
         title: const Text(
           'Manage Categories',
         ),
@@ -263,91 +724,151 @@ class _ManageCategoriesScreenState
           showCategoryDialog();
         },
 
-        child: const Icon(Icons.add),
+        child: const Icon(
+          Icons.add,
+        ),
       ),
 
       body: loading
+
           ? const Center(
               child:
                   CircularProgressIndicator(),
             )
-          : ListView.builder(
 
-              itemCount:
-                  categories.length,
+          : categories.isEmpty
 
-              itemBuilder:
-                  (context, index) {
+              ? const Center(
+                  child: Text(
+                    'No categories found',
+                  ),
+                )
 
-                final category =
-                    categories[index];
+              : ListView.builder(
 
-                return ListTile(
-
-                  title: Text(
-                    category.name,
+                  padding:
+                      const EdgeInsets.only(
+                    bottom: 100,
                   ),
 
-                  subtitle: Text(
-                    category.type,
-                  ),
+                  itemCount:
+                      categories.length,
 
-                  trailing: Row(
-                    mainAxisSize:
-                        MainAxisSize.min,
+                  itemBuilder:
+                      (
+                    context,
+                    index,
+                  ) {
 
-                    children: [
+                    final category =
+                        categories[
+                            index];
 
-                      if (!category
-                          .isDefault)
-                          
-                        IconButton(
+                    print('``````````````````category``````````````````````````````');
+                    print('``````````````````title: ${category.name}``````````````````````````````');
+                    print('``````````````````type: ${category.type}``````````````````````````````');
+                    print('``````````````````monthlyBudget: ${category.monthlyBudget}``````````````````````````````');
+                    print('``````````````````category``````````````````````````````');
 
-                          onPressed: () {
+                    return Card(
 
-                            showCategoryDialog(
-                              category:
-                                  category,
-                            );
-                          },
+                      margin:
+                          const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
 
-                          icon: const Icon(
-                            Icons.edit,
-                          ),
+                      child: ListTile(
+
+                        title: Text(
+                          category.name,
                         ),
 
-                      if (!category
-                          .isDefault)
+                        subtitle: Column(
 
-                        IconButton(
+                          crossAxisAlignment:
+                              CrossAxisAlignment
+                                  .start,
 
-                          onPressed:
-                              () async {
+                          children: [
 
-                            final repository =
-                                await ref.read(
-                              categoryRepositoryProvider
-                                  .future,
-                            );
+                            Text(
+                              category.type
+                                  .toUpperCase(),
+                            ),
 
-                            await repository
-                                .deleteCategory(
-                              category.id,
-                            );
+                            if (category
+                                    .monthlyBudget !=
+                                null)
 
-                            await loadCategories();
-                          },
+                              Padding(
 
-                          icon:
-                              const Icon(
-                            Icons.delete,
-                          ),
+                                padding:
+                                    const EdgeInsets.only(
+                                  top: 4,
+                                ),
+
+                                child: Text(
+
+                                  'Budget: ${CurrencyFormatter.format(category.monthlyBudget!)}',
+
+                                  style:
+                                      const TextStyle(
+                                    fontWeight:
+                                        FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                    ],
-                  ),
-                );
-              },
-            ),
+
+                        trailing: Row(
+
+                          mainAxisSize:
+                              MainAxisSize.min,
+
+                          children: [
+
+                            IconButton(
+
+                              onPressed: () {
+
+                                showCategoryDialog(
+                                  category:
+                                      category,
+                                );
+                              },
+
+                              icon:
+                                  const Icon(
+                                Icons.edit,
+                              ),
+                            ),
+
+                            if (!category
+                                .isDefault)
+
+                              IconButton(
+
+                                onPressed:
+                                    () {
+
+                                  deleteCategory(
+                                    category,
+                                  );
+                                },
+
+                                icon:
+                                    const Icon(
+                                  Icons.delete,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }

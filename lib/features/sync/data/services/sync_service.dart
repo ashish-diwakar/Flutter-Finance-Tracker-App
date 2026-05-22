@@ -95,6 +95,13 @@ class SyncService {
 
     for (final category
         in unsynced) {
+    logger.d(
+      '----------------------------------------------------------------------------------------------', 
+    );
+    logger.d(
+      'category to sync ${category.name}, ${category.type}, ${category.isDefault}, ${category.monthlyBudget},', 
+    );
+
 
       await client
           .from('categories')
@@ -113,6 +120,9 @@ class SyncService {
 
         'is_deleted':
             category.isDeleted,
+
+        'monthly_budget':
+            category.monthlyBudget,
 
         'updated_at':
             (category.updatedAt ??
@@ -188,7 +198,10 @@ class SyncService {
               ..updatedAt =
                   cloudUpdated
 
-              ..isSynced = true;
+              ..isSynced = true
+
+              ..monthlyBudget = 
+                  item['monthly_budget'];
 
         await isar.writeTxn(() async {
 
@@ -223,6 +236,9 @@ class SyncService {
             cloudUpdated;
 
         existing.isSynced = true;
+
+        existing.monthlyBudget = 
+            item['monthly_budget'];
 
         await isar.writeTxn(() async {
 

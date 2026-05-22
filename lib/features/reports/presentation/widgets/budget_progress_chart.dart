@@ -52,15 +52,19 @@ class BudgetProgressChart
 
         ...data.map((item) {
 
+          // final progress =
+          //     item.progress
+          //         .clamp(0.0, 1.0);
           final progress =
-              item.progress
-                  .clamp(0.0, 1.0);
+              item.progress;
 
           final percentage =
               (progress * 100)
                   .toStringAsFixed(0);
 
           Color progressColor;
+          Color? progressBorderColor;
+          Color? progressBackColor;
 
           if (progress < 0.3) {
 
@@ -83,15 +87,33 @@ class BudgetProgressChart
 
             progressColor =
                 Colors.red;
+            progressBackColor = 
+                const Color.fromARGB(255, 211, 233, 191);
+            progressBorderColor = 
+                const Color.fromARGB(255, 235, 196, 209);
           }
 
           return Card(
 
+            color: progressBackColor ?? Colors.grey.shade50,
+
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12), // Keeps standard card rounding
+              side: BorderSide(
+                color: progressBorderColor ?? Colors.grey.shade300, // Choose your border color here
+                width: 1,                    // Set border thickness
+              ),              
+            ),
+
+            
             child: Padding(
 
               padding:
                   const EdgeInsets.only(
                 bottom: 20,
+                top: 10,
+                right: 10,
+                left: 10,
               ),
 
               child: Column(
@@ -121,6 +143,14 @@ class BudgetProgressChart
 
                       Text(
                         '$percentage%',
+                        style:
+                            TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontStyle:
+                              FontStyle.italic,
+                          color: (progress < 1.0) ? Colors.green : Colors.red,
+                          
+                        ),
                       ),
                     ],
                   ),

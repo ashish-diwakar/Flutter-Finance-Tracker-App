@@ -24,6 +24,8 @@ class CategoryModel {
 
   bool isDeleted = false;
 
+  int? monthlyBudget;
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -33,6 +35,7 @@ class CategoryModel {
       'updatedAt': updatedAt?.toIso8601String(),
       'isSynced': isSynced,
       'isDeleted': isDeleted,
+      'monthlyBudget': monthlyBudget
     };
   }
 }
