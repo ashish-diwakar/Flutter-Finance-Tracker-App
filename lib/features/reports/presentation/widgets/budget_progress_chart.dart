@@ -62,13 +62,19 @@ class BudgetProgressChart
 
           Color progressColor;
 
-          if (progress < 0.5) {
+          if (progress < 0.3) {
 
             progressColor =
                 Colors.green;
 
           } else if (progress <
-              0.8) {
+              0.5) {
+
+            progressColor =
+                Colors.yellow;
+
+          } else if (progress <
+              0.75) {
 
             progressColor =
                 Colors.orange;
@@ -79,108 +85,111 @@ class BudgetProgressChart
                 Colors.red;
           }
 
-          return Padding(
+          return Card(
 
-            padding:
-                const EdgeInsets.only(
-              bottom: 20,
-            ),
+            child: Padding(
 
-            child: Column(
+              padding:
+                  const EdgeInsets.only(
+                bottom: 20,
+              ),
 
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              child: Column(
 
-              children: [
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
 
-                Row(
+                children: [
 
-                  children: [
+                  Row(
 
-                    Expanded(
+                    children: [
 
-                      child: Text(
+                      Expanded(
 
-                        item.category,
+                        child: Text(
+
+                          item.category,
+
+                          style:
+                              const TextStyle(
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
+                      Text(
+                        '$percentage%',
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(
+                    height: 8,
+                  ),
+
+                  ClipRRect(
+
+                    borderRadius:
+                        BorderRadius.circular(
+                      8,
+                    ),
+
+                    child:
+                        LinearProgressIndicator(
+
+                      value:
+                          progress,
+
+                      minHeight:
+                          10,
+
+                      backgroundColor:
+                          Colors.grey.shade300,
+
+                      valueColor:
+                          AlwaysStoppedAnimation(
+                        progressColor,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 6,
+                  ),
+
+                  Row(
+
+                    mainAxisAlignment:
+                        MainAxisAlignment
+                            .spaceBetween,
+
+                    children: [
+
+                      Text(
+
+                        'Spent: ${CurrencyFormatter.format((item.spent * 100).toInt())}',
 
                         style:
                             const TextStyle(
-                          fontWeight:
-                              FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
-                    ),
 
-                    Text(
-                      '$percentage%',
-                    ),
-                  ],
-                ),
+                      Text(
 
-                const SizedBox(
-                  height: 8,
-                ),
+                        'Budget: ${CurrencyFormatter.format((item.budget * 100).toInt())}',
 
-                ClipRRect(
-
-                  borderRadius:
-                      BorderRadius.circular(
-                    8,
-                  ),
-
-                  child:
-                      LinearProgressIndicator(
-
-                    value:
-                        progress,
-
-                    minHeight:
-                        14,
-
-                    backgroundColor:
-                        Colors.grey.shade300,
-
-                    valueColor:
-                        AlwaysStoppedAnimation(
-                      progressColor,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 6,
-                ),
-
-                Row(
-
-                  mainAxisAlignment:
-                      MainAxisAlignment
-                          .spaceBetween,
-
-                  children: [
-
-                    Text(
-
-                      'Spent: ${CurrencyFormatter.format((item.spent * 100).toInt())}',
-
-                      style:
-                          const TextStyle(
-                        fontSize: 12,
+                        style:
+                            const TextStyle(
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-
-                    Text(
-
-                      'Budget: ${CurrencyFormatter.format((item.budget * 100).toInt())}',
-
-                      style:
-                          const TextStyle(
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         }),

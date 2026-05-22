@@ -366,26 +366,24 @@ class _ReportsScreenState
                       .progress) {
 
                 return budgetAsync.when(
-
                   data: (budgetData) {
-
                     return BudgetProgressChart(
                       data: budgetData,
                     );
                   },
-
-                  error: (_, __) =>
-
-                      const Text(
-                        'Unable to load budget chart',
-                      ),
-
-                  loading: () =>
-
-                      const Center(
-                        child:
-                            CircularProgressIndicator(),
-                      ),
+                  error: (error, stackTrace) {
+                    // This prints the error and full stack trace to the console
+                    print('Budget chart error: $error');
+                    print(stackTrace); 
+                    
+                    // Remove 'const' because the string is now dynamic
+                    return Text(
+                      'Unable to load budget chart: $error',
+                    );
+                  },
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
                 );
               }
 

@@ -20,4 +20,13 @@ class BudgetProgressData {
 
     return spent / budget;
   }
+
+  // Add this mapping method
+  Map<String, dynamic> toJson() {
+    return {
+      'category': category,
+      'spent': spent,
+      'budget': budget,
+    };
+  }
 }

@@ -18,7 +18,7 @@ class AccountModel {
 
   DateTime createdAt = DateTime.now();
 
-  DateTime? updatedAt;
+  DateTime? updatedAt = DateTime.now();
 
   bool isSynced = false;
 
