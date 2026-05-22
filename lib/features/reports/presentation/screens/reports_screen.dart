@@ -3,8 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/category_analytics_provider.dart';
 import '../providers/monthly_summary_provider.dart';
+import '../widgets/expense_donut_chart.dart';
 import '../widgets/expense_pie_chart.dart';
 import '../widgets/monthly_summary_card.dart';
+
+enum ReportChartType {
+
+  pie,
+
+  donut,
+}
 
 class ReportsScreen
     extends ConsumerStatefulWidget {
@@ -20,10 +28,14 @@ class ReportsScreen
 }
 
 class _ReportsScreenState
-    extends ConsumerState<ReportsScreen> {
+    extends ConsumerState<
+        ReportsScreen> {
 
   DateTime selectedMonth =
       DateTime.now();
+
+  ReportChartType selectedChart =
+      ReportChartType.donut;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +57,9 @@ class _ReportsScreenState
     return Scaffold(
 
       appBar: AppBar(
-        title: const Text('Reports'),
+        title: const Text(
+          'Reports',
+        ),
       ),
 
       body: ListView(
@@ -57,31 +71,43 @@ class _ReportsScreenState
 
           ListTile(
 
-            shape: RoundedRectangleBorder(
+            shape:
+                RoundedRectangleBorder(
+
               borderRadius:
-                  BorderRadius.circular(8),
-              side: const BorderSide(),
+                  BorderRadius.circular(
+                8,
+              ),
+
+              side:
+                  const BorderSide(),
             ),
 
-            title:
-                const Text('Selected Month'),
+            title: const Text(
+              'Selected Month',
+            ),
 
             subtitle: Text(
               '${selectedMonth.month}/${selectedMonth.year}',
             ),
 
-            trailing:
-                const Icon(Icons.calendar_today),
+            trailing: const Icon(
+              Icons.calendar_today,
+            ),
 
             onTap: () async {
 
               final picked =
                   await showDatePicker(
+
                 context: context,
+
                 initialDate:
                     selectedMonth,
+
                 firstDate:
                     DateTime(2020),
+
                 lastDate:
                     DateTime(2100),
               );
@@ -100,59 +126,215 @@ class _ReportsScreenState
             },
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(
+            height: 16,
+          ),
 
           summaryAsync.when(
 
             data: (summary) {
 
               return MonthlySummaryCard(
-                income: summary.income,
-                expense: summary.expense,
+
+                income:
+                    summary.income,
+
+                expense:
+                    summary.expense,
               );
             },
 
-            error: (e, s) =>
-                Text(e.toString()),
+            error: (_, __) =>
+
+                const Card(
+
+                  child: Padding(
+
+                    padding:
+                        EdgeInsets.all(16),
+
+                    child: Text(
+                      'Unable to load summary',
+                    ),
+                  ),
+                ),
 
             loading: () =>
+
                 const Center(
-              child:
-                  CircularProgressIndicator(),
-            ),
+                  child:
+                      CircularProgressIndicator(),
+                ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(
+            height: 24,
+          ),
 
           const Text(
-            'Expense Breakdown',
+
+            'Expense Analytics',
+
             style: TextStyle(
+
               fontSize: 18,
+
               fontWeight:
                   FontWeight.bold,
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(
+            height: 16,
+          ),
+
+          SegmentedButton<
+              ReportChartType>(
+
+            segments: const [
+
+              ButtonSegment(
+                value:
+                    ReportChartType
+                        .donut,
+
+                label: Text(
+                  'Donut',
+                ),
+
+                icon: Icon(
+                  Icons.donut_large,
+                ),
+              ),
+
+              ButtonSegment(
+                value:
+                    ReportChartType
+                        .pie,
+
+                label: Text(
+                  'Pie',
+                ),
+
+                icon: Icon(
+                  Icons.pie_chart,
+                ),
+              ),
+            ],
+
+            selected: {
+              selectedChart,
+            },
+
+            onSelectionChanged:
+                (value) {
+
+              setState(() {
+
+                selectedChart =
+                    value.first;
+              });
+            },
+          ),
+
+          const SizedBox(
+            height: 24,
+          ),
 
           categoryAsync.when(
 
             data: (categories) {
 
+              if (categories
+                  .isEmpty) {
+
+                return const Card(
+
+                  child: Padding(
+
+                    padding:
+                        EdgeInsets.all(24),
+
+                    child: Center(
+
+                      child: Text(
+                        'No expense data available',
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              final colors = const [
+
+                Colors.red,
+
+                Colors.blue,
+
+                Colors.green,
+
+                Colors.orange,
+
+                Colors.purple,
+
+                Colors.teal,
+
+                Colors.indigo,
+
+                Colors.pink,
+              ];
+
+              if (selectedChart ==
+                  ReportChartType
+                      .donut) {
+
+                return ExpenseDonutChart(
+
+                  data:
+                      categories,
+                );
+              }
+
               return ExpensePieChart(
+
                 categories:
                     categories,
+
+                colors: colors,
+
+                forecolors:
+                    List.generate(
+                  colors.length,
+                  (_) => Colors.black,
+                ),
               );
             },
 
-            error: (e, s) =>
-                Text(e.toString()),
+            error: (_, __) =>
+
+                const Card(
+
+                  child: Padding(
+
+                    padding:
+                        EdgeInsets.all(16),
+
+                    child: Text(
+                      'Unable to load analytics',
+                    ),
+                  ),
+                ),
 
             loading: () =>
+
                 const Center(
-              child:
-                  CircularProgressIndicator(),
-            ),
+                  child:
+                      CircularProgressIndicator(),
+                ),
+          ),
+
+          const SizedBox(
+            height: 32,
           ),
         ],
       ),

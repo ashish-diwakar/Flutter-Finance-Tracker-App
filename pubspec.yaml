@@ -51,7 +51,8 @@ dependencies:
   uuid: ^4.5.1
 
   # Charts
-  fl_chart: ^0.69.0
+  #fl_chart: ^0.69.0
+  fl_chart: ^1.2.0
 
   # UI
   flutter_screenutil: ^5.9.3
