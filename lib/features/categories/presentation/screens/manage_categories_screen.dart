@@ -719,9 +719,12 @@ class _ManageCategoriesScreenState
       floatingActionButton:
           FloatingActionButton(
 
-        onPressed: () {
+          heroTag:
+            'managecategories_fab',
 
-          showCategoryDialog();
+          onPressed: () {
+
+            showCategoryDialog();
         },
 
         child: const Icon(

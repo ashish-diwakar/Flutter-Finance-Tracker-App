@@ -31,7 +31,9 @@ class _CounterTestAppState extends State<CounterTestApp> {
         body: Center(
           child: Text('$_counter'),
         ),
-        floatingActionButton: FloatingActionButton(
+        floatingActionButton: FloatingActionButton(          
+          heroTag:
+            'widgets_fab',
           onPressed: _increment,
           child: const Icon(Icons.add),
         ),

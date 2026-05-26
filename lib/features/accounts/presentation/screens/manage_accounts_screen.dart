@@ -262,9 +262,12 @@ class _ManageAccountsScreenState
       floatingActionButton:
           FloatingActionButton(
 
-        onPressed: () {
+          heroTag:
+            'manageaccounts_fab',
 
-          showAccountDialog();
+          onPressed: () {
+
+            showAccountDialog();
         },
 
         child: const Icon(Icons.add),

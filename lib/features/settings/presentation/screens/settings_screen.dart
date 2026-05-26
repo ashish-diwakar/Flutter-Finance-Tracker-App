@@ -4,6 +4,7 @@ import '../../../accounts/presentation/screens/manage_accounts_screen.dart';
 import '../../../backup/presentation/screens/backup_screen.dart';
 import '../../../categories/presentation/screens/manage_categories_screen.dart';
 import '../../../reports/presentation/screens/budget_alerts_screen.dart';
+import '../../../recurring/presentation/screens/recurring_transactions_screen.dart';
 
 class SettingsScreen
     extends StatelessWidget {
@@ -140,6 +141,39 @@ class SettingsScreen
 
                   builder: (_) =>
                       const BudgetAlertsScreen(),
+                ),
+              );
+            },
+          ),
+
+
+          // =====================================================
+          // Recurring Transactions Screen Link
+          // =====================================================
+          ListTile(
+
+            leading: const Icon(
+              Icons.repeat,
+            ),
+
+            title: const Text(
+              'Recurring Transactions',
+            ),
+
+            trailing: const Icon(
+              Icons.chevron_right,
+            ),
+
+            onTap: () {
+
+              Navigator.push(
+
+                context,
+
+                MaterialPageRoute(
+
+                  builder: (_) =>
+                      const RecurringTransactionsScreen(),
                 ),
               );
             },

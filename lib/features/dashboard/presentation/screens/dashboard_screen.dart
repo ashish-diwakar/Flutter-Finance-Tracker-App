@@ -300,6 +300,9 @@ class _DashboardScreenState
       ),
 
       floatingActionButton: FloatingActionButton(
+      
+        heroTag:
+          'dashboard_fab',
         onPressed: () {
           Navigator.push(
             context,

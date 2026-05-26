@@ -222,6 +222,9 @@ class _TransactionListContainerScreenState
       ),
 
       floatingActionButton: FloatingActionButton(
+        
+        heroTag:
+          'transactions_fab',
         onPressed: () {
           Navigator.push(
             context,

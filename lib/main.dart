@@ -6,59 +6,271 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logger/logger.dart';
 
 import 'core/config/supabase_config.dart';
-// import 'features/dashboard/presentation/dashboard_screen.dart';
+import 'core/database/isar_service.dart';
 import 'core/services/deep_link_service.dart';
 
+import 'features/recurring/data/services/recurring_scheduler_service.dart';
+
 final logger = Logger();
-final navigatorKey = GlobalKey<NavigatorState>();
+
+final navigatorKey =
+    GlobalKey<NavigatorState>();
 
 Future<void> main() async {
 
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding
+      .ensureInitialized();
 
-  await dotenv.load(
-    fileName: '.env'
-  );
+  FlutterError.onError =
+      (details) {
 
-  await Supabase.initialize(
-    url: SupabaseConfig.supabaseUrl,
-    anonKey: SupabaseConfig.supabaseAnonKey,
-  );
+    logger.e(
+      'Flutter Error',
+      error: details.exception,
+      stackTrace:
+          details.stack,
+    );
+  };
 
-  DeepLinkService.initialize(
-    navigatorKey: navigatorKey,
-  );
+  try {
 
-  runApp(
-    const ProviderScope(
-      child: FinanceTrackerApp(),
-    ),
-  );
+    // =====================================================
+    // ENVIRONMENT
+    // =====================================================
+
+    await dotenv.load(
+      fileName: '.env',
+    );
+
+    // =====================================================
+    // SUPABASE
+    // =====================================================
+
+    await Supabase.initialize(
+
+      url:
+          SupabaseConfig
+              .supabaseUrl,
+
+      anonKey:
+          SupabaseConfig
+              .supabaseAnonKey,
+    );
+
+    // =====================================================
+    // ISAR
+    // =====================================================
+
+    final isar =
+    await IsarService
+        .openIsar();
+
+    // =====================================================
+    // RECURRING TRANSACTIONS
+    // =====================================================
+
+    final recurringScheduler =
+        RecurringSchedulerService(
+      isar,
+    );
+
+    await recurringScheduler
+        .processRecurringTransactions();
+
+    // =====================================================
+    // DEEP LINKS
+    // =====================================================
+
+    DeepLinkService.initialize(
+      navigatorKey:
+          navigatorKey,
+    );
+
+    logger.i(
+      'Application initialized successfully',
+    );
+
+    // =====================================================
+    // START APP
+    // =====================================================
+
+    runApp(
+
+      const ProviderScope(
+
+        child:
+            FinanceTrackerApp(),
+      ),
+    );
+
+  } catch (e, stack) {
+
+    logger.e(
+
+      'Application startup failed',
+
+      error: e,
+
+      stackTrace: stack,
+    );
+
+    runApp(
+
+      MaterialApp(
+
+        debugShowCheckedModeBanner:
+            false,
+
+        home: Scaffold(
+
+          body: Center(
+
+            child: Padding(
+
+              padding:
+                  const EdgeInsets.all(
+                24,
+              ),
+
+              child: Column(
+
+                mainAxisAlignment:
+                    MainAxisAlignment
+                        .center,
+
+                children: [
+
+                  const Icon(
+
+                    Icons.error_outline,
+
+                    size: 72,
+
+                    color: Colors.red,
+                  ),
+
+                  const SizedBox(
+                    height: 24,
+                  ),
+
+                  const Text(
+
+                    'Application failed to start',
+
+                    style: TextStyle(
+
+                      fontSize: 20,
+
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 12,
+                  ),
+
+                  const Text(
+
+                    'Please restart the application.',
+
+                    textAlign:
+                        TextAlign.center,
+                  ),
+
+                  const SizedBox(
+                    height: 24,
+                  ),
+
+                  SelectableText(
+                    e.toString(),
+                    textAlign:
+                        TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class FinanceTrackerApp
-  extends StatelessWidget {
+    extends StatelessWidget {
 
   const FinanceTrackerApp({
     super.key,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
 
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
 
-      title: 'Finance Tracker',
+      debugShowCheckedModeBanner:
+          false,
+
+      title:
+          'Finance Tracker',
+
+      navigatorKey:
+          navigatorKey,
 
       theme: ThemeData(
+
         useMaterial3: true,
+
+        colorSchemeSeed:
+            Colors.green,
+
+        brightness:
+            Brightness.light,
+
+        scaffoldBackgroundColor:
+            Colors.grey.shade50,
+
+        appBarTheme:
+            const AppBarTheme(
+
+          centerTitle: true,
+
+          elevation: 0,
+        ),
+
+        cardTheme:
+            CardThemeData(
+
+          elevation: 1,
+
+          shape:
+              RoundedRectangleBorder(
+
+            borderRadius:
+                BorderRadius.circular(
+              16,
+            ),
+          ),
+        ),
+
+        inputDecorationTheme:
+            InputDecorationTheme(
+
+          border:
+              OutlineInputBorder(
+
+            borderRadius:
+                BorderRadius.circular(
+              12,
+            ),
+          ),
+        ),
       ),
 
-      // home: const DashboardScreen(),
       home: const AuthGate(),
-
-      navigatorKey: navigatorKey,
     );
   }
 }
