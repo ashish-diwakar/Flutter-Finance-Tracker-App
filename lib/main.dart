@@ -8,8 +8,10 @@ import 'package:logger/logger.dart';
 import 'core/config/supabase_config.dart';
 import 'core/database/isar_service.dart';
 import 'core/services/deep_link_service.dart';
-
+import 'core/services/notification_service.dart';
 import 'features/recurring/data/services/recurring_scheduler_service.dart';
+import 'features/reports/data/services/budget_alert_checker.dart';
+import 'features/reports/data/services/budget_notification_service.dart';
 
 final logger = Logger();
 
@@ -58,6 +60,13 @@ Future<void> main() async {
     );
 
     // =====================================================
+    // NOTIFICATIONS
+    // =====================================================
+
+    await NotificationService
+    .initialize();
+
+    // =====================================================
     // ISAR
     // =====================================================
 
@@ -76,6 +85,24 @@ Future<void> main() async {
 
     await recurringScheduler
         .processRecurringTransactions();
+
+
+    // =====================================================
+    // BUDGET ALERTS
+    // =====================================================
+    final budgetChecker =
+        BudgetAlertChecker(
+      isar,
+    );
+
+    final alerts =
+        await budgetChecker
+            .checkAlerts();
+
+    await BudgetNotificationService
+        .processBudgetAlerts(
+      alerts,
+    );
 
     // =====================================================
     // DEEP LINKS
@@ -102,6 +129,24 @@ Future<void> main() async {
             FinanceTrackerApp(),
       ),
     );
+
+    await Future.delayed(
+      const Duration(seconds: 1),
+    );
+
+    // =====================================================
+    // TESTING NOTIFICATIONS
+    // =====================================================
+    // await NotificationService
+    //     .showNotification(
+
+    //   id: 1,
+
+    //   title: 'Finance Tracker',
+
+    //   body:
+    //       'Notifications are working successfully.',
+    // );
 
   } catch (e, stack) {
 
