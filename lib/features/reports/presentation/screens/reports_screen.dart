@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/budget_progress_provider.dart';
 import '../providers/category_analytics_provider.dart';
+import '../providers/monthly_chart_provider.dart';
 import '../providers/monthly_summary_provider.dart';
+
+import '../widgets/budget_progress_chart.dart';
 import '../widgets/expense_donut_chart.dart';
 import '../widgets/expense_pie_chart.dart';
-import '../widgets/monthly_summary_card.dart';
-import '../providers/monthly_chart_provider.dart';
 import '../widgets/monthly_grouped_bar_chart.dart';
-import '../providers/budget_progress_provider.dart';
-import '../widgets/budget_progress_chart.dart';
+import '../widgets/monthly_summary_card.dart';
+import 'budget_alerts_screen.dart';
 
 enum ReportChartType {
 
@@ -46,7 +48,9 @@ class _ReportsScreenState
       ReportChartType.donut;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
 
     final summaryAsync =
         ref.watch(
@@ -67,7 +71,6 @@ class _ReportsScreenState
       monthlyChartProvider,
     );
 
-
     final budgetAsync =
         ref.watch(
       budgetProgressProvider,
@@ -76,6 +79,7 @@ class _ReportsScreenState
     return Scaffold(
 
       appBar: AppBar(
+
         title: const Text(
           'Reports',
         ),
@@ -87,6 +91,10 @@ class _ReportsScreenState
             const EdgeInsets.all(16),
 
         children: [
+
+          // =====================================================
+          // MONTH SELECTOR
+          // =====================================================
 
           ListTile(
 
@@ -131,7 +139,8 @@ class _ReportsScreenState
                     DateTime(2100),
               );
 
-              if (picked != null) {
+              if (picked != null &&
+                  mounted) {
 
                 setState(() {
 
@@ -148,6 +157,10 @@ class _ReportsScreenState
           const SizedBox(
             height: 16,
           ),
+
+          // =====================================================
+          // SUMMARY
+          // =====================================================
 
           summaryAsync.when(
 
@@ -187,8 +200,54 @@ class _ReportsScreenState
           ),
 
           const SizedBox(
+            height: 12,
+          ),
+
+          
+          // =====================================================
+          // Budget Alerts SELECTOR
+          // =====================================================
+          const SizedBox(
+            height: 16,
+          ),
+
+          SizedBox(
+
+            width: double.infinity,
+
+            child: OutlinedButton.icon(
+
+              onPressed: () {
+
+                Navigator.push(
+
+                  context,
+
+                  MaterialPageRoute(
+
+                    builder: (_) =>
+                        const BudgetAlertsScreen(),
+                  ),
+                );
+              },
+
+              icon: const Icon(
+                Icons.warning_amber,
+              ),
+
+              label: const Text(
+                'View Budget Alerts',
+              ),
+            ),
+          ),
+
+          const SizedBox(
             height: 24,
           ),
+
+          // =====================================================
+          // ANALYTICS TITLE
+          // =====================================================
 
           const Text(
 
@@ -207,12 +266,17 @@ class _ReportsScreenState
             height: 16,
           ),
 
+          // =====================================================
+          // CHART SELECTOR
+          // =====================================================
+
           SegmentedButton<
               ReportChartType>(
 
             segments: const [
 
               ButtonSegment(
+
                 value:
                     ReportChartType
                         .donut,
@@ -227,6 +291,7 @@ class _ReportsScreenState
               ),
 
               ButtonSegment(
+
                 value:
                     ReportChartType
                         .pie,
@@ -241,6 +306,7 @@ class _ReportsScreenState
               ),
 
               ButtonSegment(
+
                 value:
                     ReportChartType
                         .groupedBar,
@@ -268,7 +334,6 @@ class _ReportsScreenState
                   Icons.linear_scale,
                 ),
               ),
-
             ],
 
             selected: {
@@ -290,48 +355,17 @@ class _ReportsScreenState
             height: 24,
           ),
 
-          categoryAsync.when(
+          // =====================================================
+          // CHART CONTENT
+          // =====================================================
 
-            data: (categories) {
+          Builder(
 
-              if (categories
-                  .isEmpty) {
+            builder: (_) {
 
-                return const Card(
-
-                  child: Padding(
-
-                    padding:
-                        EdgeInsets.all(24),
-
-                    child: Center(
-
-                      child: Text(
-                        'No expense data available',
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              final colors = const [
-
-                Colors.red,
-
-                Colors.blue,
-
-                Colors.green,
-
-                Colors.orange,
-
-                Colors.purple,
-
-                Colors.teal,
-
-                Colors.indigo,
-
-                Colors.pink,
-              ];
+              // =========================================
+              // GROUPED BAR CHART
+              // =========================================
 
               if (selectedChart ==
                   ReportChartType
@@ -348,8 +382,19 @@ class _ReportsScreenState
 
                   error: (_, __) =>
 
-                      const Text(
-                        'Unable to load Monthly grouped bar chart',
+                      const Card(
+
+                        child: Padding(
+
+                          padding:
+                              EdgeInsets.all(
+                            16,
+                          ),
+
+                          child: Text(
+                            'Unable to load monthly chart',
+                          ),
+                        ),
                       ),
 
                   loading: () =>
@@ -361,84 +406,178 @@ class _ReportsScreenState
                 );
               }
 
+              // =========================================
+              // BUDGET PROGRESS CHART
+              // =========================================
+
               if (selectedChart ==
                   ReportChartType
                       .progress) {
 
                 return budgetAsync.when(
+
                   data: (budgetData) {
+
+                    if (budgetData
+                        .isEmpty) {
+
+                      return const Card(
+
+                        child: Padding(
+
+                          padding:
+                              EdgeInsets.all(
+                            24,
+                          ),
+
+                          child: Center(
+
+                            child: Text(
+                              'No budget data available',
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
                     return BudgetProgressChart(
                       data: budgetData,
                     );
                   },
-                  error: (error, stackTrace) {
-                    // This prints the error and full stack trace to the console
-                    // print('Budget chart error: $error');
-                    // print(stackTrace); 
-                    
-                    // Remove 'const' because the string is now dynamic
-                    return Text(
-                      'Unable to load budget chart: $error',
+
+                  error: (_, __) =>
+
+                      const Card(
+
+                        child: Padding(
+
+                          padding:
+                              EdgeInsets.all(
+                            16,
+                          ),
+
+                          child: Text(
+                            'Unable to load budget chart',
+                          ),
+                        ),
+                      ),
+
+                  loading: () =>
+
+                      const Center(
+                        child:
+                            CircularProgressIndicator(),
+                      ),
+                );
+              }
+
+              // =========================================
+              // PIE/DONUT CHARTS
+              // =========================================
+
+              return categoryAsync.when(
+
+                data: (categories) {
+
+                  if (categories
+                      .isEmpty) {
+
+                    return const Card(
+
+                      child: Padding(
+
+                        padding:
+                            EdgeInsets.all(
+                          24,
+                        ),
+
+                        child: Center(
+
+                          child: Text(
+                            'No expense data available',
+                          ),
+                        ),
+                      ),
                     );
-                  },
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
+                  }
 
-              if (selectedChart ==
-                  ReportChartType
-                      .donut) {
+                  final colors = const [
 
-                return ExpenseDonutChart(
+                    Colors.red,
 
-                  data:
-                      categories,
-                );
-              }
+                    Colors.blue,
 
-              return ExpensePieChart(
+                    Colors.green,
 
-                categories:
-                    categories,
+                    Colors.orange,
 
-                colors: colors,
+                    Colors.purple,
 
-                forecolors:
-                    List.generate(
-                  colors.length,
-                  (_) => Colors.black,
-                ),
+                    Colors.teal,
+
+                    Colors.indigo,
+
+                    Colors.pink,
+                  ];
+
+                  if (selectedChart ==
+                      ReportChartType
+                          .donut) {
+
+                    return ExpenseDonutChart(
+                      data: categories,
+                    );
+                  }
+
+                  return ExpensePieChart(
+
+                    categories:
+                        categories,
+
+                    colors: colors,
+
+                    forecolors:
+                        List.generate(
+
+                      colors.length,
+
+                      (_) =>
+                          Colors.black,
+                    ),
+                  );
+                },
+
+                error: (_, __) =>
+
+                    const Card(
+
+                      child: Padding(
+
+                        padding:
+                            EdgeInsets.all(
+                          16,
+                        ),
+
+                        child: Text(
+                          'Unable to load analytics',
+                        ),
+                      ),
+                    ),
+
+                loading: () =>
+
+                    const Center(
+                      child:
+                          CircularProgressIndicator(),
+                    ),
               );
             },
-
-            error: (_, __) =>
-
-                const Card(
-
-                  child: Padding(
-
-                    padding:
-                        EdgeInsets.all(16),
-
-                    child: Text(
-                      'Unable to load analytics',
-                    ),
-                  ),
-                ),
-
-            loading: () =>
-
-                const Center(
-                  child:
-                      CircularProgressIndicator(),
-                ),
           ),
 
           const SizedBox(
             height: 32,
           ),
+
         ],
       ),
     );

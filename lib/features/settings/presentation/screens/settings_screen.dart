@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../accounts/presentation/screens/manage_accounts_screen.dart';
 import '../../../backup/presentation/screens/backup_screen.dart';
 import '../../../categories/presentation/screens/manage_categories_screen.dart';
+import '../../../reports/presentation/screens/budget_alerts_screen.dart';
 
 class SettingsScreen
     extends StatelessWidget {
@@ -26,6 +27,9 @@ class SettingsScreen
 
         children: [
 
+          // =====================================================
+          // Manage Categories Screen Link
+          // =====================================================
           ListTile(
 
             leading:
@@ -51,6 +55,9 @@ class SettingsScreen
             },
           ),
 
+          // =====================================================
+          // Manage Accounts Screen Link
+          // =====================================================
           ListTile(
 
             leading:
@@ -76,6 +83,10 @@ class SettingsScreen
             },
           ),
 
+          // =====================================================
+          // Backup & Restore Screen Link
+          // =====================================================
+
           ListTile(
 
             leading:
@@ -100,6 +111,40 @@ class SettingsScreen
               );
             },
           ),
+
+
+          // =====================================================
+          // Budget Alerts Screen Link
+          // =====================================================
+          ListTile(
+
+            leading: const Icon(
+              Icons.warning_amber,
+            ),
+
+            title: const Text(
+              'Budget Alerts',
+            ),
+
+            trailing: const Icon(
+              Icons.chevron_right,
+            ),
+
+            onTap: () {
+
+              Navigator.push(
+
+                context,
+
+                MaterialPageRoute(
+
+                  builder: (_) =>
+                      const BudgetAlertsScreen(),
+                ),
+              );
+            },
+          ),
+
         ],
       ),
     );
