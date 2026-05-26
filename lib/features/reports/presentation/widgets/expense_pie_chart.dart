@@ -1,7 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-
-//import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/models/category_expense_model.dart';
 
 class ExpensePieChart
@@ -29,39 +27,86 @@ class ExpensePieChart
       );
     }
 
-    return SizedBox(
+    return Column(
 
-      height: 250,
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
 
-      child: PieChart(
 
-        PieChartData(
+      children: [
+        
+        const Text(
 
-          sections: categories
-              .asMap()
-              .entries
-              .map((entry) {
+          'Expense Breakdown',
 
-            final item = entry.value;
-
-            return PieChartSectionData(
-              value:
-                  item.amount.toDouble(),
-
-              title:
-                  item.category,
-
-              radius: 80,
-              color: colors[entry.key % colors.length], // Use the color from the list
-              titleStyle: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: forecolors[entry.key % forecolors.length], // Use the foreground color from the list
-              ),
-            );
-          }).toList(),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight:
+                FontWeight.bold,
+          ),
         ),
-      ),
+
+        const SizedBox(height: 4),
+
+        const Text(
+
+          'See where your money goes in Visual presentation',
+
+          style: TextStyle(
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(
+          height: 16,
+        ),
+
+        SizedBox(
+
+          height: 300,
+
+          child: Stack(
+
+            alignment:
+                Alignment.center,
+
+            children: [
+                PieChart(
+
+                  PieChartData(
+
+                    sections: categories
+                        .asMap()
+                        .entries
+                        .map((entry) {
+
+                      final item = entry.value;
+
+                      return PieChartSectionData(
+                        value:
+                            item.amount.toDouble(),
+
+                        title:
+                            item.category,
+
+                        radius: 80,
+                        color: colors[entry.key % colors.length], // Use the color from the list
+                        titleStyle: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: forecolors[entry.key % forecolors.length], // Use the foreground color from the list
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),              
+            ],
+          ),
+        ),
+
+        const SizedBox(
+          height: 16,
+        ),
+      ]
     );
   }
 }

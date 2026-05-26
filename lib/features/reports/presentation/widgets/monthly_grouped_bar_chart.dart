@@ -53,7 +53,7 @@ class MonthlyGroupedBarChart
 
         const Text(
 
-          'Monthly Income vs Expense',
+          'Overall Monthly Income vs Expense Comparison',
 
           style: TextStyle(
 
@@ -64,8 +64,19 @@ class MonthlyGroupedBarChart
           ),
         ),
 
+        const SizedBox(height: 4),
+
+        const Text(
+
+          'Analyze income and expense trends',
+
+          style: TextStyle(
+            color: Colors.grey,
+          ),
+        ),
+
         const SizedBox(
-          height: 16,
+          height: 20,
         ),
 
         SizedBox(

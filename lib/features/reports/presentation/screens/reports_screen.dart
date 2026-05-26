@@ -269,86 +269,108 @@ class _ReportsScreenState
           // =====================================================
           // CHART SELECTOR
           // =====================================================
+          const Text(
+            'Chart Type',
+          ),
+          SingleChildScrollView(
 
-          SegmentedButton<
-              ReportChartType>(
+            scrollDirection:
+                Axis.horizontal,
 
-            segments: const [
+            child: SegmentedButton<
+                ReportChartType>(
 
-              ButtonSegment(
+              showSelectedIcon:
+                  false,
 
-                value:
-                    ReportChartType
-                        .donut,
+              style: ButtonStyle(
 
-                label: Text(
-                  'Donut',
-                ),
+                visualDensity:
+                    VisualDensity.compact,
 
-                icon: Icon(
-                  Icons.donut_large,
-                ),
-              ),
+                padding:
+                    WidgetStateProperty.all(
 
-              ButtonSegment(
-
-                value:
-                    ReportChartType
-                        .pie,
-
-                label: Text(
-                  'Pie',
-                ),
-
-                icon: Icon(
-                  Icons.pie_chart,
+                  const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                 ),
               ),
 
-              ButtonSegment(
+              segments: const [
 
-                value:
-                    ReportChartType
-                        .groupedBar,
+                ButtonSegment(
 
-                label: Text(
-                  'Bar',
+                  value:
+                      ReportChartType
+                          .donut,
+
+                  icon: Icon(
+                    Icons.donut_large,
+                  ),
+
+                  tooltip:
+                      'Donut Chart',
                 ),
 
-                icon: Icon(
-                  Icons.bar_chart,
+                ButtonSegment(
+
+                  value:
+                      ReportChartType
+                          .pie,
+
+                  icon: Icon(
+                    Icons.pie_chart,
+                  ),
+
+                  tooltip:
+                      'Pie Chart',
                 ),
-              ),
 
-              ButtonSegment(
+                ButtonSegment(
 
-                value:
-                    ReportChartType
-                        .progress,
+                  value:
+                      ReportChartType
+                          .groupedBar,
 
-                label: Text(
-                  'Budget',
+                  icon: Icon(
+                    Icons.bar_chart,
+                  ),
+
+                  tooltip:
+                      'Bar Chart',
                 ),
 
-                icon: Icon(
-                  Icons.linear_scale,
+                ButtonSegment(
+
+                  value:
+                      ReportChartType
+                          .progress,
+
+                  icon: Icon(
+                    Icons.linear_scale,
+                  ),
+
+                  tooltip:
+                      'Budget Progress',
                 ),
-              ),
-            ],
+              ],
 
-            selected: {
-              selectedChart,
-            },
+              selected: {
+                selectedChart,
+              },
 
-            onSelectionChanged:
-                (value) {
+              onSelectionChanged:
+                  (value) {
 
-              setState(() {
+                setState(() {
 
-                selectedChart =
-                    value.first;
-              });
-            },
+                  selectedChart =
+                      value.first;
+                });
+              },
+            ),
           ),
 
           const SizedBox(

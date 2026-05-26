@@ -46,6 +46,17 @@ class BudgetProgressChart
           ),
         ),
 
+        const SizedBox(height: 4),
+
+        const Text(
+
+          'Monitor spending against your limits',
+
+          style: TextStyle(
+            color: Colors.grey,
+          ),
+        ),
+
         const SizedBox(
           height: 20,
         ),
