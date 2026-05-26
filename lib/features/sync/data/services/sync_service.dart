@@ -6,6 +6,7 @@ import '../../../../core/services/supabase_service.dart';
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
+import '../../../../shared/models/recurring_transaction_model.dart';
 
 class SyncService {
 
@@ -61,12 +62,18 @@ class SyncService {
     );
 
     await executeSafely(
+      syncRecurringTransactions,
+    );
+
+    await executeSafely(
       syncTransactions,
     );
 
     await executeSafely(
       pullTransactions,
     );
+
+
   }
 
   // =========================================================
@@ -612,6 +619,204 @@ class SyncService {
       }
     }
   }
+
+
+
+  // =========================================================
+  // RECURRING TRANSACTIONS
+  // =========================================================
+  Future<void>
+        syncRecurringTransactions()
+    async {
+
+      final user =
+          client.auth.currentUser;
+
+      if (user == null) {
+        return;
+      }
+
+      // =====================================
+      // LOCAL → SUPABASE
+      // =====================================
+
+      final unsynced =
+          await isar
+              .recurringTransactionModels
+              .filter()
+              .isSyncedEqualTo(false)
+              .findAll();
+
+      for (final recurring
+          in unsynced) {
+
+        await client
+            .from(
+              'recurring_transactions',
+            )
+            .upsert({
+
+          'id':
+              recurring.id,
+
+          'user_id':
+              user.id,
+
+          'amount':
+              recurring.amount,
+
+          'type':
+              recurring.type,
+
+          'category_id':
+              recurring.categoryId,
+
+          'account_id':
+              recurring.accountId,
+
+          'notes':
+              recurring.notes,
+
+          'start_date':
+              recurring.startDate
+                  .toIso8601String(),
+
+          'end_date':
+              recurring.endDate
+                  ?.toIso8601String(),
+
+          'frequency':
+              recurring.frequency,
+
+          'interval':
+              recurring.interval,
+
+          'is_active':
+              recurring.isActive,
+
+          'next_run_date':
+              recurring.nextRunDate
+                  .toIso8601String(),
+
+          'updated_at':
+              recurring.updatedAt
+                  .toIso8601String(),
+
+          'is_deleted':
+              recurring.isDeleted,
+        });
+
+        recurring.isSynced =
+            true;
+
+        await isar.writeTxn(
+          () async {
+
+            await isar
+                .recurringTransactionModels
+                .put(recurring);
+          },
+        );
+      }
+
+      // =====================================
+      // SUPABASE → LOCAL
+      // =====================================
+
+      final remote =
+          await client
+              .from(
+                'recurring_transactions',
+              )
+              .select();
+
+      for (final item
+          in remote) {
+
+        final local =
+            await isar
+                .recurringTransactionModels
+                .get(item['id']);
+
+        final remoteUpdated =
+            DateTime.parse(
+          item['updated_at'],
+        );
+
+        if (local == null ||
+            remoteUpdated.isAfter(
+              local.updatedAt,
+            )) {
+
+          final recurring =
+              RecurringTransactionModel()
+
+                ..id = item['id']
+
+                ..amount =
+                    item['amount']
+
+                ..type =
+                    item['type']
+
+                ..categoryId =
+                    item['category_id']
+
+                ..accountId =
+                    item['account_id']
+
+                ..notes =
+                    item['notes']
+
+                ..startDate =
+                    DateTime.parse(
+                  item['start_date'],
+                )
+
+                ..endDate =
+                    item['end_date'] !=
+                            null
+
+                        ? DateTime.parse(
+                            item['end_date'],
+                          )
+
+                        : null
+
+                ..frequency =
+                    item['frequency']
+
+                ..interval =
+                    item['interval']
+
+                ..isActive =
+                    item['is_active']
+
+                ..nextRunDate =
+                    DateTime.parse(
+                  item['next_run_date'],
+                )
+
+                ..updatedAt =
+                    remoteUpdated
+
+                ..isDeleted =
+                    item['is_deleted']
+
+                ..isSynced =
+                    true;
+
+          await isar.writeTxn(
+            () async {
+
+              await isar
+                  .recurringTransactionModels
+                  .put(recurring);
+            },
+          );
+        }
+      }
+    }
 
   // =========================================================
   // HELPERS
