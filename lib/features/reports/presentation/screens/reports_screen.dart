@@ -6,9 +6,11 @@ import '../providers/category_analytics_provider.dart';
 import '../providers/monthly_chart_provider.dart';
 import '../providers/monthly_summary_provider.dart';
 import '../providers/monthly_trends_provider.dart';
+import '../providers/expense_forecast_provider.dart';
 
 import '../widgets/budget_progress_chart.dart';
 import '../widgets/expense_donut_chart.dart';
+import '../widgets/expense_forecast_card.dart';
 import '../widgets/expense_pie_chart.dart';
 import '../widgets/monthly_grouped_bar_chart.dart';
 import '../widgets/monthly_summary_card.dart';
@@ -52,6 +54,38 @@ class _ReportsScreenState
   ReportChartType selectedChart =
       ReportChartType.donut;
 
+  Future<void> refreshReports()
+  async {
+
+    ref.invalidate(
+      monthlySummaryProvider(
+        selectedMonth,
+      ),
+    );
+
+    ref.invalidate(
+      categoryAnalyticsProvider(
+        selectedMonth,
+      ),
+    );
+
+    ref.invalidate(
+      monthlyChartProvider,
+    );
+
+    ref.invalidate(
+      budgetProgressProvider,
+    );
+
+    ref.invalidate(
+      monthlyTrendsProvider,
+    );
+
+    ref.invalidate(
+      expenseForecastProvider,
+    );
+  }
+
   @override
   Widget build(
     BuildContext context,
@@ -86,6 +120,11 @@ class _ReportsScreenState
       monthlyTrendsProvider,
     );
 
+    final forecastAsync =
+        ref.watch(
+      expenseForecastProvider,
+    );
+
     return Scaffold(
 
       appBar: AppBar(
@@ -98,33 +137,14 @@ class _ReportsScreenState
 
           IconButton(
 
-            onPressed: () {
+            onPressed: () async {
 
-              ref.invalidate(
-                monthlySummaryProvider(
-                  selectedMonth,
-                ),
-              );
+              await refreshReports();
 
-              ref.invalidate(
-                categoryAnalyticsProvider(
-                  selectedMonth,
-                ),
-              );
+              if (mounted) {
 
-              ref.invalidate(
-                monthlyChartProvider,
-              );
-
-              ref.invalidate(
-                budgetProgressProvider,
-              );
-
-              ref.invalidate(
-                monthlyTrendsProvider,
-              );
-
-              setState(() {});
+                setState(() {});
+              }
             },
 
             icon: const Icon(
@@ -136,32 +156,8 @@ class _ReportsScreenState
 
       body: RefreshIndicator(
 
-        onRefresh: () async {
-
-          ref.invalidate(
-            monthlySummaryProvider(
-              selectedMonth,
-            ),
-          );
-
-          ref.invalidate(
-            categoryAnalyticsProvider(
-              selectedMonth,
-            ),
-          );
-
-          ref.invalidate(
-            monthlyChartProvider,
-          );
-
-          ref.invalidate(
-            budgetProgressProvider,
-          );
-
-          ref.invalidate(
-            monthlyTrendsProvider,
-          );
-        },
+        onRefresh:
+            refreshReports,
 
         child: ListView(
 
@@ -245,7 +241,7 @@ class _ReportsScreenState
             ),
 
             // =====================================================
-            // SUMMARY
+            // MONTHLY SUMMARY
             // =====================================================
 
             summaryAsync.when(
@@ -269,7 +265,9 @@ class _ReportsScreenState
                     child: Padding(
 
                       padding:
-                          EdgeInsets.all(16),
+                          EdgeInsets.all(
+                        16,
+                      ),
 
                       child: Text(
                         'Unable to load summary',
@@ -282,7 +280,9 @@ class _ReportsScreenState
                   const Padding(
 
                     padding:
-                        EdgeInsets.all(24),
+                        EdgeInsets.all(
+                      24,
+                    ),
 
                     child: Center(
 
@@ -294,6 +294,87 @@ class _ReportsScreenState
 
             const SizedBox(
               height: 16,
+            ),
+
+            // =====================================================
+            // FORECAST SECTION
+            // =====================================================
+
+            const Text(
+
+              'Financial Forecast',
+
+              style: TextStyle(
+
+                fontSize: 20,
+
+                fontWeight:
+                    FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(
+              height: 6,
+            ),
+
+            const Text(
+
+              'Predict future spending patterns based on current behavior.',
+
+              style: TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+
+            const SizedBox(
+              height: 16,
+            ),
+
+            forecastAsync.when(
+
+              data: (forecast) {
+
+                return ExpenseForecastCard(
+                  forecast: forecast,
+                );
+              },
+
+              error: (_, __) =>
+
+                  const Card(
+
+                    child: Padding(
+
+                      padding:
+                          EdgeInsets.all(
+                        16,
+                      ),
+
+                      child: Text(
+                        'Unable to generate forecast',
+                      ),
+                    ),
+                  ),
+
+              loading: () =>
+
+                  const Center(
+
+                    child: Padding(
+
+                      padding:
+                          EdgeInsets.all(
+                        24,
+                      ),
+
+                      child:
+                          CircularProgressIndicator(),
+                    ),
+                  ),
+            ),
+
+            const SizedBox(
+              height: 20,
             ),
 
             // =====================================================
@@ -369,7 +450,7 @@ class _ReportsScreenState
             ),
 
             // =====================================================
-            // CHART SELECTOR
+            // CHART TYPE
             // =====================================================
 
             const Text(
@@ -507,7 +588,7 @@ class _ReportsScreenState
             ),
 
             // =====================================================
-            // CHART SECTION TITLE
+            // CHART TITLE
             // =====================================================
 
             Builder(
@@ -699,7 +780,7 @@ class _ReportsScreenState
                   }
 
                   // =========================================
-                  // BUDGET PROGRESS CHART
+                  // BUDGET CHART
                   // =========================================
 
                   if (selectedChart ==
@@ -780,7 +861,7 @@ class _ReportsScreenState
                   }
 
                   // =========================================
-                  // MONTHLY TRENDS
+                  // TRENDS CHART
                   // =========================================
 
                   if (selectedChart ==
@@ -859,7 +940,7 @@ class _ReportsScreenState
                   }
 
                   // =========================================
-                  // PIE/DONUT CHARTS
+                  // PIE & DONUT CHARTS
                   // =========================================
 
                   return categoryAsync.when(
@@ -891,19 +972,12 @@ class _ReportsScreenState
                       final colors = const [
 
                         Colors.red,
-
                         Colors.blue,
-
                         Colors.green,
-
                         Colors.orange,
-
                         Colors.purple,
-
                         Colors.teal,
-
                         Colors.indigo,
-
                         Colors.pink,
                       ];
 
