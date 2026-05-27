@@ -110,6 +110,7 @@ flutter:
   assets:
     - .env
     - assets/branding/
+    - assets/fonts/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

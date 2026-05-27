@@ -16,8 +16,7 @@ class SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    return Expanded(
-      child: Card(
+    return Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -45,7 +44,6 @@ class SummaryCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

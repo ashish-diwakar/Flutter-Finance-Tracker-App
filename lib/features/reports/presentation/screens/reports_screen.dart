@@ -3,15 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/budget_progress_provider.dart';
 import '../providers/category_analytics_provider.dart';
+import '../providers/expense_forecast_provider.dart';
+import '../providers/financial_insights_provider.dart';
 import '../providers/monthly_chart_provider.dart';
 import '../providers/monthly_summary_provider.dart';
 import '../providers/monthly_trends_provider.dart';
-import '../providers/expense_forecast_provider.dart';
 
 import '../widgets/budget_progress_chart.dart';
 import '../widgets/expense_donut_chart.dart';
 import '../widgets/expense_forecast_card.dart';
 import '../widgets/expense_pie_chart.dart';
+import '../widgets/financial_insights_section.dart';
 import '../widgets/monthly_grouped_bar_chart.dart';
 import '../widgets/monthly_summary_card.dart';
 import '../widgets/monthly_trend_chart.dart';
@@ -84,6 +86,10 @@ class _ReportsScreenState
     ref.invalidate(
       expenseForecastProvider,
     );
+
+    ref.invalidate(
+      financialInsightsProvider,
+    );
   }
 
   @override
@@ -123,6 +129,11 @@ class _ReportsScreenState
     final forecastAsync =
         ref.watch(
       expenseForecastProvider,
+    );
+
+    final insightsAsync =
+        ref.watch(
+      financialInsightsProvider,
     );
 
     return Scaffold(
@@ -293,11 +304,11 @@ class _ReportsScreenState
             ),
 
             const SizedBox(
-              height: 16,
+              height: 20,
             ),
 
             // =====================================================
-            // FORECAST SECTION
+            // FINANCIAL FORECAST
             // =====================================================
 
             const Text(
@@ -374,7 +385,45 @@ class _ReportsScreenState
             ),
 
             const SizedBox(
-              height: 20,
+              height: 28,
+            ),
+
+            // =====================================================
+            // AI INSIGHTS
+            // =====================================================
+
+            insightsAsync.when(
+
+              data: (insights) {
+
+                return FinancialInsightsSection(
+                  insights: insights,
+                );
+              },
+
+              error: (_, __) =>
+
+                  const SizedBox(),
+
+              loading: () =>
+
+                  const Center(
+
+                    child: Padding(
+
+                      padding:
+                          EdgeInsets.all(
+                        24,
+                      ),
+
+                      child:
+                          CircularProgressIndicator(),
+                    ),
+                  ),
+            ),
+
+            const SizedBox(
+              height: 24,
             ),
 
             // =====================================================
@@ -505,9 +554,6 @@ class _ReportsScreenState
                     icon: Icon(
                       Icons.donut_large,
                     ),
-
-                    tooltip:
-                        'Donut Chart',
                   ),
 
                   ButtonSegment(
@@ -519,9 +565,6 @@ class _ReportsScreenState
                     icon: Icon(
                       Icons.pie_chart,
                     ),
-
-                    tooltip:
-                        'Pie Chart',
                   ),
 
                   ButtonSegment(
@@ -533,9 +576,6 @@ class _ReportsScreenState
                     icon: Icon(
                       Icons.bar_chart,
                     ),
-
-                    tooltip:
-                        'Bar Chart',
                   ),
 
                   ButtonSegment(
@@ -547,9 +587,6 @@ class _ReportsScreenState
                     icon: Icon(
                       Icons.linear_scale,
                     ),
-
-                    tooltip:
-                        'Budget Progress',
                   ),
 
                   ButtonSegment(
@@ -561,9 +598,6 @@ class _ReportsScreenState
                     icon: Icon(
                       Icons.show_chart,
                     ),
-
-                    tooltip:
-                        'Monthly Trends',
                   ),
                 ],
 
@@ -722,7 +756,7 @@ class _ReportsScreenState
                 builder: (_) {
 
                   // =========================================
-                  // GROUPED BAR CHART
+                  // GROUPED BAR
                   // =========================================
 
                   if (selectedChart ==
@@ -861,7 +895,7 @@ class _ReportsScreenState
                   }
 
                   // =========================================
-                  // TRENDS CHART
+                  // TRENDS
                   // =========================================
 
                   if (selectedChart ==
@@ -940,7 +974,7 @@ class _ReportsScreenState
                   }
 
                   // =========================================
-                  // PIE & DONUT CHARTS
+                  // PIE / DONUT
                   // =========================================
 
                   return categoryAsync.when(
