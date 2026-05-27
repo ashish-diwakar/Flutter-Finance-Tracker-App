@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../../../core/config/app_config.dart';
 import '../../../../shared/models/transaction_model.dart';
+
 import '../../domain/export_report_style.dart';
 
 class PdfExportService {
@@ -77,7 +78,7 @@ class PdfExportService {
     final savingsRate =
         income <= 0
 
-            ? 0.0
+            ? 0
 
             : ((balance / income) *
                     100)
@@ -101,6 +102,10 @@ class PdfExportService {
             const pw.EdgeInsets.all(
           32,
         ),
+
+        // =================================================
+        // FOOTER
+        // =================================================
 
         footer:
             (context) {
@@ -155,6 +160,10 @@ class PdfExportService {
             ),
           );
         },
+
+        // =================================================
+        // PAGE CONTENT
+        // =================================================
 
         build: (context) {
 
@@ -358,11 +367,14 @@ class PdfExportService {
       ),
 
       _transactionsTable(
+
         transactions:
             transactions,
 
         currencySymbol:
             currencySymbol,
+
+        modern: false,
       ),
     ];
   }
@@ -425,7 +437,8 @@ class PdfExportService {
                 fontSize: 28,
 
                 fontWeight:
-                    pw.FontWeight.bold,
+                    pw.FontWeight
+                        .bold,
               ),
             ),
 
@@ -460,7 +473,7 @@ class PdfExportService {
       ),
 
       // =============================================
-      // SUMMARY
+      // FINANCIAL SUMMARY
       // =============================================
 
       pw.Text(
@@ -485,7 +498,7 @@ class PdfExportService {
 
         mainAxisAlignment:
             pw.MainAxisAlignment
-                .spaceBetween,
+                .spaceEvenly,
 
         children: [
 
@@ -526,11 +539,7 @@ class PdfExportService {
             amount: balance,
 
             color:
-                balance >= 0
-
-                    ? PdfColors.blue
-
-                    : PdfColors.orange,
+                PdfColors.blue,
 
             symbol: '=',
 
@@ -545,23 +554,33 @@ class PdfExportService {
       ),
 
       // =============================================
-      // SAVINGS RATE
+      // FINANCIAL HEALTH
       // =============================================
 
       pw.Container(
 
         padding:
             const pw.EdgeInsets.all(
-          16,
+          18,
         ),
 
         decoration:
-            pw.BoxDecoration(
+            const pw.BoxDecoration(
+
+          color:
+              PdfColors.blue50,
 
           border:
-              pw.Border.all(
-            color:
-                PdfColors.grey300,
+              pw.Border(
+
+            left:
+                pw.BorderSide(
+
+              color:
+                  PdfColors.blue,
+
+              width: 4,
+            ),
           ),
         ),
 
@@ -575,32 +594,62 @@ class PdfExportService {
 
             pw.Text(
 
-              'Savings Rate',
+              'Financial Health',
 
               style:
                   pw.TextStyle(
 
-                fontWeight:
-                    pw.FontWeight.bold,
+                fontSize: 17,
 
-                fontSize: 16,
+                fontWeight:
+                    pw.FontWeight
+                        .bold,
               ),
             ),
 
             pw.SizedBox(
-              height: 10,
+              height: 14,
             ),
 
             pw.Text(
+
+              'Savings Rate: '
               '${savingsRate.toStringAsFixed(1)}%',
+
+              style:
+                  const pw.TextStyle(
+                fontSize: 12,
+              ),
+            ),
+
+            pw.SizedBox(
+              height: 8,
+            ),
+
+            pw.Text(
+
+              balance >= 0
+
+                  ? 'Status: Healthy savings pattern'
+
+                  : 'Status: Spending exceeds income',
+
+              style:
+                  const pw.TextStyle(
+                fontSize: 12,
+              ),
             ),
           ],
         ),
       ),
 
       pw.SizedBox(
-        height: 28,
+        height: 32,
       ),
+
+      // =============================================
+      // TRANSACTIONS
+      // =============================================
 
       pw.Text(
 
@@ -621,11 +670,43 @@ class PdfExportService {
       ),
 
       _transactionsTable(
+
         transactions:
             transactions,
 
         currencySymbol:
             currencySymbol,
+
+        modern: true,
+      ),
+
+      pw.SizedBox(
+        height: 24,
+      ),
+
+      // =============================================
+      // TOTAL TRANSACTIONS
+      // =============================================
+
+      pw.Align(
+
+        alignment:
+            pw.Alignment.centerRight,
+
+        child: pw.Text(
+
+          'Total Transactions: '
+          '${transactions.length}',
+
+          style:
+              pw.TextStyle(
+
+            fontWeight:
+                pw.FontWeight.bold,
+
+            fontSize: 12,
+          ),
+        ),
       ),
     ];
   }
@@ -642,54 +723,96 @@ class PdfExportService {
 
     required String
         currencySymbol,
+
+    required bool modern,
   }) {
 
     return pw.Table(
 
       border:
           pw.TableBorder.all(
+
         color:
             PdfColors.grey300,
+
+        width: 0.5,
       ),
 
       columnWidths: {
 
-        0: const pw.FlexColumnWidth(2),
-        1: const pw.FlexColumnWidth(2),
-        2: const pw.FlexColumnWidth(2),
-        3: const pw.FlexColumnWidth(4),
+        0:
+            const pw.FixedColumnWidth(
+          70,
+        ),
+
+        1:
+            const pw.FixedColumnWidth(
+          70,
+        ),
+
+        2:
+            const pw.FixedColumnWidth(
+          90,
+        ),
       },
 
       children: [
 
+        // =========================================
+        // TABLE HEADER
+        // =========================================
+
         pw.TableRow(
 
           decoration:
-              const pw.BoxDecoration(
+              pw.BoxDecoration(
 
             color:
-                PdfColors.grey200,
+
+                modern
+
+                    ? PdfColor.fromHex(
+                        '#1565C0',
+                      )
+
+                    : PdfColors.grey300,
           ),
 
           children: [
 
             _tableHeader(
               'Date',
+
+              modern:
+                  modern,
             ),
 
             _tableHeader(
               'Type',
+
+              modern:
+                  modern,
             ),
 
             _tableHeader(
               'Amount',
+
+              modern:
+                  modern,
             ),
 
             _tableHeader(
               'Notes',
+
+              modern:
+                  modern,
             ),
           ],
         ),
+
+        // =========================================
+        // TABLE ROWS
+        // =========================================
 
         ...transactions.map(
 
@@ -699,6 +822,23 @@ class PdfExportService {
                 t.amount / 100;
 
             return pw.TableRow(
+
+              decoration:
+                  modern
+
+                      ? pw.BoxDecoration(
+
+                          color:
+
+                              t.type ==
+                                      'income'
+
+                                  ? PdfColors.green50
+
+                                  : PdfColors.red50,
+                        )
+
+                      : null,
 
               children: [
 
@@ -710,13 +850,12 @@ class PdfExportService {
                 ),
 
                 _tableCell(
-                  t.type,
+                  t.type
+                      .toUpperCase(),
                 ),
 
                 _tableCell(
-
-                  '$currencySymbol '
-                  '${amount.toStringAsFixed(2)}',
+                  '$currencySymbol ${amount.toStringAsFixed(2)}',
                 ),
 
                 _tableCell(
@@ -744,7 +883,8 @@ class PdfExportService {
 
     required String symbol,
 
-    required String currencySymbol,
+    required String
+        currencySymbol,
   }) {
 
     return pw.Container(
@@ -759,12 +899,11 @@ class PdfExportService {
       decoration:
           pw.BoxDecoration(
 
-        border:
-            pw.Border.all(
+        color: color,
 
-          color: color,
-
-          width: 1.5,
+        borderRadius:
+            pw.BorderRadius.circular(
+          12,
         ),
       ),
 
@@ -776,24 +915,44 @@ class PdfExportService {
 
         children: [
 
-          pw.Text(
+          pw.Container(
 
-            symbol,
+            width: 30,
 
-            style:
-                pw.TextStyle(
+            height: 30,
 
-              color: color,
+            alignment:
+                pw.Alignment.center,
 
-              fontSize: 20,
+            decoration:
+                const pw.BoxDecoration(
 
-              fontWeight:
-                  pw.FontWeight.bold,
+              color:
+                  PdfColors.white,
+
+              shape:
+                  pw.BoxShape.circle,
+            ),
+
+            child: pw.Text(
+
+              symbol,
+
+              style:
+                  pw.TextStyle(
+
+                color: color,
+
+                fontSize: 16,
+
+                fontWeight:
+                    pw.FontWeight.bold,
+              ),
             ),
           ),
 
           pw.SizedBox(
-            height: 12,
+            height: 16,
           ),
 
           pw.Text(
@@ -801,17 +960,17 @@ class PdfExportService {
             title,
 
             style:
-                pw.TextStyle(
+                const pw.TextStyle(
+
+              color:
+                  PdfColors.white,
 
               fontSize: 14,
-
-              fontWeight:
-                  pw.FontWeight.bold,
             ),
           ),
 
           pw.SizedBox(
-            height: 6,
+            height: 10,
           ),
 
           pw.Text(
@@ -822,9 +981,10 @@ class PdfExportService {
             style:
                 pw.TextStyle(
 
-              fontSize: 16,
+              color:
+                  PdfColors.white,
 
-              color: color,
+              fontSize: 20,
 
               fontWeight:
                   pw.FontWeight.bold,
@@ -840,14 +1000,19 @@ class PdfExportService {
   // =======================================================
 
   pw.Widget _tableHeader(
-    String text,
-  ) {
+
+    String text, {
+
+    required bool modern,
+  }) {
 
     return pw.Padding(
 
       padding:
-          const pw.EdgeInsets.all(
-        10,
+          const pw.EdgeInsets.symmetric(
+
+        horizontal: 8,
+        vertical: 10,
       ),
 
       child: pw.Text(
@@ -857,8 +1022,18 @@ class PdfExportService {
         style:
             pw.TextStyle(
 
+          color:
+
+              modern
+
+                  ? PdfColors.white
+
+                  : PdfColors.black,
+
           fontWeight:
               pw.FontWeight.bold,
+
+          fontSize: 11,
         ),
       ),
     );
@@ -875,12 +1050,21 @@ class PdfExportService {
     return pw.Padding(
 
       padding:
-          const pw.EdgeInsets.all(
-        10,
+          const pw.EdgeInsets.symmetric(
+
+        horizontal: 8,
+        vertical: 10,
       ),
 
       child: pw.Text(
+
         text,
+
+        style:
+            const pw.TextStyle(
+
+          fontSize: 11,
+        ),
       ),
     );
   }
