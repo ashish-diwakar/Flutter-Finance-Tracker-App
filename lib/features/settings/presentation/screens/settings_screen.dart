@@ -371,7 +371,7 @@ class SettingsScreen
 
               subtitle:
                   const Text(
-                'Export transactions as CSV',
+                'Export transactions as CSV or PDF',
               ),
 
               trailing:

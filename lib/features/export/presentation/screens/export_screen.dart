@@ -8,6 +8,7 @@ import '../../../../shared/providers/database_provider.dart';
 import '../../../../shared/models/transaction_model.dart';
 
 import '../../data/services/csv_export_service.dart';
+import '../../data/services/pdf_export_service.dart';
 
 class ExportScreen
     extends ConsumerStatefulWidget {
@@ -110,6 +111,119 @@ class _ExportScreenState
     }
   }
 
+  Future<void>
+    exportPdf()
+  async {
+
+    setState(() {
+      exporting = true;
+    });
+
+    try {
+
+      final isar =
+          await ref.read(
+        isarProvider.future,
+      );
+
+      final transactions =
+          await isar
+              .transactionModels
+              .filter()
+              .isDeletedEqualTo(
+                false,
+              )
+              .findAll();
+
+      double income = 0;
+
+      double expense = 0;
+
+      for (final t
+          in transactions) {
+
+        if (t.type ==
+            'income') {
+
+          income +=
+              t.amount / 100;
+
+        } else {
+
+          expense +=
+              t.amount / 100;
+        }
+      }
+
+      final balance =
+          income - expense;
+
+      final service =
+          PdfExportService();
+
+      final file =
+          await service
+              .generateMonthlyReport(
+
+        transactions:
+            transactions,
+
+        income: income,
+
+        expense: expense,
+
+        balance: balance,
+      );
+
+      await Share.shareXFiles([
+        XFile(file.path),
+      ]);
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+
+        const SnackBar(
+
+          content: Text(
+            'PDF exported successfully',
+          ),
+        ),
+      );
+
+    } catch (_) {
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+
+        const SnackBar(
+
+          content: Text(
+            'Unable to export PDF',
+          ),
+        ),
+      );
+
+    } finally {
+
+      if (mounted) {
+
+        setState(() {
+          exporting = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(
     BuildContext context,
@@ -174,6 +288,49 @@ class _ExportScreenState
                       : exportCsv,
             ),
           ),
+
+
+          Card(
+
+            child: ListTile(
+
+              leading: const Icon(
+                Icons.picture_as_pdf,
+              ),
+
+              title: const Text(
+                'Export PDF Report',
+              ),
+
+              subtitle: const Text(
+                'Generate printable financial report',
+              ),
+
+              trailing:
+                  exporting
+
+                      ? const SizedBox(
+
+                          height: 20,
+                          width: 20,
+
+                          child:
+                              CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+
+                      : const Icon(
+                          Icons.chevron_right,
+                        ),
+
+              onTap:
+                  exporting
+                      ? null
+                      : exportPdf,
+            ),
+          ),
+
         ],
       ),
     );
