@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/transaction_model.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
-class TransactionDetailsScreen extends StatelessWidget {
+class TransactionDetailsScreen extends ConsumerWidget {
 
   final TransactionModel transaction;
 
@@ -13,7 +15,15 @@ class TransactionDetailsScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
+
+    final currency =
+        ref.watch(
+      currencyProvider,
+    );
 
     return Scaffold(
 
@@ -32,7 +42,8 @@ class TransactionDetailsScreen extends StatelessWidget {
 
             Text(
               CurrencyFormatter.format(
-                transaction.amount,
+                amount: transaction.amount,
+                currency: currency,
               ),
               style: const TextStyle(
                 fontSize: 28,

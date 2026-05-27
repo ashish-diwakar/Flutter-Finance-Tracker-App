@@ -6,6 +6,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/category_model.dart';
 import '../providers/category_repository_provider.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 class ManageCategoriesScreen
     extends ConsumerStatefulWidget {
@@ -707,6 +708,11 @@ class _ManageCategoriesScreenState
     BuildContext context,
   ) {
 
+    final currency =
+        ref.watch(
+      currencyProvider,
+    );
+
     return Scaffold(
 
       appBar: AppBar(
@@ -813,7 +819,12 @@ class _ManageCategoriesScreenState
 
                                 child: Text(
 
-                                  'Budget: ${CurrencyFormatter.format(category.monthlyBudget!)}',
+                                  'Budget: ${
+                                      CurrencyFormatter.format(
+                                      amount: category.monthlyBudget!,
+                                      currency: currency,
+                                      )
+                                    }',
 
                                   style:
                                       const TextStyle(

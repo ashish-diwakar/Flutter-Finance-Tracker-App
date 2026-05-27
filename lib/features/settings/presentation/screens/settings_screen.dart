@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../accounts/presentation/screens/manage_accounts_screen.dart';
 import '../../../backup/presentation/screens/backup_screen.dart';
@@ -6,9 +7,11 @@ import '../../../categories/presentation/screens/manage_categories_screen.dart';
 import '../../../export/presentation/screens/export_screen.dart';
 import '../../../recurring/presentation/screens/recurring_transactions_screen.dart';
 import '../../../reports/presentation/screens/budget_alerts_screen.dart';
+import 'currency_settings_screen.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 class SettingsScreen
-    extends StatelessWidget {
+    extends ConsumerWidget {
 
   const SettingsScreen({
     super.key,
@@ -17,6 +20,7 @@ class SettingsScreen
   @override
   Widget build(
     BuildContext context,
+    WidgetRef ref,
   ) {
 
     return Scaffold(
@@ -63,6 +67,46 @@ class SettingsScreen
               ),
             ),
           ),
+
+          
+          // =====================================================
+          // MANAGE CURRENCY
+          // =====================================================
+          ListTile(
+
+            leading: const Icon(
+              Icons.currency_exchange,
+            ),
+
+            title: const Text(
+              'Default Currency',
+            ),
+
+            subtitle: Text(
+
+              '${ref.watch(currencyProvider).flag} '
+              '${ref.watch(currencyProvider).code}',
+            ),
+
+            trailing: const Icon(
+              Icons.chevron_right,
+            ),
+
+            onTap: () {
+
+              Navigator.push(
+
+                context,
+
+                MaterialPageRoute(
+
+                  builder: (_) =>
+                      const CurrencySettingsScreen(),
+                ),
+              );
+            },
+          ),
+
 
           // =====================================================
           // MANAGE CATEGORIES

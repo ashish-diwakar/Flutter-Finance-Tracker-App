@@ -1,0 +1,6 @@
+enum ExportReportStyle {
+
+  classic,
+
+  modern,
+}

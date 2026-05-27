@@ -4,23 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/summary_card.dart';
-
 import '../../../transactions/presentation/screens/add_transaction_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_screen.dart';
-
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
-
 import '../../../sync/presentation/providers/sync_provider.dart';
-
 import '../providers/balance_provider.dart';
 import '../providers/expense_provider.dart';
 import '../providers/income_provider.dart';
 import '../providers/transactions_provider.dart';
-
 import '../providers/dashboard_insights_provider.dart';
-
 import '../widgets/dashboard_insights_section.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 class DashboardScreen
     extends ConsumerStatefulWidget {
@@ -182,6 +177,11 @@ class _DashboardScreenState
       dashboardInsightsProvider,
     );
 
+    final currency =
+        ref.watch(
+      currencyProvider,
+    );
+
     return Scaffold(
 
       appBar: AppBar(
@@ -294,9 +294,11 @@ class _DashboardScreenState
                             'Income',
 
                         amount:
-                            CurrencyFormatter
-                                .format(
-                          income,
+                          CurrencyFormatter.format(
+
+                          amount: income,
+
+                          currency: currency,
                         ),
 
                         icon:
@@ -317,9 +319,11 @@ class _DashboardScreenState
                             'Expense',
 
                         amount:
-                            CurrencyFormatter
-                                .format(
-                          expense,
+                          CurrencyFormatter.format(
+
+                          amount: expense,
+
+                          currency: currency,
                         ),
 
                         icon:
@@ -377,10 +381,12 @@ class _DashboardScreenState
 
                         Text(
 
-                          CurrencyFormatter
-                              .format(
-                            balance,
-                          ),
+                          CurrencyFormatter.format(
+
+                          amount: balance,
+
+                          currency: currency,
+                        ),
 
                           style:
                               const TextStyle(
@@ -483,25 +489,22 @@ class _DashboardScreenState
             // TRANSACTION LIST
             // =========================================
 
-            SliverFillRemaining(
-
-              hasScrollBody:
-                  true,
-
-              child:
-                  Padding(
-
-                padding:
-                    const EdgeInsets.only(
-                  bottom: 100,
+            SliverToBoxAdapter(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 300, // 🔥 Set your maximum height here
                 ),
-
-                child:
-                    const TransactionListScreen(
-                  defaultLimit: 3,
+                child: const Padding(
+                  padding: EdgeInsets.only(
+                    bottom: 20,
+                  ),
+                  child: TransactionListScreen(
+                    defaultLimit: 3,
+                  ),
                 ),
               ),
             ),
+
           ],
         ),
       ),

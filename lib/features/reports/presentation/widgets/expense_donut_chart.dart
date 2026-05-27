@@ -1,12 +1,13 @@
 import 'package:finance_tracker/features/reports/domain/models/category_expense_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
-//import '../../domain/models/category_expense_model.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 class ExpenseDonutChart
-    extends StatelessWidget {
+    extends ConsumerWidget {
 
   final List<CategoryExpenseModel>
       data;
@@ -17,7 +18,10 @@ class ExpenseDonutChart
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
 
     if (data.isEmpty) {
 
@@ -28,8 +32,13 @@ class ExpenseDonutChart
       );
     }
 
+    final currency =
+        ref.watch(
+      currencyProvider,
+    );
+
     final total =
-        data.fold<double>(
+        data.fold<int>(
       0,
       (
         previousValue,
@@ -56,21 +65,24 @@ class ExpenseDonutChart
       crossAxisAlignment:
           CrossAxisAlignment.start,
 
-
       children: [
-        
+
         const Text(
 
           'Expense Breakdown',
 
           style: TextStyle(
+
             fontSize: 18,
+
             fontWeight:
                 FontWeight.bold,
           ),
         ),
 
-        const SizedBox(height: 4),
+        const SizedBox(
+          height: 4,
+        ),
 
         const Text(
 
@@ -80,6 +92,7 @@ class ExpenseDonutChart
             color: Colors.grey,
           ),
         ),
+
         const SizedBox(
           height: 20,
         ),
@@ -106,7 +119,9 @@ class ExpenseDonutChart
 
                   sections:
                       List.generate(
+
                     data.length,
+
                     (index) {
 
                       final item =
@@ -135,9 +150,12 @@ class ExpenseDonutChart
 
                         titleStyle:
                             const TextStyle(
+
                           fontSize: 12,
+
                           fontWeight:
                               FontWeight.bold,
+
                           color:
                               Colors.white,
                         ),
@@ -162,13 +180,18 @@ class ExpenseDonutChart
 
                     CurrencyFormatter
                         .format(
-                      (total)
-                          .toInt(),
+
+                      amount: total,
+
+                      currency:
+                          currency,
                     ),
 
                     style:
                         const TextStyle(
+
                       fontSize: 18,
+
                       fontWeight:
                           FontWeight.bold,
                     ),
@@ -190,7 +213,8 @@ class ExpenseDonutChart
           physics:
               const NeverScrollableScrollPhysics(),
 
-          itemCount: data.length,
+          itemCount:
+              data.length,
 
           itemBuilder:
               (context, index) {
@@ -216,6 +240,7 @@ class ExpenseDonutChart
 
                     decoration:
                         BoxDecoration(
+
                       color:
                           colors[index %
                               colors
@@ -240,10 +265,14 @@ class ExpenseDonutChart
                   ),
 
                   Text(
+
                     CurrencyFormatter
                         .format(
-                      (item.amount)
-                          .toInt(),
+
+                      amount: item.amount,
+
+                      currency:
+                          currency,
                     ),
                   ),
                 ],

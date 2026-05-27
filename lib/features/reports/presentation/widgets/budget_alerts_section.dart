@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 
 import '../../domain/models/budget_alert_model.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 class BudgetAlertsSection
-    extends StatelessWidget {
+    extends ConsumerWidget {
 
   final List<BudgetAlertModel>
       alerts;
@@ -18,12 +20,18 @@ class BudgetAlertsSection
   @override
   Widget build(
     BuildContext context,
+    WidgetRef ref,
   ) {
 
     if (alerts.isEmpty) {
 
       return const SizedBox();
     }
+
+    final currency =
+        ref.watch(
+      currencyProvider,
+    );
 
     return Column(
 
@@ -129,7 +137,13 @@ class BudgetAlertsSection
 
                   Text(
 
-                    '${CurrencyFormatter.format((alert.spent * 100).toInt())} / ${CurrencyFormatter.format((alert.budget * 100).toInt())}',
+                    '${CurrencyFormatter.formatDouble(
+                      amount: alert.spent,
+                      currency: currency,
+                    )} / ${CurrencyFormatter.formatDouble(
+                      amount: alert.budget,
+                      currency: currency,
+                    )}',
                   ),
                 ],
               ),

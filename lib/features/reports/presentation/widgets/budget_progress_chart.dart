@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/models/budget_progress_data.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 class BudgetProgressChart
-    extends StatelessWidget {
+    extends ConsumerWidget {
 
   final List<BudgetProgressData>
       data;
@@ -15,7 +17,10 @@ class BudgetProgressChart
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
 
     if (data.isEmpty) {
 
@@ -25,6 +30,11 @@ class BudgetProgressChart
         ),
       );
     }
+
+    final currency =
+        ref.watch(
+      currencyProvider,
+    );
 
     return Column(
 
@@ -63,9 +73,6 @@ class BudgetProgressChart
 
         ...data.map((item) {
 
-          // final progress =
-          //     item.progress
-          //         .clamp(0.0, 1.0);
           final progress =
               item.progress;
 
@@ -74,7 +81,9 @@ class BudgetProgressChart
                   .toStringAsFixed(0);
 
           Color progressColor;
+
           Color? progressBorderColor;
+
           Color? progressBackColor;
 
           if (progress < 0.3) {
@@ -98,29 +107,53 @@ class BudgetProgressChart
 
             progressColor =
                 Colors.red;
-            progressBackColor = 
-                const Color.fromARGB(255, 211, 233, 191);
-            progressBorderColor = 
-                const Color.fromARGB(255, 235, 196, 209);
+
+            progressBackColor =
+                const Color.fromARGB(
+              255,
+              211,
+              233,
+              191,
+            );
+
+            progressBorderColor =
+                const Color.fromARGB(
+              255,
+              235,
+              196,
+              209,
+            );
           }
 
           return Card(
 
-            color: progressBackColor ?? Colors.grey.shade50,
+            color:
+                progressBackColor ??
+                    Colors.grey.shade50,
 
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12), // Keeps standard card rounding
+            shape:
+                RoundedRectangleBorder(
+
+              borderRadius:
+                  BorderRadius.circular(
+                12,
+              ),
+
               side: BorderSide(
-                color: progressBorderColor ?? Colors.grey.shade300, // Choose your border color here
-                width: 1,                    // Set border thickness
-              ),              
+
+                color:
+                    progressBorderColor ??
+                        Colors.grey.shade300,
+
+                width: 1,
+              ),
             ),
 
-            
             child: Padding(
 
               padding:
                   const EdgeInsets.only(
+
                 bottom: 20,
                 top: 10,
                 right: 10,
@@ -130,7 +163,8 @@ class BudgetProgressChart
               child: Column(
 
                 crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    CrossAxisAlignment
+                        .start,
 
                 children: [
 
@@ -146,6 +180,7 @@ class BudgetProgressChart
 
                           style:
                               const TextStyle(
+
                             fontWeight:
                                 FontWeight.bold,
                           ),
@@ -153,14 +188,25 @@ class BudgetProgressChart
                       ),
 
                       Text(
+
                         '$percentage%',
+
                         style:
                             TextStyle(
-                          fontWeight: FontWeight.w600,
+
+                          fontWeight:
+                              FontWeight.w600,
+
                           fontStyle:
                               FontStyle.italic,
-                          color: (progress < 1.0) ? Colors.green : Colors.red,
-                          
+
+                          color:
+
+                              (progress < 1.0)
+
+                                  ? Colors.green
+
+                                  : Colors.red,
                         ),
                       ),
                     ],
@@ -210,7 +256,11 @@ class BudgetProgressChart
 
                       Text(
 
-                        'Spent: ${CurrencyFormatter.format((item.spent * 100).toInt())}',
+                        'Spent: '
+                        '${CurrencyFormatter.formatDouble(
+                          amount: item.spent,
+                          currency: currency,
+                        )}',
 
                         style:
                             const TextStyle(
@@ -220,7 +270,11 @@ class BudgetProgressChart
 
                       Text(
 
-                        'Budget: ${CurrencyFormatter.format((item.budget * 100).toInt())}',
+                        'Budget: '
+                        '${CurrencyFormatter.formatDouble(
+                          amount: item.budget,
+                          currency: currency,
+                        )}',
 
                         style:
                             const TextStyle(

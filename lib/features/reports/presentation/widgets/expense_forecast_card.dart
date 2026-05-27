@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 import '../../domain/models/expense_forecast_model.dart';
 
 class ExpenseForecastCard
-    extends StatelessWidget {
+    extends ConsumerWidget {
 
   final ExpenseForecastModel
       forecast;
@@ -18,7 +20,13 @@ class ExpenseForecastCard
   @override
   Widget build(
     BuildContext context,
+    WidgetRef ref,
   ) {
+
+    final currency =
+        ref.watch(
+      currencyProvider,
+    );
 
     final projected =
         forecast
@@ -81,8 +89,9 @@ class ExpenseForecastCard
             Text(
 
               CurrencyFormatter.format(
-                (projected * 100)
+                amount: (projected * 100)
                     .round(),
+                currency: currency,
               ),
 
               style:
@@ -129,7 +138,10 @@ class ExpenseForecastCard
 
             Text(
 
-              'Daily average: ${CurrencyFormatter.format((forecast.dailyAverage * 100).round())}',
+              'Daily average: ${CurrencyFormatter.format(
+                amount: (forecast.dailyAverage * 100).round(),
+                currency: currency,
+              )}',
             ),
 
             const SizedBox(
@@ -138,7 +150,10 @@ class ExpenseForecastCard
 
             Text(
 
-              'Estimated remaining spending: ${CurrencyFormatter.format((remaining * 100).round())}',
+              'Estimated remaining spending: ${CurrencyFormatter.format(
+                amount: (remaining * 100).round(),
+                currency: currency,
+              )}',
             ),
           ],
         ),

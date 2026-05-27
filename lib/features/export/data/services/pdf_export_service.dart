@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../../../core/config/app_config.dart';
 import '../../../../shared/models/transaction_model.dart';
+import '../../domain/export_report_style.dart';
 
 class PdfExportService {
 
@@ -16,6 +17,9 @@ class PdfExportService {
 
     required String
         reportTitle,
+
+    required String
+        currencySymbol,
 
     required List<
             TransactionModel>
@@ -26,6 +30,9 @@ class PdfExportService {
     required double expense,
 
     required double balance,
+
+    required ExportReportStyle
+        style,
   })
   async {
 
@@ -70,7 +77,7 @@ class PdfExportService {
     final savingsRate =
         income <= 0
 
-            ? 0
+            ? 0.0
 
             : ((balance / income) *
                     100)
@@ -94,10 +101,6 @@ class PdfExportService {
             const pw.EdgeInsets.all(
           32,
         ),
-
-        // =================================================
-        // FOOTER
-        // =================================================
 
         footer:
             (context) {
@@ -153,416 +156,53 @@ class PdfExportService {
           );
         },
 
-        // =================================================
-        // PAGE CONTENT
-        // =================================================
-
         build: (context) {
 
-          return [
+          if (
+            style ==
+            ExportReportStyle
+                .classic
+          ) {
 
-            // =============================================
-            // HEADER
-            // =============================================
+            return _buildClassicReport(
 
-            pw.Container(
+              reportTitle:
+                  reportTitle,
 
-              padding:
-                  const pw.EdgeInsets.only(
-                bottom: 20,
-              ),
+              currencySymbol:
+                  currencySymbol,
 
-              child: pw.Column(
+              transactions:
+                  transactions,
 
-                crossAxisAlignment:
-                    pw.CrossAxisAlignment
-                        .start,
+              income: income,
 
-                children: [
+              expense: expense,
 
-                  pw.Text(
+              balance: balance,
+            );
+          }
 
-                    reportTitle,
+          return _buildModernReport(
 
-                    style:
-                        pw.TextStyle(
+            reportTitle:
+                reportTitle,
 
-                      fontSize: 28,
+            currencySymbol:
+                currencySymbol,
 
-                      fontWeight:
-                          pw.FontWeight
-                              .bold,
-                    ),
-                  ),
+            transactions:
+                transactions,
 
-                  pw.SizedBox(
-                    height: 6,
-                  ),
+            income: income,
 
-                  pw.Text(
+            expense: expense,
 
-                    AppConfig.appName,
+            balance: balance,
 
-                    style:
-                        const pw.TextStyle(
-
-                      fontSize: 14,
-
-                      color:
-                          PdfColors.grey700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            pw.Divider(
-              color:
-                  PdfColors.grey300,
-            ),
-
-            pw.SizedBox(
-              height: 24,
-            ),
-
-            // =============================================
-            // FINANCIAL SUMMARY
-            // =============================================
-
-            pw.Text(
-
-              'Financial Summary',
-
-              style:
-                  pw.TextStyle(
-
-                fontSize: 22,
-
-                fontWeight:
-                    pw.FontWeight.bold,
-              ),
-            ),
-
-            pw.SizedBox(
-              height: 20,
-            ),
-
-            pw.Row(
-
-              mainAxisAlignment:
-                  pw.MainAxisAlignment
-                      .spaceEvenly,
-
-              children: [
-
-                _summaryCard(
-
-                  title: 'Income',
-
-                  amount: income,
-
-                  color:
-                      PdfColors.green,
-
-                  symbol: '+',
-                ),
-
-                _summaryCard(
-
-                  title: 'Expense',
-
-                  amount: expense,
-
-                  color:
-                      PdfColors.red,
-
-                  symbol: '-',
-                ),
-
-                _summaryCard(
-
-                  title: 'Balance',
-
-                  amount: balance,
-
-                  color:
-                      PdfColors.blue,
-
-                  symbol: '=',
-                ),
-              ],
-            ),
-
-            pw.SizedBox(
-              height: 28,
-            ),
-
-            // =============================================
-            // FINANCIAL HEALTH
-            // =============================================
-
-            pw.Container(
-
-              padding:
-                  const pw.EdgeInsets.all(
-                18,
-              ),
-
-              decoration:
-                const pw.BoxDecoration(
-
-                color:
-                    PdfColors.blue50,
-
-                border:
-                    pw.Border(
-
-                  left:
-                      pw.BorderSide(
-
-                    color:
-                        PdfColors.blue,
-
-                    width: 4,
-                  ),
-                ),
-              ),
-
-              child: pw.Column(
-
-                crossAxisAlignment:
-                    pw.CrossAxisAlignment
-                        .start,
-
-                children: [
-
-                  pw.Text(
-
-                    'Financial Health',
-
-                    style:
-                        pw.TextStyle(
-
-                      fontSize: 17,
-
-                      fontWeight:
-                          pw.FontWeight
-                              .bold,
-                    ),
-                  ),
-
-                  pw.SizedBox(
-                    height: 14,
-                  ),
-
-                  pw.Text(
-
-                    'Savings Rate: '
-                    '${savingsRate.toStringAsFixed(1)}%',
-
-                    style:
-                        const pw.TextStyle(
-                      fontSize: 12,
-                    ),
-                  ),
-
-                  pw.SizedBox(
-                    height: 8,
-                  ),
-
-                  pw.Text(
-
-                    balance >= 0
-
-                        ? 'Status: Healthy savings pattern'
-
-                        : 'Status: Spending exceeds income',
-
-                    style:
-                        const pw.TextStyle(
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            pw.SizedBox(
-              height: 32,
-            ),
-
-            // =============================================
-            // TRANSACTIONS
-            // =============================================
-
-            pw.Text(
-
-              'Transactions',
-
-              style:
-                  pw.TextStyle(
-
-                fontSize: 22,
-
-                fontWeight:
-                    pw.FontWeight.bold,
-              ),
-            ),
-
-            pw.SizedBox(
-              height: 16,
-            ),
-
-            pw.Table(
-
-              border:
-                  pw.TableBorder.all(
-
-                color:
-                    PdfColors.grey300,
-
-                width: 0.5,
-              ),
-
-              columnWidths: {
-
-                0:
-                    const pw.FixedColumnWidth(
-                  70,
-                ),
-
-                1:
-                    const pw.FixedColumnWidth(
-                  70,
-                ),
-
-                2:
-                    const pw.FixedColumnWidth(
-                  90,
-                ),
-              },
-
-              children: [
-
-                // =========================================
-                // TABLE HEADER
-                // =========================================
-
-                pw.TableRow(
-
-                  decoration:
-                      pw.BoxDecoration(
-
-                    color:
-                        PdfColor.fromHex(
-                      '#1565C0',
-                    ),
-                  ),
-
-                  children: [
-
-                    _tableHeader(
-                      'Date',
-                    ),
-
-                    _tableHeader(
-                      'Type',
-                    ),
-
-                    _tableHeader(
-                      'Amount',
-                    ),
-
-                    _tableHeader(
-                      'Notes',
-                    ),
-                  ],
-                ),
-
-                // =========================================
-                // TABLE ROWS
-                // =========================================
-
-                ...transactions.map(
-
-                  (t) {
-
-                    final amount =
-                        t.amount /
-                            100;
-
-                    return pw.TableRow(
-
-                      decoration:
-                          pw.BoxDecoration(
-
-                        color:
-
-                            t.type ==
-                                    'income'
-
-                                ? PdfColors.green50
-
-                                : PdfColors.red50,
-                      ),
-
-                      children: [
-
-                        _tableCell(
-
-                          '${t.transactionDate.day}/'
-                          '${t.transactionDate.month}/'
-                          '${t.transactionDate.year}',
-                        ),
-
-                        _tableCell(
-                          t.type
-                              .toUpperCase(),
-                        ),
-
-                        _tableCell(
-                          '₹ ${amount.toStringAsFixed(2)}',
-                        ),
-
-                        _tableCell(
-                          t.notes ?? '',
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
-
-            pw.SizedBox(
-              height: 24,
-            ),
-
-            // =============================================
-            // TOTAL TRANSACTIONS
-            // =============================================
-
-            pw.Align(
-
-              alignment:
-                  pw.Alignment.centerRight,
-
-              child: pw.Text(
-
-                'Total Transactions: '
-                '${transactions.length}',
-
-                style:
-                    pw.TextStyle(
-
-                  fontWeight:
-                      pw.FontWeight.bold,
-
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ];
+            savingsRate:
+                savingsRate.toDouble(),
+          );
         },
       ),
     );
@@ -586,6 +226,511 @@ class PdfExportService {
   }
 
   // =======================================================
+  // CLASSIC REPORT
+  // =======================================================
+
+  List<pw.Widget>
+      _buildClassicReport({
+
+    required String
+        reportTitle,
+
+    required String
+        currencySymbol,
+
+    required List<
+            TransactionModel>
+        transactions,
+
+    required double income,
+
+    required double expense,
+
+    required double balance,
+  }) {
+
+    return [
+
+      pw.Text(
+
+        reportTitle,
+
+        style:
+            pw.TextStyle(
+
+          fontSize: 28,
+
+          fontWeight:
+              pw.FontWeight.bold,
+        ),
+      ),
+
+      pw.SizedBox(
+        height: 8,
+      ),
+
+      pw.Text(
+        AppConfig.appName,
+      ),
+
+      pw.SizedBox(
+        height: 24,
+      ),
+
+      pw.Container(
+
+        padding:
+            const pw.EdgeInsets.all(
+          16,
+        ),
+
+        decoration:
+            pw.BoxDecoration(
+
+          border:
+              pw.Border.all(
+            color:
+                PdfColors.grey400,
+          ),
+        ),
+
+        child: pw.Column(
+
+          crossAxisAlignment:
+              pw.CrossAxisAlignment
+                  .start,
+
+          children: [
+
+            pw.Text(
+
+              'Financial Summary',
+
+              style:
+                  pw.TextStyle(
+
+                fontWeight:
+                    pw.FontWeight.bold,
+
+                fontSize: 18,
+              ),
+            ),
+
+            pw.SizedBox(
+              height: 12,
+            ),
+
+            pw.Text(
+              'Income: $currencySymbol ${income.toStringAsFixed(2)}',
+            ),
+
+            pw.Text(
+              'Expense: $currencySymbol ${expense.toStringAsFixed(2)}',
+            ),
+
+            pw.Text(
+              'Balance: $currencySymbol ${balance.toStringAsFixed(2)}',
+            ),
+          ],
+        ),
+      ),
+
+      pw.SizedBox(
+        height: 28,
+      ),
+
+      pw.Text(
+
+        'Transactions',
+
+        style:
+            pw.TextStyle(
+
+          fontSize: 20,
+
+          fontWeight:
+              pw.FontWeight.bold,
+        ),
+      ),
+
+      pw.SizedBox(
+        height: 12,
+      ),
+
+      _transactionsTable(
+        transactions:
+            transactions,
+
+        currencySymbol:
+            currencySymbol,
+      ),
+    ];
+  }
+
+  // =======================================================
+  // MODERN REPORT
+  // =======================================================
+
+  List<pw.Widget>
+      _buildModernReport({
+
+    required String
+        reportTitle,
+
+    required String
+        currencySymbol,
+
+    required List<
+            TransactionModel>
+        transactions,
+
+    required double income,
+
+    required double expense,
+
+    required double balance,
+
+    required double
+        savingsRate,
+  }) {
+
+    return [
+
+      // =============================================
+      // HEADER
+      // =============================================
+
+      pw.Container(
+
+        padding:
+            const pw.EdgeInsets.only(
+          bottom: 20,
+        ),
+
+        child: pw.Column(
+
+          crossAxisAlignment:
+              pw.CrossAxisAlignment
+                  .start,
+
+          children: [
+
+            pw.Text(
+
+              reportTitle,
+
+              style:
+                  pw.TextStyle(
+
+                fontSize: 28,
+
+                fontWeight:
+                    pw.FontWeight.bold,
+              ),
+            ),
+
+            pw.SizedBox(
+              height: 6,
+            ),
+
+            pw.Text(
+
+              AppConfig.appName,
+
+              style:
+                  const pw.TextStyle(
+
+                fontSize: 14,
+
+                color:
+                    PdfColors.grey700,
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      pw.Divider(
+        color:
+            PdfColors.grey300,
+      ),
+
+      pw.SizedBox(
+        height: 24,
+      ),
+
+      // =============================================
+      // SUMMARY
+      // =============================================
+
+      pw.Text(
+
+        'Financial Summary',
+
+        style:
+            pw.TextStyle(
+
+          fontSize: 22,
+
+          fontWeight:
+              pw.FontWeight.bold,
+        ),
+      ),
+
+      pw.SizedBox(
+        height: 20,
+      ),
+
+      pw.Row(
+
+        mainAxisAlignment:
+            pw.MainAxisAlignment
+                .spaceBetween,
+
+        children: [
+
+          _summaryCard(
+
+            title: 'Income',
+
+            amount: income,
+
+            color:
+                PdfColors.green,
+
+            symbol: '+',
+
+            currencySymbol:
+                currencySymbol,
+          ),
+
+          _summaryCard(
+
+            title: 'Expense',
+
+            amount: expense,
+
+            color:
+                PdfColors.red,
+
+            symbol: '-',
+
+            currencySymbol:
+                currencySymbol,
+          ),
+
+          _summaryCard(
+
+            title: 'Balance',
+
+            amount: balance,
+
+            color:
+                balance >= 0
+
+                    ? PdfColors.blue
+
+                    : PdfColors.orange,
+
+            symbol: '=',
+
+            currencySymbol:
+                currencySymbol,
+          ),
+        ],
+      ),
+
+      pw.SizedBox(
+        height: 28,
+      ),
+
+      // =============================================
+      // SAVINGS RATE
+      // =============================================
+
+      pw.Container(
+
+        padding:
+            const pw.EdgeInsets.all(
+          16,
+        ),
+
+        decoration:
+            pw.BoxDecoration(
+
+          border:
+              pw.Border.all(
+            color:
+                PdfColors.grey300,
+          ),
+        ),
+
+        child: pw.Column(
+
+          crossAxisAlignment:
+              pw.CrossAxisAlignment
+                  .start,
+
+          children: [
+
+            pw.Text(
+
+              'Savings Rate',
+
+              style:
+                  pw.TextStyle(
+
+                fontWeight:
+                    pw.FontWeight.bold,
+
+                fontSize: 16,
+              ),
+            ),
+
+            pw.SizedBox(
+              height: 10,
+            ),
+
+            pw.Text(
+              '${savingsRate.toStringAsFixed(1)}%',
+            ),
+          ],
+        ),
+      ),
+
+      pw.SizedBox(
+        height: 28,
+      ),
+
+      pw.Text(
+
+        'Transactions',
+
+        style:
+            pw.TextStyle(
+
+          fontSize: 22,
+
+          fontWeight:
+              pw.FontWeight.bold,
+        ),
+      ),
+
+      pw.SizedBox(
+        height: 16,
+      ),
+
+      _transactionsTable(
+        transactions:
+            transactions,
+
+        currencySymbol:
+            currencySymbol,
+      ),
+    ];
+  }
+
+  // =======================================================
+  // TRANSACTIONS TABLE
+  // =======================================================
+
+  pw.Widget _transactionsTable({
+
+    required List<
+            TransactionModel>
+        transactions,
+
+    required String
+        currencySymbol,
+  }) {
+
+    return pw.Table(
+
+      border:
+          pw.TableBorder.all(
+        color:
+            PdfColors.grey300,
+      ),
+
+      columnWidths: {
+
+        0: const pw.FlexColumnWidth(2),
+        1: const pw.FlexColumnWidth(2),
+        2: const pw.FlexColumnWidth(2),
+        3: const pw.FlexColumnWidth(4),
+      },
+
+      children: [
+
+        pw.TableRow(
+
+          decoration:
+              const pw.BoxDecoration(
+
+            color:
+                PdfColors.grey200,
+          ),
+
+          children: [
+
+            _tableHeader(
+              'Date',
+            ),
+
+            _tableHeader(
+              'Type',
+            ),
+
+            _tableHeader(
+              'Amount',
+            ),
+
+            _tableHeader(
+              'Notes',
+            ),
+          ],
+        ),
+
+        ...transactions.map(
+
+          (t) {
+
+            final amount =
+                t.amount / 100;
+
+            return pw.TableRow(
+
+              children: [
+
+                _tableCell(
+
+                  '${t.transactionDate.day}/'
+                  '${t.transactionDate.month}/'
+                  '${t.transactionDate.year}',
+                ),
+
+                _tableCell(
+                  t.type,
+                ),
+
+                _tableCell(
+
+                  '$currencySymbol '
+                  '${amount.toStringAsFixed(2)}',
+                ),
+
+                _tableCell(
+                  t.notes ?? '',
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // =======================================================
   // SUMMARY CARD
   // =======================================================
 
@@ -598,6 +743,8 @@ class PdfExportService {
     required PdfColor color,
 
     required String symbol,
+
+    required String currencySymbol,
   }) {
 
     return pw.Container(
@@ -612,11 +759,12 @@ class PdfExportService {
       decoration:
           pw.BoxDecoration(
 
-        color: color,
+        border:
+            pw.Border.all(
 
-        borderRadius:
-            pw.BorderRadius.circular(
-          12,
+          color: color,
+
+          width: 1.5,
         ),
       ),
 
@@ -628,44 +776,24 @@ class PdfExportService {
 
         children: [
 
-          pw.Container(
+          pw.Text(
 
-            width: 30,
+            symbol,
 
-            height: 30,
+            style:
+                pw.TextStyle(
 
-            alignment:
-                pw.Alignment.center,
+              color: color,
 
-            decoration:
-                const pw.BoxDecoration(
+              fontSize: 20,
 
-              color:
-                  PdfColors.white,
-
-              shape:
-                  pw.BoxShape.circle,
-            ),
-
-            child: pw.Text(
-
-              symbol,
-
-              style:
-                  pw.TextStyle(
-
-                color: color,
-
-                fontSize: 16,
-
-                fontWeight:
-                    pw.FontWeight.bold,
-              ),
+              fontWeight:
+                  pw.FontWeight.bold,
             ),
           ),
 
           pw.SizedBox(
-            height: 16,
+            height: 12,
           ),
 
           pw.Text(
@@ -673,30 +801,30 @@ class PdfExportService {
             title,
 
             style:
-                const pw.TextStyle(
-
-              color:
-                  PdfColors.white,
+                pw.TextStyle(
 
               fontSize: 14,
+
+              fontWeight:
+                  pw.FontWeight.bold,
             ),
           ),
 
           pw.SizedBox(
-            height: 10,
+            height: 6,
           ),
 
           pw.Text(
 
-            '₹ ${amount.toStringAsFixed(2)}',
+            '$currencySymbol '
+            '${amount.toStringAsFixed(2)}',
 
             style:
                 pw.TextStyle(
 
-              color:
-                  PdfColors.white,
+              fontSize: 16,
 
-              fontSize: 20,
+              color: color,
 
               fontWeight:
                   pw.FontWeight.bold,
@@ -718,10 +846,8 @@ class PdfExportService {
     return pw.Padding(
 
       padding:
-          const pw.EdgeInsets.symmetric(
-
-        horizontal: 8,
-        vertical: 10,
+          const pw.EdgeInsets.all(
+        10,
       ),
 
       child: pw.Text(
@@ -731,13 +857,8 @@ class PdfExportService {
         style:
             pw.TextStyle(
 
-          color:
-              PdfColors.white,
-
           fontWeight:
               pw.FontWeight.bold,
-
-          fontSize: 11,
         ),
       ),
     );
@@ -754,21 +875,12 @@ class PdfExportService {
     return pw.Padding(
 
       padding:
-          const pw.EdgeInsets.symmetric(
-
-        horizontal: 8,
-        vertical: 10,
+          const pw.EdgeInsets.all(
+        10,
       ),
 
       child: pw.Text(
-
         text,
-
-        style:
-            const pw.TextStyle(
-
-          fontSize: 11,
-        ),
       ),
     );
   }

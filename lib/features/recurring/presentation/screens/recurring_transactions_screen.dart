@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../providers/recurring_provider.dart';
 import 'add_recurring_transaction_screen.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 class RecurringTransactionsScreen
     extends ConsumerWidget {
@@ -21,6 +22,11 @@ class RecurringTransactionsScreen
     final recurringAsync =
         ref.watch(
       recurringTransactionsProvider,
+    );
+
+    final currency =
+        ref.watch(
+      currencyProvider,
     );
 
     return Scaffold(
@@ -140,7 +146,8 @@ class RecurringTransactionsScreen
                       Text(
 
                         CurrencyFormatter.format(
-                          item.amount,
+                          amount: item.amount,
+                          currency: currency,
                         ),
 
                         style: const TextStyle(

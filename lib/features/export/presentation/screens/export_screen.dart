@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:isar/isar.dart';
+
 import '../../../../shared/providers/database_provider.dart';
 import '../../../../shared/models/transaction_model.dart';
+import '../../../../shared/providers/currency_provider.dart';
+
+import '../../domain/export_report_style.dart';
+
 import '../../data/services/csv_export_service.dart';
 import '../../data/services/pdf_export_service.dart';
 
@@ -25,6 +30,9 @@ class _ExportScreenState
         ExportScreen> {
 
   bool exporting = false;
+
+  ExportReportStyle selectedStyle =
+      ExportReportStyle.modern;
 
   final TextEditingController
       reportTitleController =
@@ -93,33 +101,35 @@ class _ExportScreenState
 
     } catch (e, s) {
 
-        debugPrint(
-          'CSV EXPORT ERROR:',
-        );
+      debugPrint(
+        'CSV EXPORT ERROR:',
+      );
 
-        debugPrint(
-          e.toString(),
-        );
+      debugPrint(
+        e.toString(),
+      );
 
-        debugPrint(
-          s.toString(),
-        );
+      debugPrint(
+        s.toString(),
+      );
 
-        if (!mounted) {
-          return;
-        }
+      if (!mounted) {
+        return;
+      }
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
 
         const SnackBar(
-            content: Text(
-              'Unable to export CSV',
-            ),
+
+          content: Text(
+            'Unable to export CSV',
           ),
-        );
-      } finally {
+        ),
+      );
+
+    } finally {
 
       if (mounted) {
 
@@ -204,6 +214,11 @@ class _ExportScreenState
       final balance =
           income - expense;
 
+      final currency =
+          ref.read(
+        currencyProvider,
+      );
+
       final service =
           PdfExportService();
 
@@ -213,6 +228,12 @@ class _ExportScreenState
 
         reportTitle:
             reportTitle,
+
+        style:
+            selectedStyle,
+
+        currencySymbol:
+            currency.symbol,
 
         transactions:
             transactions,
@@ -246,34 +267,35 @@ class _ExportScreenState
 
     } catch (e, s) {
 
-        debugPrint(
-          'PDF EXPORT ERROR:',
-        );
+      debugPrint(
+        'PDF EXPORT ERROR:',
+      );
 
-        debugPrint(
-          e.toString(),
-        );
+      debugPrint(
+        e.toString(),
+      );
 
-        debugPrint(
-          s.toString(),
-        );
+      debugPrint(
+        s.toString(),
+      );
 
-        if (!mounted) {
-          return;
-        }
+      if (!mounted) {
+        return;
+      }
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
 
-          SnackBar(
+        SnackBar(
 
-            content: Text(
-              'PDF Export Error: $e',
-            ),
+          content: Text(
+            'PDF Export Error: $e',
           ),
-        );
-      } finally {
+        ),
+      );
+
+    } finally {
 
       if (mounted) {
 
@@ -436,6 +458,122 @@ class _ExportScreenState
                     'This title will appear at the top of the exported PDF report.',
 
                     style: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(
+            height: 24,
+          ),
+
+          // ===================================================
+          // REPORT STYLE
+          // ===================================================
+
+          Card(
+
+            child: Padding(
+
+              padding:
+                  const EdgeInsets.all(
+                16,
+              ),
+
+              child: Column(
+
+                crossAxisAlignment:
+                    CrossAxisAlignment
+                        .start,
+
+                children: [
+
+                  const Text(
+
+                    'Report Style',
+
+                    style: TextStyle(
+
+                      fontSize: 18,
+
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(
+                    height: 16,
+                  ),
+
+                  SegmentedButton<
+                      ExportReportStyle>(
+
+                    segments: const [
+
+                      ButtonSegment(
+
+                        value:
+                            ExportReportStyle
+                                .classic,
+
+                        label: Text(
+                          'Classic',
+                        ),
+
+                        icon: Icon(
+                          Icons.description,
+                        ),
+                      ),
+
+                      ButtonSegment(
+
+                        value:
+                            ExportReportStyle
+                                .modern,
+
+                        label: Text(
+                          'Modern',
+                        ),
+
+                        icon: Icon(
+                          Icons.auto_graph,
+                        ),
+                      ),
+                    ],
+
+                    selected: {
+                      selectedStyle,
+                    },
+
+                    onSelectionChanged:
+                        (value) {
+
+                      setState(() {
+
+                        selectedStyle =
+                            value.first;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(
+                    height: 14,
+                  ),
+
+                  Text(
+
+                    selectedStyle ==
+                            ExportReportStyle
+                                .classic
+
+                        ? 'Simple printable financial report with compact layout.'
+
+                        : 'Modern analytics-style report with summary cards and insights.',
+
+                    style: const TextStyle(
                       color: Colors.grey,
                     ),
                   ),

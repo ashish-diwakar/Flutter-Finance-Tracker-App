@@ -8,6 +8,7 @@ import '../../../dashboard/presentation/providers/income_provider.dart';
 import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
 import '../../../dashboard/presentation/providers/transactions_provider.dart';
 import '../providers/transaction_repository_provider.dart';
+import '../../../../shared/providers/currency_provider.dart';
 import 'add_transaction_screen.dart';
 import 'transaction_details_screen.dart';
 
@@ -158,6 +159,11 @@ class TransactionListScreen
       filteredTransactionsProvider,
     );
 
+    final currency =
+        ref.watch(
+      currencyProvider,
+    );
+
     return transactionsAsync.when(
 
       data: (transactions) {
@@ -254,7 +260,8 @@ class TransactionListScreen
 
                 title: Text(
                   CurrencyFormatter.format(
-                    transaction.amount,
+                    amount: transaction.amount,
+                    currency: currency,
                   ),
                 ),
 

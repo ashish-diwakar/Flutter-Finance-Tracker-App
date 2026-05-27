@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 class MonthlySummaryCard
-    extends StatelessWidget {
+    extends ConsumerWidget {
 
   final int income;
   final int expense;
@@ -15,10 +17,18 @@ class MonthlySummaryCard
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
 
     final balance =
         income - expense;
+
+    final currency =
+        ref.watch(
+      currencyProvider,
+    );
 
     return Card(
 
@@ -43,7 +53,8 @@ class MonthlySummaryCard
                     Text(
                       CurrencyFormatter
                           .format(
-                        income,
+                        amount: income,
+                        currency: currency,
                       ),
                     ),
                   ],
@@ -57,7 +68,8 @@ class MonthlySummaryCard
                     Text(
                       CurrencyFormatter
                           .format(
-                        expense,
+                        amount: expense,
+                        currency: currency,
                       ),
                     ),
                   ],
@@ -78,7 +90,8 @@ class MonthlySummaryCard
 
             Text(
               CurrencyFormatter.format(
-                balance,
+                amount: balance,
+                currency: currency,
               ),
 
               style: const TextStyle(
