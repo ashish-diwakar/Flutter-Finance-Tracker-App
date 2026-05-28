@@ -17,8 +17,12 @@ import '../widgets/financial_insights_section.dart';
 import '../widgets/monthly_grouped_bar_chart.dart';
 import '../widgets/monthly_summary_card.dart';
 import '../widgets/monthly_trend_chart.dart';
+
 import '../providers/financial_health_provider.dart';
 import '../widgets/financial_health_card.dart';
+
+import '../../../recurring/presentation/providers/recurring_analytics_provider.dart';
+import '../../../recurring/presentation/widgets/monthly_commitments_card.dart';
 
 import 'budget_alerts_screen.dart';
 
@@ -96,6 +100,34 @@ class _ReportsScreenState
     ref.invalidate(
       financialHealthProvider,
     );
+
+    ref.invalidate(
+      recurringAnalyticsProvider,
+    );
+  }
+
+  TextStyle get sectionTitleStyle {
+
+    return const TextStyle(
+
+      fontSize: 22,
+
+      fontWeight:
+          FontWeight.w700,
+    );
+  }
+
+  TextStyle get sectionSubtitleStyle {
+
+    return TextStyle(
+
+      color:
+          Colors.grey.shade600,
+
+      height: 1.4,
+
+      fontSize: 14,
+    );
   }
 
   @override
@@ -145,6 +177,11 @@ class _ReportsScreenState
     final healthAsync =
         ref.watch(
       financialHealthProvider,
+    );
+
+    final recurringAsync =
+        ref.watch(
+      recurringAnalyticsProvider,
     );
 
     return Scaffold(
@@ -315,37 +352,31 @@ class _ReportsScreenState
             ),
 
             const SizedBox(
-              height: 20,
+              height: 24,
             ),
 
             // =====================================================
             // FINANCIAL FORECAST
             // =====================================================
 
-            const Text(
+            Text(
 
-              'Financial Forecast',
+              'Expense Forecast',
 
-              style: TextStyle(
-
-                fontSize: 20,
-
-                fontWeight:
-                    FontWeight.bold,
-              ),
+              style:
+                  sectionTitleStyle,
             ),
 
             const SizedBox(
               height: 6,
             ),
 
-            const Text(
+            Text(
 
-              'Predict future spending patterns based on current behavior.',
+              'Projected spending trends based on recent financial activity.',
 
-              style: TextStyle(
-                color: Colors.grey,
-              ),
+              style:
+                  sectionSubtitleStyle,
             ),
 
             const SizedBox(
@@ -396,37 +427,31 @@ class _ReportsScreenState
             ),
 
             const SizedBox(
-              height: 28,
+              height: 32,
             ),
-
 
             // =====================================================
             // FINANCIAL HEALTH
-            // =====================================================            
-            const Text(
+            // =====================================================
 
-              'Financial Health',
+            Text(
 
-              style: TextStyle(
+              'Financial Health Score',
 
-                fontSize: 20,
-
-                fontWeight:
-                    FontWeight.bold,
-              ),
+              style:
+                  sectionTitleStyle,
             ),
 
             const SizedBox(
               height: 6,
             ),
 
-            const Text(
+            Text(
 
-              'Your Financial Health based on current spendings.',
+              'Analyze your financial stability, savings discipline and spending efficiency.',
 
-              style: TextStyle(
-                color: Colors.grey,
-              ),
+              style:
+                  sectionSubtitleStyle,
             ),
 
             const SizedBox(
@@ -453,10 +478,63 @@ class _ReportsScreenState
                         CircularProgressIndicator(),
                   ),
             ),
+
             const SizedBox(
-              height: 28,
+              height: 32,
             ),
 
+            // =====================================================
+            // RECURRING COMMITMENTS
+            // =====================================================
+
+            Text(
+
+              'Monthly Commitments',
+
+              style:
+                  sectionTitleStyle,
+            ),
+
+            const SizedBox(
+              height: 6,
+            ),
+
+            Text(
+
+              'Track fixed monthly obligations and recurring financial commitments.',
+
+              style:
+                  sectionSubtitleStyle,
+            ),
+
+            const SizedBox(
+              height: 16,
+            ),
+
+            recurringAsync.when(
+
+              data: (analytics) {
+
+                return MonthlyCommitmentsCard(
+                  analytics: analytics,
+                );
+              },
+
+              loading: () =>
+
+                  const Center(
+
+                    child:
+                        CircularProgressIndicator(),
+                  ),
+
+              error: (_, __) =>
+                  const SizedBox(),
+            ),
+
+            const SizedBox(
+              height: 32,
+            ),
 
             // =====================================================
             // AI INSIGHTS
@@ -531,41 +609,35 @@ class _ReportsScreenState
             ),
 
             const SizedBox(
-              height: 28,
+              height: 32,
             ),
 
             // =====================================================
             // ANALYTICS HEADER
             // =====================================================
 
-            const Text(
+            Text(
 
-              'Expense Analytics',
+              'Financial Analytics',
 
-              style: TextStyle(
-
-                fontSize: 20,
-
-                fontWeight:
-                    FontWeight.bold,
-              ),
+              style:
+                  sectionTitleStyle,
             ),
 
             const SizedBox(
               height: 6,
             ),
 
-            const Text(
+            Text(
 
-              'Visualize spending trends, category distribution and financial performance.',
+              'Explore interactive insights across spending patterns, budgets and income trends.',
 
-              style: TextStyle(
-                color: Colors.grey,
-              ),
+              style:
+                  sectionSubtitleStyle,
             ),
 
             const SizedBox(
-              height: 20,
+              height: 24,
             ),
 
             // =====================================================
@@ -574,12 +646,14 @@ class _ReportsScreenState
 
             const Text(
 
-              'Chart Type',
+              'Visualization Mode',
 
               style: TextStyle(
 
                 fontWeight:
                     FontWeight.w600,
+
+                fontSize: 15,
               ),
             ),
 
@@ -688,7 +762,7 @@ class _ReportsScreenState
             ),
 
             const SizedBox(
-              height: 28,
+              height: 32,
             ),
 
             // =====================================================
@@ -709,10 +783,10 @@ class _ReportsScreenState
                         .donut:
 
                     title =
-                        'Expense Distribution';
+                        'Spending Distribution';
 
                     subtitle =
-                        'Analyze proportional category spending with a modern donut chart.';
+                        'Understand how expenses are distributed across spending categories.';
 
                     break;
 
@@ -720,10 +794,10 @@ class _ReportsScreenState
                         .pie:
 
                     title =
-                        'Expense Share Analysis';
+                        'Category Contribution';
 
                     subtitle =
-                        'View category-wise contribution to total expenses.';
+                        'Compare category contribution to your total monthly spending.';
 
                     break;
 
@@ -731,10 +805,10 @@ class _ReportsScreenState
                         .groupedBar:
 
                     title =
-                        'Income vs Expense';
+                        'Income & Expense Trends';
 
                     subtitle =
-                        'Compare monthly income and expense performance.';
+                        'Analyze monthly cash flow performance across income and expenses.';
 
                     break;
 
@@ -742,10 +816,10 @@ class _ReportsScreenState
                         .progress:
 
                     title =
-                        'Budget Utilization';
+                        'Budget Performance';
 
                     subtitle =
-                        'Track budget consumption across categories.';
+                        'Monitor category-wise budget usage and spending efficiency.';
 
                     break;
 
@@ -753,10 +827,10 @@ class _ReportsScreenState
                         .trends:
 
                     title =
-                        'Monthly Trends';
+                        'Financial Growth Trends';
 
                     subtitle =
-                        'Track financial growth and spending patterns over time.';
+                        'Visualize long-term income growth and expense movement patterns.';
 
                     break;
                 }
@@ -776,10 +850,10 @@ class _ReportsScreenState
                       style:
                           const TextStyle(
 
-                        fontSize: 18,
+                        fontSize: 20,
 
                         fontWeight:
-                            FontWeight.bold,
+                            FontWeight.w700,
                       ),
                     ),
 
@@ -792,9 +866,12 @@ class _ReportsScreenState
                       subtitle,
 
                       style:
-                          const TextStyle(
+                          TextStyle(
+
                         color:
-                            Colors.grey,
+                            Colors.grey.shade600,
+
+                        height: 1.4,
                       ),
                     ),
                   ],
@@ -824,10 +901,6 @@ class _ReportsScreenState
                 ),
 
                 builder: (_) {
-
-                  // =========================================
-                  // GROUPED BAR
-                  // =========================================
 
                   if (selectedChart ==
                       ReportChartType
@@ -882,10 +955,6 @@ class _ReportsScreenState
                       ),
                     );
                   }
-
-                  // =========================================
-                  // BUDGET CHART
-                  // =========================================
 
                   if (selectedChart ==
                       ReportChartType
@@ -964,10 +1033,6 @@ class _ReportsScreenState
                     );
                   }
 
-                  // =========================================
-                  // TRENDS
-                  // =========================================
-
                   if (selectedChart ==
                       ReportChartType
                           .trends) {
@@ -1042,10 +1107,6 @@ class _ReportsScreenState
                       ),
                     );
                   }
-
-                  // =========================================
-                  // PIE / DONUT
-                  // =========================================
 
                   return categoryAsync.when(
 

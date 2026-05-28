@@ -43,33 +43,33 @@ class BudgetProgressChart
 
       children: [
 
-        const Text(
+        // const Text(
 
-          'Budget Progress',
+        //   'Budget Progress',
 
-          style: TextStyle(
+        //   style: TextStyle(
 
-            fontSize: 18,
+        //     fontSize: 18,
 
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
+        //     fontWeight:
+        //         FontWeight.bold,
+        //   ),
+        // ),
 
-        const SizedBox(height: 4),
+        // const SizedBox(height: 4),
 
-        const Text(
+        // const Text(
 
-          'Monitor spending against your limits',
+        //   'Monitor spending against your limits',
 
-          style: TextStyle(
-            color: Colors.grey,
-          ),
-        ),
+        //   style: TextStyle(
+        //     color: Colors.grey,
+        //   ),
+        // ),
 
-        const SizedBox(
-          height: 20,
-        ),
+        // const SizedBox(
+        //   height: 20,
+        // ),
 
         ...data.map((item) {
 

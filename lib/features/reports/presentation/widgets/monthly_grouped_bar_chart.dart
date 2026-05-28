@@ -51,33 +51,33 @@ class MonthlyGroupedBarChart
 
       children: [
 
-        const Text(
+        // const Text(
 
-          'Overall Monthly Income vs Expense Comparison',
+        //   'Overall Monthly Income vs Expense Comparison',
 
-          style: TextStyle(
+        //   style: TextStyle(
 
-            fontSize: 18,
+        //     fontSize: 18,
 
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
+        //     fontWeight:
+        //         FontWeight.bold,
+        //   ),
+        // ),
 
-        const SizedBox(height: 4),
+        // const SizedBox(height: 4),
 
-        const Text(
+        // const Text(
 
-          'Analyze income and expense trends',
+        //   'Analyze income and expense trends',
 
-          style: TextStyle(
-            color: Colors.grey,
-          ),
-        ),
+        //   style: TextStyle(
+        //     color: Colors.grey,
+        //   ),
+        // ),
 
-        const SizedBox(
-          height: 20,
-        ),
+        // const SizedBox(
+        //   height: 20,
+        // ),
 
         SizedBox(
 

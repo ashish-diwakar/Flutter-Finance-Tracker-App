@@ -55,19 +55,19 @@ class ExpenseForecastCard
 
           children: [
 
-            Row(
+            const Row(
 
               children: [
 
-                const Icon(
+                Icon(
                   Icons.insights,
                 ),
 
-                const SizedBox(
+                SizedBox(
                   width: 8,
                 ),
 
-                const Text(
+                Text(
 
                   'Expense Forecast',
 

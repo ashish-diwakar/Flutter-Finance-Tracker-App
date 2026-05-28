@@ -35,30 +35,30 @@ class ExpensePieChart
 
       children: [
         
-        const Text(
+        // const Text(
 
-          'Expense Breakdown',
+        //   'Expense Breakdown',
 
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
+        //   style: TextStyle(
+        //     fontSize: 18,
+        //     fontWeight:
+        //         FontWeight.bold,
+        //   ),
+        // ),
 
-        const SizedBox(height: 4),
+        // const SizedBox(height: 4),
 
-        const Text(
+        // const Text(
 
-          'See where your money goes in Visual presentation',
+        //   'See where your money goes in Visual presentation',
 
-          style: TextStyle(
-            color: Colors.grey,
-          ),
-        ),
-        const SizedBox(
-          height: 16,
-        ),
+        //   style: TextStyle(
+        //     color: Colors.grey,
+        //   ),
+        // ),
+        // const SizedBox(
+        //   height: 16,
+        // ),
 
         SizedBox(
 
