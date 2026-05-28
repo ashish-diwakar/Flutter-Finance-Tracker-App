@@ -17,6 +17,8 @@ import '../widgets/financial_insights_section.dart';
 import '../widgets/monthly_grouped_bar_chart.dart';
 import '../widgets/monthly_summary_card.dart';
 import '../widgets/monthly_trend_chart.dart';
+import '../providers/financial_health_provider.dart';
+import '../widgets/financial_health_card.dart';
 
 import 'budget_alerts_screen.dart';
 
@@ -90,6 +92,10 @@ class _ReportsScreenState
     ref.invalidate(
       financialInsightsProvider,
     );
+
+    ref.invalidate(
+      financialHealthProvider,
+    );
   }
 
   @override
@@ -134,6 +140,11 @@ class _ReportsScreenState
     final insightsAsync =
         ref.watch(
       financialInsightsProvider,
+    );
+
+    final healthAsync =
+        ref.watch(
+      financialHealthProvider,
     );
 
     return Scaffold(
@@ -387,6 +398,65 @@ class _ReportsScreenState
             const SizedBox(
               height: 28,
             ),
+
+
+            // =====================================================
+            // FINANCIAL HEALTH
+            // =====================================================            
+            const Text(
+
+              'Financial Health',
+
+              style: TextStyle(
+
+                fontSize: 20,
+
+                fontWeight:
+                    FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(
+              height: 6,
+            ),
+
+            const Text(
+
+              'Your Financial Health based on current spendings.',
+
+              style: TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+
+            const SizedBox(
+              height: 16,
+            ),
+
+            healthAsync.when(
+
+              data: (health) {
+
+                return FinancialHealthCard(
+                  health: health,
+                );
+              },
+
+              error: (_, __) =>
+                  const SizedBox(),
+
+              loading: () =>
+
+                  const Center(
+
+                    child:
+                        CircularProgressIndicator(),
+                  ),
+            ),
+            const SizedBox(
+              height: 28,
+            ),
+
 
             // =====================================================
             // AI INSIGHTS
