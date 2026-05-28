@@ -88,21 +88,21 @@ class _TransactionListContainerScreenState
 
         actions: [
 
-          IconButton(
-            onPressed: () {
+          // IconButton(
+          //   onPressed: () {
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const ReportsScreen(),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.bar_chart,
-            ),
-          ),
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (_) =>
+          //             const ReportsScreen(),
+          //       ),
+          //     );
+          //   },
+          //   icon: const Icon(
+          //     Icons.bar_chart,
+          //   ),
+          // ),
 
           IconButton(
 
@@ -127,21 +127,21 @@ class _TransactionListContainerScreenState
                   ),
           ),
 
-          IconButton(
-            onPressed: () {
+          // IconButton(
+          //   onPressed: () {
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const SettingsScreen(),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.settings,
-            ),
-          ),
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (_) =>
+          //             const SettingsScreen(),
+          //       ),
+          //     );
+          //   },
+          //   icon: const Icon(
+          //     Icons.settings,
+          //   ),
+          // ),
 
           IconButton(
             onPressed: () async {
