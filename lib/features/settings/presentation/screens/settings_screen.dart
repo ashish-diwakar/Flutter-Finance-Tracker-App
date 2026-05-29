@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+
 import '../../../accounts/presentation/screens/manage_accounts_screen.dart';
 import '../../../backup/presentation/screens/backup_screen.dart';
 import '../../../categories/presentation/screens/manage_categories_screen.dart';
@@ -9,6 +10,7 @@ import '../../../recurring/presentation/screens/recurring_transactions_screen.da
 import '../../../reports/presentation/screens/budget_alerts_screen.dart';
 import 'currency_settings_screen.dart';
 import '../../../../shared/providers/currency_provider.dart';
+import '../../../investments/presentation/screens/portfolio_screen.dart';
 
 class SettingsScreen
     extends ConsumerWidget {
@@ -72,46 +74,53 @@ class SettingsScreen
           // =====================================================
           // MANAGE CURRENCY
           // =====================================================
-          ListTile(
+          Card(
 
-            leading: const Icon(
-              Icons.currency_exchange,
+            margin:
+                const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
             ),
 
-            title: const Text(
-              'Default Currency',
+            child: ListTile(
+
+              leading: const Icon(
+                Icons.currency_exchange,
+              ),
+
+              title: const Text(
+                'Default Currency',
+              ),
+
+              subtitle: Text(
+
+                '${ref.watch(currencyProvider).flag} '
+                '${ref.watch(currencyProvider).code}',
+              ),
+
+              trailing: const Icon(
+                Icons.chevron_right,
+              ),
+
+              onTap: () {
+
+                Navigator.push(
+
+                  context,
+
+                  MaterialPageRoute(
+
+                    builder: (_) =>
+                        const CurrencySettingsScreen(),
+                  ),
+                );
+              },
             ),
-
-            subtitle: Text(
-
-              '${ref.watch(currencyProvider).flag} '
-              '${ref.watch(currencyProvider).code}',
-            ),
-
-            trailing: const Icon(
-              Icons.chevron_right,
-            ),
-
-            onTap: () {
-
-              Navigator.push(
-
-                context,
-
-                MaterialPageRoute(
-
-                  builder: (_) =>
-                      const CurrencySettingsScreen(),
-                ),
-              );
-            },
           ),
-
 
           // =====================================================
           // MANAGE CATEGORIES
           // =====================================================
-
           Card(
 
             margin:
@@ -279,6 +288,83 @@ class SettingsScreen
 
                     builder: (_) =>
                         const RecurringTransactionsScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // =====================================================
+          // WEALTH MANAGEMENT SECTION
+          // =====================================================
+
+          const Padding(
+
+            padding: EdgeInsets.fromLTRB(
+              16,
+              24,
+              16,
+              8,
+            ),
+
+            child: Text(
+
+              'Wealth Management',
+
+              style: TextStyle(
+
+                fontSize: 16,
+
+                fontWeight:
+                    FontWeight.bold,
+              ),
+            ),
+          ),
+
+          // =====================================================
+          // INVESTMENTS
+          // =====================================================
+
+          Card(
+
+            margin:
+                const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+
+            child: ListTile(
+
+              leading:
+                  const Icon(
+                Icons.trending_up,
+              ),
+
+              title:
+                  const Text(
+                'Investments',
+              ),
+
+              subtitle:
+                  const Text(
+                'Track portfolio performance and returns',
+              ),
+
+              trailing:
+                  const Icon(
+                Icons.chevron_right,
+              ),
+
+              onTap: () {
+
+                Navigator.push(
+
+                  context,
+
+                  MaterialPageRoute(
+
+                    builder: (_) =>
+                        const PortfolioScreen(),
                   ),
                 );
               },

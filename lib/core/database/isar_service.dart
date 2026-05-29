@@ -7,6 +7,7 @@ import '../../shared/models/category_model.dart';
 import '../../shared/models/credit_card_model.dart';
 import '../../shared/models/loan_model.dart';
 import '../../shared/models/transaction_model.dart';
+import '../../shared/models/investment_model.dart';
 
 class IsarService {
 
@@ -47,6 +48,8 @@ class IsarService {
         CreditCardModelSchema,
 
         RecurringTransactionModelSchema,
+        
+        InvestmentModelSchema,
       ],
 
       inspector: true,
