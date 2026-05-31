@@ -27,7 +27,7 @@ class BudgetAlertsScreen
       appBar: AppBar(
 
         title: const Text(
-          'Budget Alerts',
+          'This Month\'s Budget Alerts',
         ),
       ),
 
@@ -40,12 +40,22 @@ class BudgetAlertsScreen
             return const Center(
 
               child: Text(
-                'No budget alerts available',
+                'No budget alerts this month',
               ),
             );
           }
 
-          return SafeArea(
+          return RefreshIndicator(
+            onRefresh: () async {
+
+              ref.invalidate(
+                budgetAlertsProvider,
+              );
+
+              await ref.read(
+                budgetAlertsProvider.future,
+              );
+            },
 
             child: SingleChildScrollView(
 

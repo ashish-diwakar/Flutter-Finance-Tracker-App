@@ -13,10 +13,31 @@ class BudgetAlertChecker {
     this.isar,
   );
 
-  Future<List<
-      BudgetAlertModel>>
-      checkAlerts()
+  Future<List<BudgetAlertModel>>
+      checkAlerts({required bool includeSafe})
   async {
+
+    final now = DateTime.now();
+    final startOfMonth =
+        DateTime(
+          now.year,
+          now.month,
+          1,
+        );
+    final startOfNextMonth =
+        now.month == 12
+
+            ? DateTime(
+                now.year + 1,
+                1,
+                1,
+              )
+
+            : DateTime(
+                now.year,
+                now.month + 1,
+                1,
+              );
 
     final transactions =
         await isar
@@ -27,6 +48,16 @@ class BudgetAlertChecker {
             )
             .isDeletedEqualTo(
               false,
+            )
+            .transactionDateBetween(
+
+              startOfMonth,
+
+              startOfNextMonth,
+
+              includeLower: true,
+
+              includeUpper: false,
             )
             .findAll();
 
@@ -105,8 +136,13 @@ class BudgetAlertChecker {
                 .warning;
 
       } else {
-
-        continue;
+        if(includeSafe) {
+          type =
+              BudgetAlertType
+                  .safe;
+        } else {
+          continue;
+        }
       }
 
       alerts.add(
@@ -127,6 +163,14 @@ class BudgetAlertChecker {
         ),
       );
     }
+
+    alerts.sort(
+      (a, b) =>
+          b.percentage
+              .compareTo(
+        a.percentage,
+      ),
+    );
 
     return alerts;
   }

@@ -97,7 +97,7 @@ Future<void> main() async {
 
     final alerts =
         await budgetChecker
-            .checkAlerts();
+            .checkAlerts(includeSafe: false);
 
     await BudgetNotificationService
         .processBudgetAlerts(
