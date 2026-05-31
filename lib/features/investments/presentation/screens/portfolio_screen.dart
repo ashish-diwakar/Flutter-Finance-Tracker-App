@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/providers/currency_provider.dart';
@@ -517,7 +518,11 @@ class _InvestmentCard
 
     final investedValue =
 
-        (investment.quantity *
+    isFixedReturn
+
+        ? investment.purchasePrice / 100
+
+        : (investment.quantity *
                 investment.purchasePrice) /
             100;
 
@@ -661,7 +666,9 @@ class _InvestmentCard
                   ),
 
                   Text(
-                    '${investment.interestRate ?? 0}%',
+                    investment.interestRate == null
+                        ? '-'
+                        : '${investment.interestRate}%',
                   ),
                 ],
               ),
@@ -703,50 +710,19 @@ class _InvestmentCard
 
             Row(
 
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceBetween,
-
               children: [
 
-                Text(
+                Expanded(
 
-                  isFixedReturn
+                  child: Text(
 
-                      ? 'Maturity Value'
+                    isFixedReturn
 
-                      : 'Current Value',
+                        ? 'Maturity Value'
+
+                        : 'Current Value',
+                  ),
                 ),
-
-                if (isFixedReturn &&
-                    investment.maturityDate != null)
-                  ...[
-
-                    const SizedBox(
-                      height: 8,
-                    ),
-
-                    Row(
-
-                      mainAxisAlignment:
-                          MainAxisAlignment
-                              .spaceBetween,
-
-                      children: [
-
-                        const Text(
-                          'Maturity Date',
-                        ),
-
-                        Text(
-
-                          '${investment.maturityDate!.day}/'
-                          '${investment.maturityDate!.month}/'
-                          '${investment.maturityDate!.year}',
-                        ),
-                      ],
-                    ),
-                  ],
 
                 Text(
 
@@ -762,6 +738,40 @@ class _InvestmentCard
                 ),
               ],
             ),
+
+            if (isFixedReturn &&
+                investment.maturityDate != null)
+              ...[
+
+                const SizedBox(
+                  height: 8,
+                ),
+
+                Row(
+
+                  children: [
+
+                    const Expanded(
+
+                      child: Text(
+                        'Maturity Date',
+                      ),
+                    ),
+
+                    Text(
+
+                      // '${investment.maturityDate!.day}/'
+                      // '${investment.maturityDate!.month}/'
+                      // '${investment.maturityDate!.year}',
+                      DateFormat(
+                        'dd MMM yyyy',
+                      ).format(
+                        investment.maturityDate!,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
 
             const Divider(
               height: 24,

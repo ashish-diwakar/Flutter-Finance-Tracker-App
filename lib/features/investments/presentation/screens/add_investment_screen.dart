@@ -1,24 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:finance_tracker/features/investments/domain/utils/investment_helper.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/database/isar_service.dart';
 import '../../../../shared/models/investment_model.dart';
 
 import '../../domain/constants/investment_types.dart';
+import '../../core/investment_calculator.dart';
+import '../../../../shared/providers/currency_provider.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
-class AddInvestmentScreen extends StatefulWidget {
+
+class AddInvestmentScreen extends ConsumerStatefulWidget {
 
   const AddInvestmentScreen({
     super.key,
   });
 
   @override
-  State<AddInvestmentScreen>
+  ConsumerState<AddInvestmentScreen>
       createState() =>
           _AddInvestmentScreenState();
 }
 
 class _AddInvestmentScreenState
-    extends State<
+    extends ConsumerState<
         AddInvestmentScreen> {
 
   final _formKey =
@@ -42,16 +49,121 @@ class _AddInvestmentScreenState
   final _notesController =
       TextEditingController();
 
+  final _interestRateController =
+    TextEditingController();
+
   String selectedType =
       investmentTypes.first;
 
   DateTime purchaseDate =
       DateTime.now();
 
+  DateTime? maturityDate;
+
   bool isSaving = false;
+
+  int calculateEstimatedMaturityValue() {
+
+    if (!requiresInterestRate) {
+      return 0;
+    }
+
+    if (!InvestmentHelper
+            .supportsAutoMaturityCalculation(
+          selectedType,
+        )) {
+
+      return 0;
+    }
+
+    if (maturityDate == null) {
+      return 0;
+    }
+
+    final principal =
+
+        double.tryParse(
+          _purchasePriceController.text,
+        ) ??
+        0;
+
+    final rate =
+
+        double.tryParse(
+          _interestRateController.text,
+        ) ??
+        0;
+
+    return InvestmentCalculator
+            .calculateFdMaturityValue(
+
+          principalAmount:
+              (principal * 100)
+                  .round(),
+
+          interestRate:
+              rate,
+
+          purchaseDate:
+              purchaseDate,
+
+          maturityDate:
+              maturityDate!,
+        ) ??
+        0;
+  }
+
+  void _refreshEstimatedValue() {
+    if (mounted) {
+
+      setState(() {});
+    }
+  }
+
+  bool get isFixedReturn {
+
+    return InvestmentHelper
+        .isFixedReturn(
+      selectedType,
+    );
+  }
+
+  bool get requiresInterestRate {
+
+    return InvestmentHelper
+        .requiresInterestRate(
+      selectedType,
+    );
+  }
+    
+  @override
+  void initState() {
+
+    super.initState();
+
+    _purchasePriceController
+        .addListener(
+      _refreshEstimatedValue,
+    );
+
+    _interestRateController
+        .addListener(
+      _refreshEstimatedValue,
+    );
+  }
 
   @override
   void dispose() {
+
+    _purchasePriceController
+        .removeListener(
+      _refreshEstimatedValue,
+    );
+
+    _interestRateController
+        .removeListener(
+      _refreshEstimatedValue,
+    );
 
     _nameController.dispose();
 
@@ -59,13 +171,13 @@ class _AddInvestmentScreenState
 
     _quantityController.dispose();
 
-    _purchasePriceController
-        .dispose();
+    _purchasePriceController.dispose();
 
-    _currentPriceController
-        .dispose();
+    _currentPriceController.dispose();
 
     _notesController.dispose();
+
+    _interestRateController.dispose();
 
     super.dispose();
   }
@@ -85,6 +197,29 @@ class _AddInvestmentScreenState
       isSaving = true;
     });
 
+    if (isFixedReturn &&
+        maturityDate == null) {
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+
+        const SnackBar(
+
+          content: Text(
+            'Please select maturity date',
+          ),
+        ),
+      );
+
+      setState(() {
+
+        isSaving = false;
+      });
+
+      return;
+    }
+
     try {
 
       final isar =
@@ -92,61 +227,134 @@ class _AddInvestmentScreenState
               .openIsar();
 
       final investment =
-          InvestmentModel()
+    InvestmentModel()
 
-            ..name =
-                _nameController.text
-                    .trim()
+      ..name =
+          _nameController.text
+              .trim()
 
-            ..type =
-                selectedType
+      ..type =
+          selectedType
 
-            ..symbol =
-                _symbolController.text
-                    .trim()
-                    .isEmpty
+      ..symbol =
+          _symbolController.text
+                  .trim()
+                  .isEmpty
+              ? null
+              : _symbolController.text
+                  .trim()
 
-                ? null
+      ..purchaseDate =
+          purchaseDate
 
-                : _symbolController
-                    .text
-                    .trim()
+      ..notes =
+          _notesController.text
+                  .trim()
+                  .isEmpty
+              ? null
+              : _notesController.text
+                  .trim()
 
-            ..quantity =
-                int.parse(
-              _quantityController
-                  .text,
-            )
+      ..investmentClass =
+          isFixedReturn
+              ? 'fixed'
+              : 'market';
 
-            ..purchasePrice =
-                ((double.parse(
-                              _purchasePriceController
-                                  .text,
-                            )) *
-                        100)
-                    .round()
+      if (isFixedReturn) {
 
-            ..currentPrice =
-                ((double.parse(
-                              _currentPriceController
-                                  .text,
-                            )) *
-                        100)
-                    .round()
+        final principalAmount =
 
-            ..purchaseDate =
-                purchaseDate
+            ((double.parse(
+                          _purchasePriceController
+                              .text,
+                        )) *
+                    100)
+                .round();
 
-            ..notes =
-                _notesController.text
-                    .trim()
-                    .isEmpty
+        investment.quantity = 1;
 
-                ? null
+        investment.purchasePrice =
+            principalAmount;
 
-                : _notesController
-                    .text
-                    .trim();
+        investment.currentPrice =
+            principalAmount;
+
+        investment.interestRate =
+          requiresInterestRate
+
+              ? double.tryParse(
+                  _interestRateController.text,
+                )
+
+              : null;
+
+        investment.maturityDate =
+            maturityDate;
+
+          if (InvestmentHelper
+                  .supportsAutoMaturityCalculation(
+                selectedType,
+              )) {
+
+            investment.maturityValue =
+                    InvestmentCalculator
+                        .calculateFdMaturityValue(
+
+                      principalAmount:
+                          principalAmount,
+
+                      interestRate:
+                          double.parse(
+                            _interestRateController
+                                .text,
+                          ),
+
+                      purchaseDate:
+                          purchaseDate,
+
+                      maturityDate:
+                          maturityDate!,
+                    );
+
+          } else {
+
+            investment.maturityValue =
+                null;
+          }
+
+      } else {
+
+        investment.quantity =
+            int.parse(
+          _quantityController.text,
+        );
+
+        investment.purchasePrice =
+            ((double.parse(
+                          _purchasePriceController
+                              .text,
+                        )) *
+                    100)
+                .round();
+
+        investment.currentPrice =
+            ((double.parse(
+                          _currentPriceController
+                              .text,
+                        )) *
+                    100)
+                .round();
+
+        investment.interestRate =
+            null;
+
+        investment.maturityDate =
+            null;
+
+        investment.maturityValue =
+            null;
+      }
+
 
       await isar.writeTxn(
         () async {
@@ -194,14 +402,12 @@ class _AddInvestmentScreenState
           ),
         ),
       );
-    }
-
-    if (mounted) {
-
-      setState(() {
-
-        isSaving = false;
-      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
     }
   }
 
@@ -225,10 +431,36 @@ class _AddInvestmentScreenState
     );
 
     if (picked != null) {
-
       setState(() {
-
         purchaseDate =
+            picked;
+      });
+    }
+  }
+
+  Future<void>
+      selectMaturityDate()
+  async {
+
+    final picked =
+        await showDatePicker(
+
+      context: context,
+
+      initialDate:
+          maturityDate ??
+          DateTime.now(),
+
+      firstDate:
+          DateTime.now(),
+
+      lastDate:
+          DateTime(2100),
+    );
+
+    if (picked != null) {
+      setState(() {
+        maturityDate =
             picked;
       });
     }
@@ -238,6 +470,11 @@ class _AddInvestmentScreenState
   Widget build(
     BuildContext context,
   ) {
+
+    final currency =
+    ref.watch(
+      currencyProvider,
+    );
 
     return Scaffold(
 
@@ -328,157 +565,343 @@ class _AddInvestmentScreenState
                 },
               ).toList(),
 
-              onChanged:
-                  (value) {
+              onChanged: (value) {
 
-                if (value !=
-                    null) {
-
-                  setState(() {
-
-                    selectedType =
-                        value;
-                  });
+                if (value == null) {
+                  return;
                 }
+
+                setState(() {
+
+                  selectedType = value;
+
+                  if (!InvestmentHelper
+                          .isFixedReturn(
+                        value,
+                      )) {
+
+                    maturityDate = null;
+                  }
+
+                  if (!InvestmentHelper
+                          .requiresInterestRate(
+                        value,
+                      )) {
+
+                    _interestRateController.clear();
+                  }
+                });
               },
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            if (!isFixedReturn) ...[
 
-            TextFormField(
-
-              controller:
-                  _symbolController,
-
-              decoration:
-                  const InputDecoration(
-
-                labelText:
-                    'Symbol (Optional)',
-
-                border:
-                    OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(
-              height: 16,
-            ),
-
-            TextFormField(
-
-              controller:
-                  _quantityController,
-
-              keyboardType:
-                  TextInputType.number,
-
-              decoration:
-                  const InputDecoration(
-
-                labelText:
-                    'Quantity',
-
-                border:
-                    OutlineInputBorder(),
+              const SizedBox(
+                height: 16,
               ),
 
-              validator:
-                  (value) {
+              TextFormField(
 
-                if (value == null ||
-                    value
-                        .trim()
-                        .isEmpty) {
+                controller:
+                    _symbolController,
 
-                  return 'Enter quantity';
-                }
+                decoration:
+                    const InputDecoration(
 
-                return null;
-              },
-            ),
+                  labelText:
+                      'Symbol (Optional)',
 
-            const SizedBox(
-              height: 16,
-            ),
-
-            TextFormField(
-
-              controller:
-                  _purchasePriceController,
-
-              keyboardType:
-                  const TextInputType
-                      .numberWithOptions(
-                decimal: true,
+                  border:
+                      OutlineInputBorder(),
+                ),
               ),
 
-              decoration:
-                  const InputDecoration(
+              const SizedBox(
+                height: 16,
+              ),
+            ],
 
-                labelText:
-                    'Purchase Price',
+            if (!isFixedReturn) ...[
 
-                border:
-                    OutlineInputBorder(),
+              TextFormField(
+
+                controller:
+                    _quantityController,
+
+                keyboardType:
+                    TextInputType.number,
+
+                decoration:
+                    const InputDecoration(
+
+                  labelText:
+                      'Quantity',
+
+                  border:
+                      OutlineInputBorder(),
+                ),
+
+                validator: (value) {
+
+                  if (value == null ||
+                      value.trim().isEmpty) {
+
+                    return 'Enter quantity';
+                  }
+                  if (int.tryParse(value) ==
+                      null) {
+
+                    return 'Invalid quantity';
+                  }
+
+                  return null;
+                },
               ),
 
-              validator:
-                  (value) {
-
-                if (value == null ||
-                    value
-                        .trim()
-                        .isEmpty) {
-
-                  return 'Enter purchase price';
-                }
-
-                return null;
-              },
-            ),
-
-            const SizedBox(
-              height: 16,
-            ),
-
-            TextFormField(
-
-              controller:
-                  _currentPriceController,
-
-              keyboardType:
-                  const TextInputType
-                      .numberWithOptions(
-                decimal: true,
+              const SizedBox(
+                height: 16,
               ),
 
-              decoration:
-                  const InputDecoration(
+              TextFormField(
 
-                labelText:
-                    'Current Price',
+                controller:
+                    _purchasePriceController,
 
-                border:
-                    OutlineInputBorder(),
+                keyboardType:
+                    const TextInputType
+                        .numberWithOptions(
+                  decimal: true,
+                ),
+
+                decoration:
+                    const InputDecoration(
+
+                  labelText:
+                      'Purchase Price',
+
+                  border:
+                      OutlineInputBorder(),
+                ),
+
+                validator: (value) {
+
+                  if (value == null ||
+                      value.trim().isEmpty) {
+
+                    return 'Enter purchase price';
+                  }
+
+                  if (double.tryParse(value) ==
+                      null) {
+
+                    return 'Invalid amount';
+                  }
+
+                  return null;
+                },
               ),
 
-              validator:
-                  (value) {
+              const SizedBox(
+                height: 16,
+              ),
 
-                if (value == null ||
-                    value
-                        .trim()
-                        .isEmpty) {
+              TextFormField(
 
-                  return 'Enter current price';
-                }
+                controller:
+                    _currentPriceController,
 
-                return null;
-              },
-            ),
+                keyboardType:
+                    const TextInputType
+                        .numberWithOptions(
+                  decimal: true,
+                ),
+
+                decoration:
+                    const InputDecoration(
+
+                  labelText:
+                      'Latest Price',
+
+                  border:
+                      OutlineInputBorder(),
+                ),
+
+                validator: (value) {
+
+                  if (value == null ||
+                      value.trim().isEmpty) {
+
+                    return 'Enter latest price';
+                  }
+
+                  if (double.tryParse(value) ==
+                      null) {
+
+                    return 'Invalid amount';
+                  }
+
+                  return null;
+                },
+              ),
+
+            ] else ...[
+
+              const SizedBox(
+                height: 16,
+              ),
+
+              TextFormField(
+
+                controller:
+                    _purchasePriceController,
+
+                keyboardType:
+                    const TextInputType
+                        .numberWithOptions(
+                  decimal: true,
+                ),
+
+                decoration:
+                    const InputDecoration(
+
+                  labelText:
+                      'Principal Amount',
+
+                  border:
+                      OutlineInputBorder(),
+                ),
+
+                validator: (value) {
+
+                  if (value == null ||
+                      value.trim().isEmpty) {
+
+                    return 'Enter principal amount';
+                  }
+                  
+                  if (double.tryParse(value) ==
+                      null) {
+
+                    return 'Invalid amount';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(
+                height: 16,
+              ),
+
+              if (requiresInterestRate)
+              ...[
+
+                TextFormField(
+
+                  controller:
+                      _interestRateController,
+
+                  keyboardType:
+                      const TextInputType
+                          .numberWithOptions(
+                    decimal: true,
+                  ),
+
+                  decoration:
+                      const InputDecoration(
+                    labelText:
+                        'Interest Rate (%)',
+                    border:
+                        OutlineInputBorder(),
+                  ),
+
+                  validator: (value) {
+
+                    if (value == null ||
+                        value.trim().isEmpty) {
+
+                      return 'Enter interest rate';
+                    }
+
+                    if (double.tryParse(
+                          value,
+                        ) ==
+                        null) {
+
+                      return 'Invalid interest rate';
+                    }
+
+                    return null;
+                  },
+                ),
+
+                const SizedBox(
+                  height: 16,
+                ),
+              ],
+
+              ListTile(
+
+                contentPadding:
+                    EdgeInsets.zero,
+
+                title: const Text(
+                  'Maturity Date',
+                ),
+
+                subtitle: Text(
+
+                  maturityDate == null
+
+                      ? 'Select maturity date'
+
+                      : DateFormat(
+                        'dd MMM yyyy',
+                      ).format(
+                        maturityDate!,
+                      ),
+                ),
+
+                trailing: const Icon(
+                  Icons.calendar_today,
+                ),
+
+                onTap:
+                    selectMaturityDate,
+              ),
+
+              const SizedBox(
+                height: 16,
+              ),
+
+              if (InvestmentHelper
+                    .supportsAutoMaturityCalculation(
+                  selectedType,
+                ))
+              ListTile(
+
+                contentPadding:
+                    EdgeInsets.zero,
+
+                title: const Text(
+                  'Estimated Maturity Value',
+                ),
+
+                subtitle: Text(
+
+                  CurrencyFormatter
+                      .formatDouble(
+
+                    amount:
+                        calculateEstimatedMaturityValue() /
+                        100,
+
+                    currency:
+                        currency,
+                  ),
+                ),
+              ),
+            ],
 
             const SizedBox(
               height: 16,
@@ -495,9 +918,11 @@ class _AddInvestmentScreenState
 
               subtitle: Text(
 
-                '${purchaseDate.day}/'
-                '${purchaseDate.month}/'
-                '${purchaseDate.year}',
+                DateFormat(
+                    'dd MMM yyyy',
+                  ).format(
+                    purchaseDate,
+                  )
               ),
 
               trailing: const Icon(

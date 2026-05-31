@@ -898,9 +898,20 @@ class SyncService {
     final user =
         client.auth.currentUser;
 
+    logger.d(
+      'Starting investment pull',
+    );
+
     if (user == null) {
+      logger.d(
+        'User is null, aborting investment pull',
+      );
       return;
     }
+    
+    logger.d(
+      'Step 2 investment pull',
+    );
 
     final response =
         await client
@@ -909,6 +920,10 @@ class SyncService {
             )
             .select()
             .eq('user_id', user.id);
+
+    logger.d(
+      'Step 2 investment pull ${response.length} items.',
+    );
 
     for (final item
         in response) {
@@ -926,6 +941,9 @@ class SyncService {
           item['is_deleted'] ?? false;
 
       if (existing == null) {
+        logger.d(
+          'Step 3 investment pull existing is null',
+        );
 
         if (cloudDeleted) {
           continue;
@@ -970,6 +988,9 @@ class SyncService {
 
               ..isSynced = true;
 
+        logger.d(
+          'Step 5 investment pull updating ${investment.name}. Cloud updated: ${cloudUpdated.toIso8601String()}, Local updated: ${investment.updatedAt.toIso8601String()}',
+        );
         await isar.writeTxn(() async {
 
           await isar.investmentModels
@@ -979,9 +1000,18 @@ class SyncService {
         continue;
       }
 
+        logger.d(
+          'Step 4 investment pull existing is not null',
+        );
       
         final localUpdated =
             existing.updatedAt;
+
+        
+        logger.d(
+          'Step 4a investment pull existing is not null ${cloudUpdated.toIso8601String()} vs ${localUpdated.toIso8601String() }',
+        );
+      
 
         if (
             cloudUpdated.isAfter(
@@ -1021,6 +1051,10 @@ class SyncService {
               cloudDeleted;
 
           existing.isSynced = true;
+
+        logger.d(
+          'Step 5 investment pull updating ${existing.name}. Cloud updated: ${cloudUpdated.toIso8601String()}, Local updated: ${localUpdated.toIso8601String()}',
+        );
 
           await isar.writeTxn(() async {
 

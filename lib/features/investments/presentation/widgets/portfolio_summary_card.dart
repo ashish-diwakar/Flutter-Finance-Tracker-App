@@ -49,17 +49,43 @@ class PortfolioSummaryCard
 
           children: [
 
-            const Text(
+            Column(
 
-              'Portfolio Overview',
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
 
-              style: TextStyle(
+              children: [
 
-                fontSize: 20,
+                const Text(
 
-                fontWeight:
-                    FontWeight.bold,
-              ),
+                  'Portfolio Overview',
+
+                  style: TextStyle(
+
+                    fontSize: 20,
+
+                    fontWeight:
+                        FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 4,
+                ),
+
+                Text(
+
+                  'Investments, fixed deposits and long-term savings',
+
+                  style: TextStyle(
+
+                    color:
+                        Colors.grey.shade600,
+
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(
@@ -67,16 +93,10 @@ class PortfolioSummaryCard
             ),
 
             _metric(
-
-              'Current Value',
-
+              'Portfolio Value',
               CurrencyFormatter.formatDouble(
-
-                amount:
-                    analytics.currentValue,
-
-                currency:
-                    currency,
+                amount: analytics.currentValue,
+                currency: currency,
               ),
             ),
 

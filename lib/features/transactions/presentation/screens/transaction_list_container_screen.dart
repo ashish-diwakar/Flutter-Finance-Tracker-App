@@ -1,3 +1,4 @@
+import 'package:finance_tracker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -50,7 +51,15 @@ class _TransactionListContainerScreenState
           ),
         ),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+
+        logger.d(
+          'Sync Error: $e',
+        );
+        logger.d(
+          'Stack Trace: $stackTrace',
+        );
+        
       if (!mounted) {
         return;
       }

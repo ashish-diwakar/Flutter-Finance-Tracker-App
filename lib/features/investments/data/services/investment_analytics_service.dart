@@ -12,8 +12,71 @@ class InvestmentAnalyticsService {
     this.isar,
   );
 
+  // Future<InvestmentAnalyticsModel>
+  //     calculateAnalytics() async {
+
+  //   final investments =
+  //       await isar
+  //           .investmentModels
+  //           .filter()
+  //           .isDeletedEqualTo(false)
+  //           .findAll();
+
+  //   double totalInvested = 0;
+
+  //   double currentValue = 0;
+
+  //   for (final investment
+  //       in investments) {
+
+  //     final investedAmount =
+  //         (investment.quantity *
+  //                 investment.purchasePrice) /
+  //             100;
+
+  //     final currentAmount =
+  //         (investment.quantity *
+  //                 investment.currentPrice) /
+  //             100;
+
+  //     totalInvested +=
+  //         investedAmount;
+
+  //     currentValue +=
+  //         currentAmount;
+  //   }
+
+  //   final profitLoss =
+  //       currentValue -
+  //           totalInvested;
+
+  //   final profitPercentage =
+  //       totalInvested <= 0
+
+  //           ? 0
+
+  //           : (profitLoss /
+  //                   totalInvested) *
+  //               100;
+
+  //   return InvestmentAnalyticsModel(
+
+  //     totalInvested:
+  //         totalInvested,
+
+  //     currentValue:
+  //         currentValue,
+
+  //     profitLoss:
+  //         profitLoss,
+
+  //     profitPercentage:
+  //         profitPercentage.toDouble(),
+  //   );
+  // }
   Future<InvestmentAnalyticsModel>
-      calculateAnalytics() async {
+      calculateAnalytics()
+  async {
 
     final investments =
         await isar
@@ -29,21 +92,57 @@ class InvestmentAnalyticsService {
     for (final investment
         in investments) {
 
-      final investedAmount =
-          (investment.quantity *
-                  investment.purchasePrice) /
-              100;
+      final isFixedReturn = [
 
-      final currentAmount =
-          (investment.quantity *
-                  investment.currentPrice) /
-              100;
+        'FD',
+        'RD',
+        'PPF',
+        'EPF',
+        'NPS',
+        'Bond',
 
-      totalInvested +=
-          investedAmount;
+      ].contains(
+        investment.type,
+      );
 
-      currentValue +=
-          currentAmount;
+      if (isFixedReturn) {
+
+        final investedAmount =
+            investment.purchasePrice /
+                100;
+
+        final currentAmount =
+
+            (investment.maturityValue ??
+                    investment.purchasePrice) /
+                100;
+
+        totalInvested +=
+            investedAmount;
+
+        currentValue +=
+            currentAmount;
+
+      } else {
+
+        final investedAmount =
+
+            (investment.quantity *
+                    investment.purchasePrice) /
+                100;
+
+        final currentAmount =
+
+            (investment.quantity *
+                    investment.currentPrice) /
+                100;
+
+        totalInvested +=
+            investedAmount;
+
+        currentValue +=
+            currentAmount;
+      }
     }
 
     final profitLoss =

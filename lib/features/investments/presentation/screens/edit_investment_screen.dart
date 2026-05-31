@@ -1,9 +1,16 @@
+import 'package:finance_tracker/shared/providers/currency_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/database/isar_service.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/investment_model.dart';
+import '../../domain/constants/investment_types.dart';
+import '../../core/investment_calculator.dart';
+import '../../domain/utils/investment_helper.dart';
 
-class EditInvestmentScreen extends StatefulWidget {
+class EditInvestmentScreen extends ConsumerStatefulWidget {
 
   final InvestmentModel investment;
 
@@ -13,12 +20,12 @@ class EditInvestmentScreen extends StatefulWidget {
   });
 
   @override
-  State<EditInvestmentScreen> createState() =>
+  ConsumerState<EditInvestmentScreen> createState() =>
       _EditInvestmentScreenState();
 }
 
 class _EditInvestmentScreenState
-    extends State<EditInvestmentScreen> {
+    extends ConsumerState<EditInvestmentScreen> {
 
   final _formKey =
       GlobalKey<FormState>();
@@ -44,16 +51,69 @@ class _EditInvestmentScreenState
   late TextEditingController
       interestRateController;
 
-  late TextEditingController
-      maturityValueController;
-
   late String selectedType;
 
-  late String investmentClass;
-
   DateTime? maturityDate;
+  
+
+  int calculateEstimatedMaturityValue() {
+     if (!requiresInterestRate) {
+      return 0;
+    }
+
+    if (!InvestmentHelper.supportsAutoMaturityCalculation(
+        selectedType,
+    )) {
+
+      return 0;
+    }
+
+    if (maturityDate == null) {
+      return 0;
+    }
+
+    final principal =
+
+        double.tryParse(
+          purchasePriceController.text,
+        ) ??
+        0;
+
+    final rate =
+
+        double.tryParse(
+          interestRateController.text,
+        ) ??
+        0;
+
+    return InvestmentCalculator
+            .calculateFdMaturityValue(
+
+          principalAmount:
+              (principal * 100)
+                  .round(),
+
+          interestRate:
+              rate,
+
+          purchaseDate:
+              widget
+                  .investment
+                  .purchaseDate,
+
+          maturityDate:
+              maturityDate!,
+        ) ??
+        0;
+  }
 
   bool isSaving = false;
+
+  void _refreshEstimatedValue() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void initState() {
@@ -65,9 +125,6 @@ class _EditInvestmentScreenState
 
     selectedType =
         investment.type;
-
-    investmentClass =
-        investment.investmentClass;
 
     maturityDate =
         investment.maturityDate;
@@ -122,21 +179,30 @@ class _EditInvestmentScreenState
               '',
     );
 
-    maturityValueController =
-        TextEditingController(
-      text:
-          investment.maturityValue ==
-                  null
-              ? ''
-              : (investment
-                          .maturityValue! /
-                      100)
-                  .toString(),
+    purchasePriceController
+        .addListener(
+      _refreshEstimatedValue,
     );
+
+    interestRateController
+        .addListener(
+      _refreshEstimatedValue,
+    );
+
   }
 
   @override
   void dispose() {
+
+    purchasePriceController
+        .removeListener(
+      _refreshEstimatedValue,
+    );
+
+    interestRateController
+        .removeListener(
+      _refreshEstimatedValue,
+    );
 
     nameController.dispose();
     symbolController.dispose();
@@ -145,23 +211,54 @@ class _EditInvestmentScreenState
     currentPriceController.dispose();
     notesController.dispose();
     interestRateController.dispose();
-    maturityValueController.dispose();
 
     super.dispose();
   }
 
   bool get isFixedReturn {
 
-    return [
-      'FD',
-      'RD',
-      'PPF',
-      'EPF',
-      'NPS',
-      'Bond',
-    ].contains(
+  return InvestmentHelper
+        .isFixedReturn(
       selectedType,
     );
+  }
+
+  bool get requiresInterestRate {
+
+    return InvestmentHelper
+        .requiresInterestRate(
+      selectedType,
+    );
+  }
+
+  Future<void>
+      selectMaturityDate()
+  async {
+
+    final picked =
+        await showDatePicker(
+
+      context: context,
+
+      initialDate:
+          maturityDate ??
+          DateTime.now(),
+
+      firstDate:
+          DateTime.now(),
+
+      lastDate:
+          DateTime(2100),
+    );
+
+    if (picked != null) {
+
+      setState(() {
+
+        maturityDate =
+            picked;
+      });
+    }
   }
 
   Future<void>
@@ -170,6 +267,24 @@ class _EditInvestmentScreenState
 
     if (!_formKey.currentState!
         .validate()) {
+      return;
+    }
+
+    if (isFixedReturn &&
+        maturityDate == null) {
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+
+        const SnackBar(
+
+          content: Text(
+            'Please select maturity date',
+          ),
+        ),
+      );
+
       return;
     }
 
@@ -216,27 +331,64 @@ class _EditInvestmentScreenState
 
       if (isFixedReturn) {
 
+        final principalAmount =
+
+            ((double.parse(
+                          purchasePriceController
+                              .text,
+                        )) *
+                    100)
+                .round();
+
+        investment.quantity = 1;
+
+        investment.purchasePrice =
+            principalAmount;
+
+        investment.currentPrice =
+            principalAmount;
+
         investment.interestRate =
-            double.tryParse(
-          interestRateController
-              .text,
-        );
+          requiresInterestRate
+
+              ? double.tryParse(
+                  interestRateController.text,
+                )
+
+              : null;
 
         investment.maturityDate =
             maturityDate;
 
-        investment.maturityValue =
-            maturityValueController
-                    .text
-                    .trim()
-                    .isEmpty
-                ? null
-                : (double.parse(
-                            maturityValueController
-                                .text,
-                          ) *
-                        100)
-                    .round();
+        if (InvestmentHelper
+                .supportsAutoMaturityCalculation(
+              selectedType,
+            )) {
+
+          investment.maturityValue =
+              InvestmentCalculator
+                  .calculateFdMaturityValue(
+
+                principalAmount:
+                    principalAmount,
+
+                interestRate:
+                    double.parse(
+                      interestRateController.text,
+                    ),
+
+                purchaseDate:
+                    investment.purchaseDate,
+
+                maturityDate:
+                    maturityDate!,
+              );
+
+        } else {
+
+          investment.maturityValue =
+              null;
+        }
       } else {
 
         investment.quantity =
@@ -259,6 +411,17 @@ class _EditInvestmentScreenState
                       ) *
                     100)
                 .round();
+
+        // Clear fixed-return fields
+
+        investment.interestRate =
+            null;
+
+        investment.maturityDate =
+            null;
+
+        investment.maturityValue =
+            null;
       }
 
       investment.updatedAt =
@@ -403,6 +566,11 @@ class _EditInvestmentScreenState
     BuildContext context,
   ) {
 
+    final currency =
+    ref.watch(
+      currencyProvider,
+    );
+
     return Scaffold(
 
       appBar: AppBar(
@@ -468,8 +636,107 @@ class _EditInvestmentScreenState
               height: 16,
             ),
 
+            DropdownButtonFormField<String>(
+
+              value:
+              investmentTypes.contains(
+                  selectedType,
+                )
+              ? selectedType
+              : null,
+
+              decoration:
+                  const InputDecoration(
+
+                labelText:
+                    'Investment Type',
+              ),
+
+              items:
+                  investmentTypes.map(
+                (type) {
+
+                  return DropdownMenuItem(
+
+                    value:
+                        type,
+
+                    child:
+                        Text(type),
+                  );
+                },
+              ).toList(),
+
+              onChanged: (value) {
+
+                if (value == null) {
+                  return;
+                }
+
+                setState(() {
+
+                  selectedType = value;
+
+                  if (!InvestmentHelper
+                          .requiresInterestRate(
+                        value,
+                      )) {
+
+                    interestRateController
+                        .clear();
+                  }
+
+                  // if (InvestmentHelper
+                  //         .isFixedReturn(
+                  //       value,
+                  //     )) {
+
+                  //   quantityController
+                  //       .clear();
+
+                  //   currentPriceController
+                  //       .clear();
+                  // }
+
+                  if (!InvestmentHelper
+                          .isFixedReturn(
+                        value,
+                      )) {
+
+                    maturityDate = null;
+
+                    interestRateController
+                        .clear();
+                        
+                    _refreshEstimatedValue();
+                  }
+                });
+              },
+            ),
+
+            const SizedBox(
+              height: 16,
+            ),
+
             if (!isFixedReturn)
               ...[
+
+                TextFormField(
+
+                  controller:
+                      symbolController,
+
+                  decoration:
+                      const InputDecoration(
+
+                    labelText:
+                        'Symbol (Optional)',
+                  ),
+                ),
+
+                const SizedBox(
+                  height: 16,
+                ),
 
                 TextFormField(
 
@@ -485,6 +752,23 @@ class _EditInvestmentScreenState
                     labelText:
                         'Quantity',
                   ),
+
+                  validator: (value) {
+
+                    if (value == null ||
+                        value.trim().isEmpty) {
+
+                      return 'Enter quantity';
+                    }
+
+                    if (int.tryParse(value) ==
+                        null) {
+
+                      return 'Invalid quantity';
+                    }
+
+                    return null;
+                  },
                 ),
 
                 const SizedBox(
@@ -507,6 +791,23 @@ class _EditInvestmentScreenState
                     labelText:
                         'Purchase Price',
                   ),
+
+                  validator: (value) {
+
+                    if (value == null ||
+                        value.trim().isEmpty) {
+
+                      return 'Enter purchase price';
+                    }
+
+                    if (double.tryParse(value) ==
+                        null) {
+
+                      return 'Invalid amount';
+                    }
+
+                    return null;
+                  },
                 ),
 
                 const SizedBox(
@@ -529,10 +830,69 @@ class _EditInvestmentScreenState
                     labelText:
                         'Latest Price',
                   ),
+
+                  validator: (value) {
+
+                    if (value == null ||
+                        value.trim().isEmpty) {
+
+                      return 'Enter latest price';
+                    }
+
+                    if (double.tryParse(value) ==
+                        null) {
+
+                      return 'Invalid amount';
+                    }
+
+                    return null;
+                  },
                 ),
               ]
 
             else
+            ...[
+
+              TextFormField(
+
+                controller:
+                    purchasePriceController,
+
+                keyboardType:
+                    const TextInputType
+                        .numberWithOptions(
+                  decimal: true,
+                ),
+
+                decoration:
+                    const InputDecoration(
+                  labelText:
+                      'Principal Amount',
+                ),
+
+                validator: (value) {
+
+                  if (value == null ||
+                      value.trim().isEmpty) {
+
+                    return 'Enter principal amount';
+                  }
+
+                  if (double.tryParse(value) ==
+                      null) {
+
+                    return 'Invalid amount';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(
+                height: 16,
+              ),
+
+              if (requiresInterestRate)
               ...[
 
                 TextFormField(
@@ -548,33 +908,86 @@ class _EditInvestmentScreenState
 
                   decoration:
                       const InputDecoration(
+
                     labelText:
                         'Interest Rate (%)',
                   ),
+
+                  validator: (value) {
+
+                    if (value == null ||
+                        value.trim().isEmpty) {
+
+                      return 'Enter interest rate';
+                    }
+
+                    if (double.tryParse(
+                          value,
+                        ) ==
+                        null) {
+
+                      return 'Invalid interest rate';
+                    }
+
+                    return null;
+                  },
                 ),
 
                 const SizedBox(
                   height: 16,
                 ),
-
-                TextFormField(
-
-                  controller:
-                      maturityValueController,
-
-                  keyboardType:
-                      const TextInputType
-                          .numberWithOptions(
-                    decimal: true,
-                  ),
-
-                  decoration:
-                      const InputDecoration(
-                    labelText:
-                        'Maturity Value',
-                  ),
-                ),
               ],
+
+              ListTile(
+
+                contentPadding:
+                    EdgeInsets.zero,
+
+                title: const Text(
+                  'Maturity Date',
+                ),
+
+                subtitle: Text(
+
+                  maturityDate == null
+
+                      ? 'Select maturity date'
+
+                      : DateFormat(
+                        'dd MMM yyyy',
+                      ).format(
+                        maturityDate!,
+                      ),
+                ),
+
+                trailing: const Icon(
+                  Icons.calendar_today,
+                ),
+
+                onTap:
+                    selectMaturityDate,
+              ),
+
+              const SizedBox(
+                height: 16,
+              ),
+
+              if (InvestmentHelper
+                    .supportsAutoMaturityCalculation(
+                  selectedType,
+                ))
+              ListTile(
+                contentPadding:
+                    EdgeInsets.zero,
+
+                title: const Text(
+                  'Estimated Maturity Value',
+                ),
+                subtitle: Text(
+                  CurrencyFormatter.formatDouble(amount:  calculateEstimatedMaturityValue() / 100, currency: currency),
+                ),
+              ),
+            ],
 
             const SizedBox(
               height: 16,
