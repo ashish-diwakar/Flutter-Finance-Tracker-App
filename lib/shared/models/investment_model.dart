@@ -42,6 +42,22 @@ class InvestmentModel {
       DateTime.now();
 
   // ===========================================
+  // FIXED RETURN INVESTMENTS
+  // ===========================================
+
+  double? interestRate;
+
+  DateTime? maturityDate;
+
+  int? maturityValue;
+
+  // ===========================================
+  // CLASSIFICATION
+  // ===========================================
+
+  String investmentClass = 'market';
+
+  // ===========================================
   // SYNC
   // ===========================================
 

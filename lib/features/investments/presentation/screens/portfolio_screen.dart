@@ -10,17 +10,79 @@ import '../providers/investment_analytics_provider.dart';
 
 import '../widgets/portfolio_summary_card.dart';
 import 'add_investment_screen.dart';
+import 'edit_investment_screen.dart';
 
-class PortfolioScreen extends ConsumerWidget {
+class PortfolioScreen
+    extends ConsumerStatefulWidget {
 
   const PortfolioScreen({
     super.key,
   });
 
   @override
+  ConsumerState<PortfolioScreen>
+      createState() =>
+          _PortfolioScreenState();
+}
+
+class _PortfolioScreenState
+    extends ConsumerState<
+        PortfolioScreen> {
+
+  bool isSyncing = false;
+
+  Future<void>
+      syncAllInvestments()
+  async {
+
+    if (isSyncing) return;
+
+    setState(() {
+      isSyncing = true;
+    });
+
+    try {
+      final syncedCount =
+          await ref.read(investmentSyncProvider).syncAllInvestments();
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(
+          SnackBar(
+            content: Text(
+              '$syncedCount investments synced successfully',
+            ),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Sync failed: $e');
+      debugPrint('StackTrace: $stackTrace');
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sync failed: $e',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSyncing = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(
     BuildContext context,
-    WidgetRef ref,
   ) {
 
     final analyticsAsync =
@@ -45,6 +107,42 @@ class PortfolioScreen extends ConsumerWidget {
         title: const Text(
           'Investments',
         ),
+
+        actions: [
+
+          IconButton(
+
+            tooltip:
+                'Sync All',
+
+            onPressed:
+
+                isSyncing
+
+                    ? null
+
+                    : syncAllInvestments,
+
+            icon:
+
+                isSyncing
+
+                    ? const SizedBox(
+
+                        width: 20,
+                        height: 20,
+
+                        child:
+                            CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+
+                    : const Icon(
+                        Icons.sync,
+                      ),
+          ),
+        ],
       ),
 
       floatingActionButton:
@@ -53,9 +151,10 @@ class PortfolioScreen extends ConsumerWidget {
         heroTag:
             'portfolio_add_investment',
 
-        onPressed: () {
+        onPressed: () async {
 
-          Navigator.push(
+          final result =
+              await Navigator.push(
 
             context,
 
@@ -65,6 +164,17 @@ class PortfolioScreen extends ConsumerWidget {
                   const AddInvestmentScreen(),
             ),
           );
+
+          if (result == true) {
+
+            ref.invalidate(
+              investmentsProvider,
+            );
+
+            ref.invalidate(
+              investmentAnalyticsProvider,
+            );
+          }
         },
 
         child: const Icon(
@@ -277,14 +387,50 @@ class PortfolioScreen extends ConsumerWidget {
                           bottom: 12,
                         ),
 
-                        child:
-                            _InvestmentCard(
+                        child: InkWell(
 
-                          investment:
-                              investment,
+                          borderRadius:
+                              BorderRadius.circular(
+                            12,
+                          ),
 
-                          currency:
-                              currency,
+                          onTap: () async {
+
+                            final result =
+                                await Navigator.push(
+
+                              context,
+
+                              MaterialPageRoute(
+
+                                builder: (_) =>
+                                    EditInvestmentScreen(
+                                  investment:
+                                      investment,
+                                ),
+                              ),
+                            );
+
+                            if (result == true) {
+
+                              ref.invalidate(
+                                investmentsProvider,
+                              );
+
+                              ref.invalidate(
+                                investmentAnalyticsProvider,
+                              );
+                            }
+                          },
+
+                          child: _InvestmentCard(
+
+                            investment:
+                                investment,
+
+                            currency:
+                                currency,
+                          ),
                         ),
                       );
                     },
@@ -356,19 +502,36 @@ class _InvestmentCard
     BuildContext context,
   ) {
 
+    final isFixedReturn = [
+
+      'FD',
+      'RD',
+      'PPF',
+      'EPF',
+      'NPS',
+      'Bond',
+
+    ].contains(
+      investment.type,
+    );
+
     final investedValue =
 
         (investment.quantity *
-                investment
-                    .purchasePrice) /
+                investment.purchasePrice) /
             100;
 
     final currentValue =
 
-        (investment.quantity *
-                investment
-                    .currentPrice) /
-            100;
+        isFixedReturn
+
+            ? ((investment.maturityValue ??
+                        investment.purchasePrice) /
+                    100)
+
+            : ((investment.quantity *
+                        investment.currentPrice) /
+                    100);
 
     final profitLoss =
         currentValue -
@@ -462,24 +625,46 @@ class _InvestmentCard
               height: 16,
             ),
 
-            Row(
+            if (!isFixedReturn)
 
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceBetween,
+              Row(
 
-              children: [
+                mainAxisAlignment:
+                    MainAxisAlignment
+                        .spaceBetween,
 
-                const Text(
-                  'Quantity',
-                ),
+                children: [
 
-                Text(
-                  investment.quantity
-                      .toString(),
-                ),
-              ],
-            ),
+                  const Text(
+                    'Quantity',
+                  ),
+
+                  Text(
+                    investment.quantity
+                        .toString(),
+                  ),
+                ],
+              )
+
+            else
+
+              Row(
+
+                mainAxisAlignment:
+                    MainAxisAlignment
+                        .spaceBetween,
+
+                children: [
+
+                  const Text(
+                    'Interest Rate',
+                  ),
+
+                  Text(
+                    '${investment.interestRate ?? 0}%',
+                  ),
+                ],
+              ),
 
             const SizedBox(
               height: 8,
@@ -524,9 +709,44 @@ class _InvestmentCard
 
               children: [
 
-                const Text(
-                  'Current Value',
+                Text(
+
+                  isFixedReturn
+
+                      ? 'Maturity Value'
+
+                      : 'Current Value',
                 ),
+
+                if (isFixedReturn &&
+                    investment.maturityDate != null)
+                  ...[
+
+                    const SizedBox(
+                      height: 8,
+                    ),
+
+                    Row(
+
+                      mainAxisAlignment:
+                          MainAxisAlignment
+                              .spaceBetween,
+
+                      children: [
+
+                        const Text(
+                          'Maturity Date',
+                        ),
+
+                        Text(
+
+                          '${investment.maturityDate!.day}/'
+                          '${investment.maturityDate!.month}/'
+                          '${investment.maturityDate!.year}',
+                        ),
+                      ],
+                    ),
+                  ],
 
                 Text(
 

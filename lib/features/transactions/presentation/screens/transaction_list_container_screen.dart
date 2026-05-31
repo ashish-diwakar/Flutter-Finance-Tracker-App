@@ -3,11 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../transactions/presentation/screens/add_transaction_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_screen.dart';
-import '../../../reports/presentation/screens/reports_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
-import '../../../settings/presentation/screens/settings_screen.dart';
 import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
 import '../../../dashboard/presentation/providers/transactions_provider.dart';
 

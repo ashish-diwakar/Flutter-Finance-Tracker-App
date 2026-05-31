@@ -27,53 +27,73 @@ const InvestmentModelSchema = CollectionSchema(
       name: r'currentPrice',
       type: IsarType.long,
     ),
-    r'isDeleted': PropertySchema(
+    r'interestRate': PropertySchema(
       id: 2,
+      name: r'interestRate',
+      type: IsarType.double,
+    ),
+    r'investmentClass': PropertySchema(
+      id: 3,
+      name: r'investmentClass',
+      type: IsarType.string,
+    ),
+    r'isDeleted': PropertySchema(
+      id: 4,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'isSynced': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'isSynced',
       type: IsarType.bool,
     ),
+    r'maturityDate': PropertySchema(
+      id: 6,
+      name: r'maturityDate',
+      type: IsarType.dateTime,
+    ),
+    r'maturityValue': PropertySchema(
+      id: 7,
+      name: r'maturityValue',
+      type: IsarType.long,
+    ),
     r'name': PropertySchema(
-      id: 4,
+      id: 8,
       name: r'name',
       type: IsarType.string,
     ),
     r'notes': PropertySchema(
-      id: 5,
+      id: 9,
       name: r'notes',
       type: IsarType.string,
     ),
     r'purchaseDate': PropertySchema(
-      id: 6,
+      id: 10,
       name: r'purchaseDate',
       type: IsarType.dateTime,
     ),
     r'purchasePrice': PropertySchema(
-      id: 7,
+      id: 11,
       name: r'purchasePrice',
       type: IsarType.long,
     ),
     r'quantity': PropertySchema(
-      id: 8,
+      id: 12,
       name: r'quantity',
       type: IsarType.long,
     ),
     r'symbol': PropertySchema(
-      id: 9,
+      id: 13,
       name: r'symbol',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 10,
+      id: 14,
       name: r'type',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 11,
+      id: 15,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -98,6 +118,7 @@ int _investmentModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.investmentClass.length * 3;
   bytesCount += 3 + object.name.length * 3;
   {
     final value = object.notes;
@@ -123,16 +144,20 @@ void _investmentModelSerialize(
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeLong(offsets[1], object.currentPrice);
-  writer.writeBool(offsets[2], object.isDeleted);
-  writer.writeBool(offsets[3], object.isSynced);
-  writer.writeString(offsets[4], object.name);
-  writer.writeString(offsets[5], object.notes);
-  writer.writeDateTime(offsets[6], object.purchaseDate);
-  writer.writeLong(offsets[7], object.purchasePrice);
-  writer.writeLong(offsets[8], object.quantity);
-  writer.writeString(offsets[9], object.symbol);
-  writer.writeString(offsets[10], object.type);
-  writer.writeDateTime(offsets[11], object.updatedAt);
+  writer.writeDouble(offsets[2], object.interestRate);
+  writer.writeString(offsets[3], object.investmentClass);
+  writer.writeBool(offsets[4], object.isDeleted);
+  writer.writeBool(offsets[5], object.isSynced);
+  writer.writeDateTime(offsets[6], object.maturityDate);
+  writer.writeLong(offsets[7], object.maturityValue);
+  writer.writeString(offsets[8], object.name);
+  writer.writeString(offsets[9], object.notes);
+  writer.writeDateTime(offsets[10], object.purchaseDate);
+  writer.writeLong(offsets[11], object.purchasePrice);
+  writer.writeLong(offsets[12], object.quantity);
+  writer.writeString(offsets[13], object.symbol);
+  writer.writeString(offsets[14], object.type);
+  writer.writeDateTime(offsets[15], object.updatedAt);
 }
 
 InvestmentModel _investmentModelDeserialize(
@@ -145,16 +170,20 @@ InvestmentModel _investmentModelDeserialize(
   object.createdAt = reader.readDateTime(offsets[0]);
   object.currentPrice = reader.readLong(offsets[1]);
   object.id = id;
-  object.isDeleted = reader.readBool(offsets[2]);
-  object.isSynced = reader.readBool(offsets[3]);
-  object.name = reader.readString(offsets[4]);
-  object.notes = reader.readStringOrNull(offsets[5]);
-  object.purchaseDate = reader.readDateTime(offsets[6]);
-  object.purchasePrice = reader.readLong(offsets[7]);
-  object.quantity = reader.readLong(offsets[8]);
-  object.symbol = reader.readStringOrNull(offsets[9]);
-  object.type = reader.readString(offsets[10]);
-  object.updatedAt = reader.readDateTime(offsets[11]);
+  object.interestRate = reader.readDoubleOrNull(offsets[2]);
+  object.investmentClass = reader.readString(offsets[3]);
+  object.isDeleted = reader.readBool(offsets[4]);
+  object.isSynced = reader.readBool(offsets[5]);
+  object.maturityDate = reader.readDateTimeOrNull(offsets[6]);
+  object.maturityValue = reader.readLongOrNull(offsets[7]);
+  object.name = reader.readString(offsets[8]);
+  object.notes = reader.readStringOrNull(offsets[9]);
+  object.purchaseDate = reader.readDateTime(offsets[10]);
+  object.purchasePrice = reader.readLong(offsets[11]);
+  object.quantity = reader.readLong(offsets[12]);
+  object.symbol = reader.readStringOrNull(offsets[13]);
+  object.type = reader.readString(offsets[14]);
+  object.updatedAt = reader.readDateTime(offsets[15]);
   return object;
 }
 
@@ -170,24 +199,32 @@ P _investmentModelDeserializeProp<P>(
     case 1:
       return (reader.readLong(offset)) as P;
     case 2:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 3:
-      return (reader.readBool(offset)) as P;
-    case 4:
       return (reader.readString(offset)) as P;
+    case 4:
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 7:
-      return (reader.readLong(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 8:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 9:
       return (reader.readStringOrNull(offset)) as P;
     case 10:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 11:
+      return (reader.readLong(offset)) as P;
+    case 12:
+      return (reader.readLong(offset)) as P;
+    case 13:
+      return (reader.readStringOrNull(offset)) as P;
+    case 14:
+      return (reader.readString(offset)) as P;
+    case 15:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -458,6 +495,226 @@ extension InvestmentModelQueryFilter
   }
 
   QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      interestRateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'interestRate',
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      interestRateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'interestRate',
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      interestRateEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'interestRate',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      interestRateGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'interestRate',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      interestRateLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'interestRate',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      interestRateBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'interestRate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'investmentClass',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'investmentClass',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'investmentClass',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'investmentClass',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'investmentClass',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'investmentClass',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'investmentClass',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'investmentClass',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'investmentClass',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      investmentClassIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'investmentClass',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
       isDeletedEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -473,6 +730,154 @@ extension InvestmentModelQueryFilter
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isSynced',
         value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'maturityDate',
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'maturityDate',
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityDateEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'maturityDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'maturityDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'maturityDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'maturityDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityValueIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'maturityValue',
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityValueIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'maturityValue',
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityValueEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'maturityValue',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityValueGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'maturityValue',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityValueLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'maturityValue',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterFilterCondition>
+      maturityValueBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'maturityValue',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -1319,6 +1724,34 @@ extension InvestmentModelQuerySortBy
   }
 
   QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      sortByInterestRate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'interestRate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      sortByInterestRateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'interestRate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      sortByInvestmentClass() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'investmentClass', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      sortByInvestmentClassDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'investmentClass', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
       sortByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isDeleted', Sort.asc);
@@ -1343,6 +1776,34 @@ extension InvestmentModelQuerySortBy
       sortByIsSyncedDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      sortByMaturityDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maturityDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      sortByMaturityDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maturityDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      sortByMaturityValue() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maturityValue', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      sortByMaturityValueDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maturityValue', Sort.desc);
     });
   }
 
@@ -1498,6 +1959,34 @@ extension InvestmentModelQuerySortThenBy
   }
 
   QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      thenByInterestRate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'interestRate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      thenByInterestRateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'interestRate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      thenByInvestmentClass() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'investmentClass', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      thenByInvestmentClassDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'investmentClass', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
       thenByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isDeleted', Sort.asc);
@@ -1522,6 +2011,34 @@ extension InvestmentModelQuerySortThenBy
       thenByIsSyncedDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isSynced', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      thenByMaturityDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maturityDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      thenByMaturityDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maturityDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      thenByMaturityValue() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maturityValue', Sort.asc);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QAfterSortBy>
+      thenByMaturityValueDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maturityValue', Sort.desc);
     });
   }
 
@@ -1651,6 +2168,21 @@ extension InvestmentModelQueryWhereDistinct
   }
 
   QueryBuilder<InvestmentModel, InvestmentModel, QDistinct>
+      distinctByInterestRate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'interestRate');
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QDistinct>
+      distinctByInvestmentClass({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'investmentClass',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QDistinct>
       distinctByIsDeleted() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isDeleted');
@@ -1661,6 +2193,20 @@ extension InvestmentModelQueryWhereDistinct
       distinctByIsSynced() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isSynced');
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QDistinct>
+      distinctByMaturityDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'maturityDate');
+    });
+  }
+
+  QueryBuilder<InvestmentModel, InvestmentModel, QDistinct>
+      distinctByMaturityValue() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'maturityValue');
     });
   }
 
@@ -1742,6 +2288,20 @@ extension InvestmentModelQueryProperty
     });
   }
 
+  QueryBuilder<InvestmentModel, double?, QQueryOperations>
+      interestRateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'interestRate');
+    });
+  }
+
+  QueryBuilder<InvestmentModel, String, QQueryOperations>
+      investmentClassProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'investmentClass');
+    });
+  }
+
   QueryBuilder<InvestmentModel, bool, QQueryOperations> isDeletedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isDeleted');
@@ -1751,6 +2311,20 @@ extension InvestmentModelQueryProperty
   QueryBuilder<InvestmentModel, bool, QQueryOperations> isSyncedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isSynced');
+    });
+  }
+
+  QueryBuilder<InvestmentModel, DateTime?, QQueryOperations>
+      maturityDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'maturityDate');
+    });
+  }
+
+  QueryBuilder<InvestmentModel, int?, QQueryOperations>
+      maturityValueProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'maturityValue');
     });
   }
 

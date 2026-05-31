@@ -1,20 +1,17 @@
 const investmentTypes = [
 
-  'Stocks',
-
-  'Mutual Funds',
-
+  // Market Linked
+  'Stock',
+  'Mutual Fund',
+  'ETF',
   'Gold',
-
   'Crypto',
 
-  'Fixed Deposit',
-
-  'Real Estate',
-
+  // Fixed Return
+  'FD',
+  'RD',
   'PPF',
-
   'EPF',
-
-  'Other',
+  'NPS',
+  'Bond',
 ];

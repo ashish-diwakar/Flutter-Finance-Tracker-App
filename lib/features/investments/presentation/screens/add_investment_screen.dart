@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
 
 import '../../../../core/database/isar_service.dart';
 import '../../../../shared/models/investment_model.dart';
@@ -160,6 +159,7 @@ class _AddInvestmentScreenState
         },
       );
 
+
       if (!mounted) {
         return;
       }
@@ -169,7 +169,15 @@ class _AddInvestmentScreenState
         true,
       );
 
-    } catch (e) {
+    } catch (e, stackTrace) {
+
+      debugPrint(
+        'SAVE INVESTMENT ERROR: $e',
+      );
+
+      debugPrint(
+        stackTrace.toString(),
+      );
 
       if (!mounted) {
         return;
