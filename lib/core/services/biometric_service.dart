@@ -5,25 +5,27 @@ class BiometricService {
   static final LocalAuthentication
       auth = LocalAuthentication();
 
+  static Future<bool> isBiometricsAvailable() async {
+    try {
+      final canCheck = await auth.canCheckBiometrics;
+      final isSupported = await auth.isDeviceSupported();
+      if (!canCheck || !isSupported) return false;
+      
+      final available = await auth.getAvailableBiometrics();
+      return available.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<bool>
       authenticate() async {
 
     try {
-
-      final canCheck =
-          await auth.canCheckBiometrics;
-
       final isSupported =
           await auth.isDeviceSupported();
 
-      if (!canCheck || !isSupported) {
-        return false;
-      }
-
-      final available =
-          await auth.getAvailableBiometrics();
-
-      if (available.isEmpty) {
+      if (!isSupported) {
         return false;
       }
 
@@ -33,7 +35,7 @@ class BiometricService {
 
         options:
             const AuthenticationOptions(
-          biometricOnly: true,
+          biometricOnly: false,
           stickyAuth: true,
         ),
       );
