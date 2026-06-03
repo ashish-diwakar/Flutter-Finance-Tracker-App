@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/summary_card.dart';
+import '../../../../shared/utils/provider_refresh_helper.dart';
+import '../../../reports/presentation/providers/budget_alerts_provider.dart';
 import '../../../transactions/presentation/screens/add_transaction_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -57,25 +59,7 @@ class _DashboardScreenState
       await syncService
           .syncAll();
 
-      ref.invalidate(
-        transactionsStreamProvider,
-      );
-
-      ref.invalidate(
-        totalIncomeProvider,
-      );
-
-      ref.invalidate(
-        totalExpenseProvider,
-      );
-
-      ref.invalidate(
-        totalBalanceProvider,
-      );
-
-      ref.invalidate(
-        dashboardInsightsProvider,
-      );
+      await refreshDashboard();
 
       if (!mounted) {
         return;
@@ -131,25 +115,9 @@ class _DashboardScreenState
 
   Future<void> refreshDashboard()
   async {
-
-    ref.invalidate(
-      transactionsStreamProvider,
-    );
-
-    ref.invalidate(
-      totalIncomeProvider,
-    );
-
-    ref.invalidate(
-      totalExpenseProvider,
-    );
-
-    ref.invalidate(
-      totalBalanceProvider,
-    );
-
-    ref.invalidate(
-      dashboardInsightsProvider,
+    await ProviderRefreshHelper
+        .refreshDashboardData(
+      ref,
     );
   }
 
@@ -173,8 +141,7 @@ class _DashboardScreenState
     final balance =
         ref.watch(
               totalBalanceProvider,
-            ) ??
-            0;
+            );
 
     final appName =
         dotenv.env['APP_NAME'] ??
@@ -184,6 +151,7 @@ class _DashboardScreenState
         ref.watch(
       dashboardInsightsProvider,
     );
+
 
     final currency =
         ref.watch(
@@ -225,6 +193,7 @@ class _DashboardScreenState
                 : const Icon(
                     Icons.sync,
                   ),
+
           ),
 
           IconButton(
@@ -523,18 +492,19 @@ class _DashboardScreenState
         heroTag:
             'dashboard_fab',
 
-        onPressed: () {
+        onPressed: () async {
 
-          Navigator.push(
-
+          await Navigator.push(
             context,
-
             MaterialPageRoute(
-
               builder: (_) =>
                   const AddTransactionScreen(),
             ),
           );
+
+          if (!mounted) return;
+
+          await refreshDashboard();
         },
 
         child: const Icon(

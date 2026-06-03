@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/utils/currency_formatter.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/recurring_transaction_model.dart';
 
+import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../../accounts/presentation/providers/accounts_provider.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
 
@@ -218,8 +218,11 @@ class _AddRecurringTransactionScreenState
       recurring.endDate =
           endDate;
 
-      recurring.nextRunDate =
-          startDate;
+      if (widget.recurring == null) {
+
+        recurring.nextRunDate =
+            startDate;
+      }
 
       recurring.isActive =
           active;
@@ -242,9 +245,12 @@ class _AddRecurringTransactionScreenState
         return;
       }
 
-      ref.invalidate(
-        recurringTransactionsProvider,
-      );
+      await ProviderRefreshHelper
+        .refreshRecurringTransactionData(ref);
+
+      // ref.invalidate(
+      //   recurringTransactionsProvider,
+      // );
 
       Navigator.pop(
         context,
@@ -718,8 +724,21 @@ class _AddRecurringTransactionScreenState
                                   value,
 
                               child: Text(
-                                'Every $value',
-                              ),
+
+                                  frequency == 'daily'
+
+                                      ? 'Every $value day(s)'
+
+                                      : frequency == 'weekly'
+
+                                          ? 'Every $value week(s)'
+
+                                          : frequency == 'monthly'
+
+                                              ? 'Every $value month(s)'
+
+                                              : 'Every $value year(s)',
+                                ),
                             );
                           },
                         ),
@@ -754,7 +773,11 @@ class _AddRecurringTransactionScreenState
                         ),
 
                         subtitle: Text(
-                          '${startDate.day}/${startDate.month}/${startDate.year}',
+                          DateFormat(
+                            'dd MMM yyyy',
+                          ).format(
+                            startDate,
+                          ),
                         ),
 
                         trailing:

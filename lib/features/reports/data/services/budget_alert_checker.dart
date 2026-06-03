@@ -14,7 +14,9 @@ class BudgetAlertChecker {
   );
 
   Future<List<BudgetAlertModel>>
-      checkAlerts({required bool includeSafe})
+    checkAlerts({
+      bool includeSafe = false,
+  })
   async {
 
     final now = DateTime.now();

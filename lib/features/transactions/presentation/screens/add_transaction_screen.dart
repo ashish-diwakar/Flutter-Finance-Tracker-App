@@ -10,6 +10,7 @@ import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
+import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../../accounts/presentation/providers/accounts_provider.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
@@ -497,17 +498,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                                 );
                               }
 
-                              ref.invalidate(
-                                totalBalanceProvider,
-                              );
-
-                              ref.invalidate(
-                                totalIncomeProvider,
-                              );
-
-                              ref.invalidate(
-                                totalExpenseProvider,
-                              );
+                              await ProviderRefreshHelper
+                                .refreshAllFinancialData(ref);
 
                               final syncService = await ref.read(
                                 syncServiceProvider.future,

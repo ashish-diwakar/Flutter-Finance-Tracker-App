@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../providers/budget_alerts_provider.dart';
 import '../widgets/budget_alerts_section.dart';
 
@@ -48,16 +49,14 @@ class BudgetAlertsScreen
           return RefreshIndicator(
             onRefresh: () async {
 
-              ref.invalidate(
-                budgetAlertsProvider,
-              );
-
-              await ref.read(
-                budgetAlertsProvider.future,
-              );
+              await ProviderRefreshHelper
+                .refreshBudgetData(ref);
             },
 
             child: SingleChildScrollView(
+
+              physics:
+                  const AlwaysScrollableScrollPhysics(),
 
               padding:
                   const EdgeInsets.fromLTRB(

@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/config/currency_config.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../../shared/models/investment_model.dart';
 
+import '../../../../shared/utils/provider_refresh_helper.dart';
+import '../../domain/utils/investment_helper.dart';
 import '../providers/investments_provider.dart';
 import '../providers/investment_analytics_provider.dart';
+import '../providers/investment_sync_provider.dart';
 
 import '../widgets/portfolio_summary_card.dart';
 import 'add_investment_screen.dart';
@@ -43,8 +47,7 @@ class _PortfolioScreenState
     });
 
     try {
-      final syncedCount =
-          await ref.read(investmentSyncProvider).syncAllInvestments();
+      final syncedCount = await ref.read(investmentSyncProvider).syncAllInvestments();
 
       if (mounted) {
         ScaffoldMessenger.of(
@@ -57,6 +60,11 @@ class _PortfolioScreenState
           ),
         );
       }
+      
+      await ProviderRefreshHelper
+          .refreshInvestmentData(
+        ref,
+      );
     } catch (e, stackTrace) {
       debugPrint('Sync failed: $e');
       debugPrint('StackTrace: $stackTrace');
@@ -168,12 +176,9 @@ class _PortfolioScreenState
 
           if (result == true) {
 
-            ref.invalidate(
-              investmentsProvider,
-            );
-
-            ref.invalidate(
-              investmentAnalyticsProvider,
+           await ProviderRefreshHelper
+                .refreshInvestmentData(
+              ref,
             );
           }
         },
@@ -187,12 +192,9 @@ class _PortfolioScreenState
 
         onRefresh: () async {
 
-          ref.invalidate(
-            investmentsProvider,
-          );
-
-          ref.invalidate(
-            investmentAnalyticsProvider,
+          await ProviderRefreshHelper
+              .refreshInvestmentData(
+            ref,
           );
         },
 
@@ -414,12 +416,9 @@ class _PortfolioScreenState
 
                             if (result == true) {
 
-                              ref.invalidate(
-                                investmentsProvider,
-                              );
-
-                              ref.invalidate(
-                                investmentAnalyticsProvider,
+                              await ProviderRefreshHelper
+                                  .refreshInvestmentData(
+                                ref,
                               );
                             }
                           },
@@ -489,7 +488,7 @@ class _InvestmentCard
   final InvestmentModel
       investment;
 
-  final dynamic currency;
+  final CurrencyConfig currency;
 
   const _InvestmentCard({
 
@@ -503,16 +502,21 @@ class _InvestmentCard
     BuildContext context,
   ) {
 
-    final isFixedReturn = [
+    // final isFixedReturn = [
 
-      'FD',
-      'RD',
-      'PPF',
-      'EPF',
-      'NPS',
-      'Bond',
+    //   'FD',
+    //   'RD',
+    //   'PPF',
+    //   'EPF',
+    //   'NPS',
+    //   'Bond',
 
-    ].contains(
+    // ].contains(
+    //   investment.type,
+    // );
+
+    final isFixedReturn =
+      InvestmentHelper.isFixedReturn(
       investment.type,
     );
 

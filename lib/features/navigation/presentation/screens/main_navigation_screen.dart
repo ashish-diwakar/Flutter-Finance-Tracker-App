@@ -5,10 +5,6 @@ import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../../reports/presentation/screens/reports_screen.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_container_screen.dart';
-import '../../../reports/presentation/providers/monthly_summary_provider.dart';
-import '../../../reports/presentation/providers/category_analytics_provider.dart';
-import '../../../reports/presentation/providers/monthly_chart_provider.dart';
-import '../../../reports/presentation/providers/budget_progress_provider.dart';
 
 class MainNavigationScreen
     extends ConsumerStatefulWidget {
@@ -70,26 +66,6 @@ class _MainNavigationScreenState
 
         onDestinationSelected:
             (index) {
-
-          if (index == 2) {
-
-            ref.invalidate(
-              monthlySummaryProvider,
-            );
-
-            ref.invalidate(
-              categoryAnalyticsProvider,
-            );
-
-            ref.invalidate(
-              monthlyChartProvider,
-            );
-
-            ref.invalidate(
-              budgetProgressProvider,
-            );
-          }
-
           setState(() {
 
             currentIndex = index;

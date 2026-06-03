@@ -1,63 +1,100 @@
 import 'package:isar/isar.dart';
-//import 'dart:convert';
 import 'package:finance_tracker/shared/providers/database_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:finance_tracker/shared/models/transaction_model.dart';
-//import 'package:finance_tracker/shared/models/category_model.dart';
 
 import '../../domain/models/budget_progress_data.dart';
 import '../../../categories/presentation/providers/category_repository_provider.dart';
 
-
-
 final budgetProgressProvider =
-    FutureProvider<
-        List<BudgetProgressData>>(
-  (ref) async {
-
+    FutureProvider.family<
+        List<BudgetProgressData>,
+        DateTime>(
+  (ref, month) async {
 
     final isar =
         await ref.read(
       isarProvider.future,
     );
-    
+
     final repository =
         await ref.read(
       categoryRepositoryProvider.future,
     );
 
+    final startOfMonth =
+        DateTime(
+      month.year,
+      month.month,
+      1,
+    );
+
+    final startOfNextMonth =
+        month.month == 12
+
+            ? DateTime(
+                month.year + 1,
+                1,
+                1,
+              )
+
+            : DateTime(
+                month.year,
+                month.month + 1,
+                1,
+              );
+
     final expenseTransactions =
-        await isar.transactionModels
+        await isar
+            .transactionModels
             .filter()
-            .typeEqualTo('expense')
-            .isDeletedEqualTo(false)
+            .typeEqualTo(
+              'expense',
+            )
+            .isDeletedEqualTo(
+              false,
+            )
+            .transactionDateBetween(
+              startOfMonth,
+              startOfNextMonth,
+              includeLower: true,
+              includeUpper: false,
+            )
+            .findAll();
+
+    final incomeTransactions =
+        await isar
+            .transactionModels
+            .filter()
+            .typeEqualTo(
+              'income',
+            )
+            .isDeletedEqualTo(
+              false,
+            )
+            .transactionDateBetween(
+              startOfMonth,
+              startOfNextMonth,
+              includeLower: true,
+              includeUpper: false,
+            )
             .findAll();
 
     final categories =
         await repository
             .getAllCategories();
 
-          
-    final incomeTransactions =
-        await isar.transactionModels
-            .filter()
-            .typeEqualTo('income')
-            .isDeletedEqualTo(false)
-            .findAll();  
-
     final Map<String, double>
         totals = {};
 
-    // Sum all amounts starting from 0.0
-    var totalIncome = incomeTransactions.fold<double>(
-      0.0, 
-      (sum, transaction) => sum + (transaction.amount ?? 0.0),
+    final totalIncome =
+        incomeTransactions.fold<double>(
+      0.0,
+      (sum, transaction) =>
+          sum +
+          transaction.amount,
     );
 
-    // if(totalIncome > 0.0) {
-    //   totalIncome = totalIncome / 100;
-    // }
-    
     for (final transaction
         in expenseTransactions) {
 
@@ -68,12 +105,18 @@ final budgetProgressProvider =
             transaction.categoryId,
       );
 
-      if (matchingCategories.isEmpty) {
-        print('No category found for transaction with categoryId: ${transaction.categoryId}');
+      if (matchingCategories
+          .isEmpty) {
+
+        print(
+          'No category found for transaction with categoryId: ${transaction.categoryId}',
+        );
+
         continue;
       }
 
-      final category = matchingCategories.first;
+      final category =
+          matchingCategories.first;
 
       final amount =
           transaction.amount / 100;
@@ -82,15 +125,12 @@ final budgetProgressProvider =
         category.name,
         (value) =>
             value + amount,
-
         ifAbsent: () => amount,
       );
     }
-    
-    var result = totals.entries.map((e) {
 
-      // final simulatedBudget =
-      //     e.value * 1.2;
+    final result =
+        totals.entries.map((e) {
 
       final category =
           categories.firstWhere(
@@ -98,26 +138,25 @@ final budgetProgressProvider =
             c.name == e.key,
       );
 
-      final simulatedBudget =
+      final budget =
           (category.monthlyBudget ??
                   totalIncome) /
               100;
-      //final simulatedBudget = totalIncome;
-      
 
-      var budgetData = BudgetProgressData(
+      return BudgetProgressData(
 
-        category: e.key,
+        category:
+            e.key,
 
-        spent: e.value,
+        spent:
+            e.value,
 
         budget:
-            simulatedBudget,
+            budget,
       );
 
-      return budgetData;
-
     }).toList();
+
     return result;
   },
 );

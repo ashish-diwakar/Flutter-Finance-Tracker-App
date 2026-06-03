@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../providers/recurring_provider.dart';
 import 'add_recurring_transaction_screen.dart';
 import '../../../../shared/providers/currency_provider.dart';
@@ -57,9 +58,8 @@ class RecurringTransactionsScreen
             ),
           );
 
-          ref.invalidate(
-            recurringTransactionsProvider,
-          );
+          await ProviderRefreshHelper
+            .refreshRecurringTransactionData(ref);
         },
 
         child: const Icon(
@@ -239,9 +239,8 @@ class RecurringTransactionsScreen
                             item,
                           );
 
-                          ref.invalidate(
-                            recurringTransactionsProvider,
-                          );
+                          await ProviderRefreshHelper
+                            .refreshRecurringTransactionData(ref);
                         }
 
                         // =====================================
@@ -263,9 +262,8 @@ class RecurringTransactionsScreen
                             ),
                           );
 
-                          ref.invalidate(
-                            recurringTransactionsProvider,
-                          );
+                          await ProviderRefreshHelper
+                            .refreshRecurringTransactionData(ref);
                         }
 
                         // =====================================
@@ -342,9 +340,8 @@ class RecurringTransactionsScreen
                             item.id,
                           );
 
-                          ref.invalidate(
-                            recurringTransactionsProvider,
-                          );
+                          await ProviderRefreshHelper
+                            .refreshRecurringTransactionData(ref);
 
                           if (context.mounted) {
 

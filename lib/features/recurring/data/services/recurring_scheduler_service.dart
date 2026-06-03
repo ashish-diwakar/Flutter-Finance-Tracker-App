@@ -32,47 +32,69 @@ class RecurringSchedulerService {
     for (final item
         in recurring) {
 
-      final transaction =
-          TransactionModel()
+      while (
+          item.nextRunDate
+              .isBefore(now)) {
 
-            ..amount =
-                item.amount
+        // Stop processing if recurring
+        // has crossed its end date.
+        if (item.endDate != null &&
+            item.nextRunDate.isAfter(
+              item.endDate!,
+            )) {
 
-            ..type =
-                item.type
+          item.isActive =
+              false;
 
-            ..categoryId =
-                item.categoryId
+          break;
+        }
 
-            ..accountId =
-                item.accountId
+        final transaction =
+            TransactionModel()
 
-            ..notes =
-                item.notes
+              ..amount =
+                  item.amount
 
-            ..transactionDate =
-                now
+              ..type =
+                  item.type
 
-            ..updatedAt =
-                DateTime.now()
+              ..categoryId =
+                  item.categoryId
 
-            ..isDeleted =
-                false
+              ..accountId =
+                  item.accountId
 
-            ..isSynced =
-                false;
+              ..notes =
+                  item.notes
 
-      await isar.writeTxn(() async {
+              ..transactionDate =
+                  item.nextRunDate
 
-        await isar
-            .transactionModels
-            .put(transaction);
-      });
+              ..updatedAt =
+                  DateTime.now()
 
-      item.nextRunDate =
-          calculateNextRunDate(
-        item,
-      );
+              ..isDeleted =
+                  false
+
+              ..isSynced =
+                  false;
+
+        await isar.writeTxn(
+          () async {
+
+            await isar
+                .transactionModels
+                .put(
+              transaction,
+            );
+          },
+        );
+
+        item.nextRunDate =
+            calculateNextRunDate(
+          item,
+        );
+      }
 
       item.updatedAt =
           DateTime.now();
@@ -80,12 +102,14 @@ class RecurringSchedulerService {
       item.isSynced =
           false;
 
-      await isar.writeTxn(() async {
+      await isar.writeTxn(
+        () async {
 
-        await isar
-            .recurringTransactionModels
-            .put(item);
-      });
+          await isar
+              .recurringTransactionModels
+              .put(item);
+        },
+      );
     }
   }
 

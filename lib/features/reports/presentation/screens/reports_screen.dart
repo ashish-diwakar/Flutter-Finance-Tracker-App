@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../providers/budget_progress_provider.dart';
 import '../providers/category_analytics_provider.dart';
 import '../providers/expense_forecast_provider.dart';
@@ -65,45 +67,71 @@ class _ReportsScreenState
   Future<void> refreshReports()
   async {
 
-    ref.invalidate(
-      monthlySummaryProvider(
-        selectedMonth,
-      ),
-    );
+    // ref.invalidate(
+    //   monthlySummaryProvider(
+    //     selectedMonth,
+    //   ),
+    // );
 
-    ref.invalidate(
-      categoryAnalyticsProvider(
-        selectedMonth,
-      ),
-    );
+    // ref.invalidate(
+    //   categoryAnalyticsProvider(
+    //     selectedMonth,
+    //   ),
+    // );
 
-    ref.invalidate(
-      monthlyChartProvider,
-    );
+    // ref.invalidate(
+    //   monthlyChartProvider,
+    // );
 
-    ref.invalidate(
-      budgetProgressProvider,
-    );
+    // ref.invalidate(
+    //   budgetProgressProvider,
+    // );
 
-    ref.invalidate(
-      monthlyTrendsProvider,
-    );
+    // ref.invalidate(
+    //   monthlyTrendsProvider,
+    // );
 
-    ref.invalidate(
-      expenseForecastProvider,
-    );
+    // ref.invalidate(
+    //   expenseForecastProvider,
+    // );
 
-    ref.invalidate(
-      financialInsightsProvider,
-    );
+    // ref.invalidate(
+    //   financialInsightsProvider,
+    // );
 
-    ref.invalidate(
-      financialHealthProvider,
-    );
+    // ref.invalidate(
+    //   financialHealthProvider,
+    // );
 
-    ref.invalidate(
-      recurringAnalyticsProvider,
-    );
+    // ref.invalidate(
+    //   recurringAnalyticsProvider,
+    // );
+
+    // await Future.wait([
+    //   ref.read(
+    //     monthlySummaryProvider(
+    //       selectedMonth,
+    //     ).future,
+    //   ),
+
+    //   ref.read(
+    //     categoryAnalyticsProvider(
+    //       selectedMonth,
+    //     ).future,
+    //   ),
+
+    //   ref.read(
+    //     monthlyChartProvider.future,
+    //   ),
+
+    //   ref.read(
+    //     budgetProgressProvider(selectedMonth).future,
+    //   ),
+    // ]);
+    
+    await ProviderRefreshHelper
+      .refreshReportsData(ref, selectedMonth);
+
   }
 
   TextStyle get sectionTitleStyle {
@@ -156,7 +184,9 @@ class _ReportsScreenState
 
     final budgetAsync =
         ref.watch(
-      budgetProgressProvider,
+      budgetProgressProvider(
+        selectedMonth,
+      ),
     );
 
     final trendsAsync =
@@ -255,7 +285,11 @@ class _ReportsScreenState
                 ),
 
                 subtitle: Text(
-                  '${selectedMonth.month}/${selectedMonth.year}',
+                  DateFormat(
+                      'MMMM yyyy',
+                    ).format(
+                      selectedMonth,
+                    ),
                 ),
 
                 trailing: const Icon(

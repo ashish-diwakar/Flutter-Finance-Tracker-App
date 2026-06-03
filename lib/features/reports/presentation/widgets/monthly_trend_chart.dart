@@ -67,382 +67,450 @@ class MonthlyTrendChart
           16,
         ),
 
-        child: SizedBox(
+        child: Column(
 
-          height: 320,
+          children: [ 
+            
+            SizedBox(
 
-          child: LineChart(
+                height: 320,
 
-            LineChartData(
+                child: LineChart(
 
-              minY: 0,
+                  LineChartData(
 
-              maxY: maxY,
+                    minY: 0,
 
-              // =========================================
-              // GRID
-              // =========================================
+                    maxY: maxY,
 
-              gridData:
-                  FlGridData(
+                    // =========================================
+                    // GRID
+                    // =========================================
 
-                show: true,
+                    gridData:
+                        FlGridData(
 
-                drawVerticalLine:
-                    false,
+                      show: true,
 
-                horizontalInterval:
-                    interval,
-              ),
+                      drawVerticalLine:
+                          false,
 
-              // =========================================
-              // BORDER
-              // =========================================
+                      horizontalInterval:
+                          interval,
+                    ),
 
-              borderData:
-                  FlBorderData(
+                    // =========================================
+                    // BORDER
+                    // =========================================
 
-                show: true,
+                    borderData:
+                        FlBorderData(
 
-                border: Border.all(
-                  color:
-                      Colors.grey,
-                ),
-              ),
+                      show: true,
 
-              // =========================================
-              // TITLES
-              // =========================================
+                      border: Border.all(
+                        color:
+                            Colors.grey,
+                      ),
+                    ),
 
-              titlesData:
-                  FlTitlesData(
+                    // =========================================
+                    // TITLES
+                    // =========================================
 
-                topTitles:
-                    const AxisTitles(
+                    titlesData:
+                        FlTitlesData(
 
-                  sideTitles:
-                      SideTitles(
-                    showTitles:
-                        false,
-                  ),
-                ),
+                      topTitles:
+                          const AxisTitles(
 
-                rightTitles:
-                    const AxisTitles(
+                        sideTitles:
+                            SideTitles(
+                          showTitles:
+                              false,
+                        ),
+                      ),
 
-                  sideTitles:
-                      SideTitles(
-                    showTitles:
-                        false,
-                  ),
-                ),
+                      rightTitles:
+                          const AxisTitles(
 
-                // =====================================
-                // LEFT TITLES
-                // =====================================
+                        sideTitles:
+                            SideTitles(
+                          showTitles:
+                              false,
+                        ),
+                      ),
 
-                leftTitles:
-                    AxisTitles(
+                      // =====================================
+                      // LEFT TITLES
+                      // =====================================
 
-                  sideTitles:
-                      SideTitles(
+                      leftTitles:
+                          AxisTitles(
 
-                    showTitles:
-                        true,
+                        sideTitles:
+                            SideTitles(
 
-                    reservedSize:
-                        52,
+                          showTitles:
+                              true,
 
-                    interval:
-                        interval,
+                          reservedSize:
+                              52,
 
-                    getTitlesWidget:
-                        (
-                      value,
-                      meta,
-                    ) {
+                          interval:
+                              interval,
 
-                      String text;
+                          getTitlesWidget:
+                              (
+                            value,
+                            meta,
+                          ) {
 
-                      if (value >=
-                          1000) {
+                            String text;
 
-                        text =
-                            '${(value / 1000).toStringAsFixed(1)}K';
+                            if (value >=
+                                1000) {
 
-                      } else {
+                              text =
+                                  '${(value / 1000).toStringAsFixed(1)}K';
 
-                        text =
-                            value
-                                .toStringAsFixed(
-                              0,
+                            } else {
+
+                              text =
+                                  value
+                                      .toStringAsFixed(
+                                    0,
+                                  );
+                            }
+
+                            return SideTitleWidget(
+
+                              meta: meta,
+
+                              child: Text(
+
+                                text,
+
+                                style:
+                                    const TextStyle(
+                                  fontSize:
+                                      11,
+                                ),
+                              ),
                             );
-                      }
-
-                      return SideTitleWidget(
-
-                        meta: meta,
-
-                        child: Text(
-
-                          text,
-
-                          style:
-                              const TextStyle(
-                            fontSize:
-                                11,
-                          ),
+                          },
                         ),
-                      );
-                    },
-                  ),
-                ),
+                      ),
 
-                // =====================================
-                // BOTTOM TITLES
-                // =====================================
+                      // =====================================
+                      // BOTTOM TITLES
+                      // =====================================
 
-                bottomTitles:
-                    AxisTitles(
+                      bottomTitles:
+                          AxisTitles(
 
-                  sideTitles:
-                      SideTitles(
+                        sideTitles:
+                            SideTitles(
 
-                    showTitles:
-                        true,
+                          showTitles:
+                              true,
 
-                    reservedSize:
-                        40,
+                          reservedSize:
+                              40,
 
-                    interval: 1,
+                          interval: 1,
 
-                    getTitlesWidget:
-                        (
-                      value,
-                      meta,
-                    ) {
+                          getTitlesWidget:
+                              (
+                            value,
+                            meta,
+                          ) {
 
-                      final index =
-                          value
-                              .toInt();
+                            final index =
+                                value
+                                    .toInt();
 
-                      if (index < 0 ||
-                          index >=
-                              trends.length) {
+                            if (index < 0 ||
+                                index >=
+                                    trends.length) {
 
-                        return const SizedBox();
-                      }
+                              return const SizedBox();
+                            }
 
-                      final raw =
-                          trends[index]
-                              .month;
+                            final raw =
+                                trends[index]
+                                    .month;
 
-                      final parts =
-                          raw.split(
-                        '-',
-                      );
+                            final parts =
+                                raw.split(
+                              '-',
+                            );
 
-                      if (parts.length !=
-                          2) {
+                            if (parts.length !=
+                                2) {
 
-                        return const SizedBox();
-                      }
+                              return const SizedBox();
+                            }
 
-                      final month =
-                          int.tryParse(
-                        parts[1],
-                      );
+                            final month =
+                                int.tryParse(
+                              parts[1],
+                            );
 
-                      const monthNames = [
+                            const monthNames = [
 
-                        'Jan',
-                        'Feb',
-                        'Mar',
-                        'Apr',
-                        'May',
-                        'Jun',
-                        'Jul',
-                        'Aug',
-                        'Sep',
-                        'Oct',
-                        'Nov',
-                        'Dec',
-                      ];
+                              'Jan',
+                              'Feb',
+                              'Mar',
+                              'Apr',
+                              'May',
+                              'Jun',
+                              'Jul',
+                              'Aug',
+                              'Sep',
+                              'Oct',
+                              'Nov',
+                              'Dec',
+                            ];
 
-                      final label =
-                          month != null &&
-                                  month >= 1 &&
-                                  month <= 12
+                            final label =
+                                month != null &&
+                                        month >= 1 &&
+                                        month <= 12
 
-                              ? monthNames[
-                                  month - 1
-                                ]
+                                    ? monthNames[
+                                        month - 1
+                                      ]
 
-                              : raw;
+                                    : raw;
 
-                      return SideTitleWidget(
+                            return SideTitleWidget(
 
-                        meta: meta,
+                              meta: meta,
 
-                        child: Padding(
+                              child: Padding(
 
-                          padding:
-                              const EdgeInsets.only(
-                            top: 8,
-                          ),
+                                padding:
+                                    const EdgeInsets.only(
+                                  top: 8,
+                                ),
 
-                          child: Text(
+                                child: Text(
 
-                            label,
+                                  label,
 
-                            style:
-                                const TextStyle(
-                              fontSize:
-                                  11,
-                            ),
-                          ),
+                                  style:
+                                      const TextStyle(
+                                    fontSize:
+                                        11,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ),
+                      ),
+                    ),
 
-              // =========================================
-              // LINE BARS
-              // =========================================
+                    // =========================================
+                    // LINE BARS
+                    // =========================================
 
-              lineBarsData: [
+                    lineBarsData: [
 
-                // =====================================
-                // INCOME
-                // =====================================
+                      // =====================================
+                      // INCOME
+                      // =====================================
 
-                LineChartBarData(
+                      LineChartBarData(
 
-                  spots:
-                      trends
-                          .asMap()
-                          .entries
-                          .map(
-                    (e) {
+                        spots:
+                            trends
+                                .asMap()
+                                .entries
+                                .map(
+                          (e) {
 
-                      return FlSpot(
+                            return FlSpot(
 
-                        e.key
-                            .toDouble(),
+                              e.key
+                                  .toDouble(),
 
-                        e.value
-                            .income,
-                      );
-                    },
-                  ).toList(),
+                              e.value
+                                  .income,
+                            );
+                          },
+                        ).toList(),
 
-                  isCurved: true,
-
-                  color: Colors.green,
-
-                  barWidth: 4,
-
-                  dotData:
-                      FlDotData(
-
-                    show: true,
-
-                    getDotPainter:
-                        (
-                      spot,
-                      percent,
-                      bar,
-                      index,
-                    ) {
-
-                      return FlDotCirclePainter(
-
-                        radius: 4,
+                        isCurved: true,
 
                         color: Colors.green,
 
-                        strokeWidth: 1.5,
+                        barWidth: 4,
 
-                        strokeColor:
-                            Colors.white,
-                      );
-                    },
-                  ),
+                        dotData:
+                            FlDotData(
 
-                  belowBarData:
-                      BarAreaData(
-                    show: false,
-                  ),
-                ),
+                          show: true,
 
-                // =====================================
-                // EXPENSE
-                // =====================================
+                          getDotPainter:
+                              (
+                            spot,
+                            percent,
+                            bar,
+                            index,
+                          ) {
 
-                LineChartBarData(
+                            return FlDotCirclePainter(
 
-                  spots:
-                      trends
-                          .asMap()
-                          .entries
-                          .map(
-                    (e) {
+                              radius: 4,
 
-                      return FlSpot(
+                              color: Colors.green,
 
-                        e.key
-                            .toDouble(),
+                              strokeWidth: 1.5,
 
-                        e.value
-                            .expense,
-                      );
-                    },
-                  ).toList(),
+                              strokeColor:
+                                  Colors.white,
+                            );
+                          },
+                        ),
 
-                  isCurved: true,
+                        belowBarData:
+                            BarAreaData(
+                          show: false,
+                        ),
+                      ),
 
-                  color: Colors.red,
+                      // =====================================
+                      // EXPENSE
+                      // =====================================
 
-                  barWidth: 4,
+                      LineChartBarData(
 
-                  dotData:
-                      FlDotData(
+                        spots:
+                            trends
+                                .asMap()
+                                .entries
+                                .map(
+                          (e) {
 
-                    show: true,
+                            return FlSpot(
 
-                    getDotPainter:
-                        (
-                      spot,
-                      percent,
-                      bar,
-                      index,
-                    ) {
+                              e.key
+                                  .toDouble(),
 
-                      return FlDotCirclePainter(
+                              e.value
+                                  .expense,
+                            );
+                          },
+                        ).toList(),
 
-                        radius: 4,
+                        isCurved: true,
 
                         color: Colors.red,
 
-                        strokeWidth: 1.5,
+                        barWidth: 4,
 
-                        strokeColor:
-                            Colors.white,
-                      );
-                    },
-                  ),
+                        dotData:
+                            FlDotData(
 
-                  belowBarData:
-                      BarAreaData(
-                    show: false,
+                          show: true,
+
+                          getDotPainter:
+                              (
+                            spot,
+                            percent,
+                            bar,
+                            index,
+                          ) {
+
+                            return FlDotCirclePainter(
+
+                              radius: 4,
+
+                              color: Colors.red,
+
+                              strokeWidth: 1.5,
+
+                              strokeColor:
+                                  Colors.white,
+                            );
+                          },
+                        ),
+
+                        belowBarData:
+                            BarAreaData(
+                          show: false,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+
+            ),
+            
+            const SizedBox(
+              height: 16,
+            ),
+
+            Wrap(
+
+              spacing: 16,
+
+              children: [
+
+                Row(
+
+                  mainAxisSize:
+                      MainAxisSize.min,
+
+                  children: [
+
+                    Container(
+                      width: 14,
+                      height: 14,
+                      color:
+                          Colors.green,
+                    ),
+
+                    const SizedBox(
+                      width: 6,
+                    ),
+
+                    const Text(
+                      'Income',
+                    ),
+                  ],
+                ),
+
+                Row(
+
+                  mainAxisSize:
+                      MainAxisSize.min,
+
+                  children: [
+
+                    Container(
+                      width: 14,
+                      height: 14,
+                      color:
+                          Colors.red,
+                    ),
+
+                    const SizedBox(
+                      width: 6,
+                    ),
+
+                    const Text(
+                      'Expense',
+                    ),
+                  ],
                 ),
               ],
             ),
-          ),
+          ]
         ),
+
       ),
     );
   }

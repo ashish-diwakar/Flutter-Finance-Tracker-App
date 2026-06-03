@@ -2,6 +2,7 @@ import 'package:finance_tracker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../../transactions/presentation/screens/add_transaction_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -35,9 +36,12 @@ class _TransactionListContainerScreenState
 
       await syncService.syncAll();
 
-      ref.invalidate(
-        transactionsStreamProvider,
-      );
+      // ref.invalidate(
+      //   transactionsStreamProvider,
+      // );
+      await ProviderRefreshHelper
+        .refreshTransactionData(ref);
+
 
 
       if (!mounted) {

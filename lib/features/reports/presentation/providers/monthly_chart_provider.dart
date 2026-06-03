@@ -16,11 +16,29 @@ final monthlyChartProvider =
       isarProvider.future,
     );
 
+    final now = DateTime.now();
+
+    final startDate = DateTime(
+      now.year,
+      now.month - 5,
+      1,
+    );
+
+    // final transactions =
+    //     await isar.transactionModels
+    //         .filter()
+    //         .isDeletedEqualTo(false)
+    //         .findAll();
+
     final transactions =
-        await isar.transactionModels
-            .filter()
-            .isDeletedEqualTo(false)
-            .findAll();
+    await isar.transactionModels
+        .filter()
+        .isDeletedEqualTo(false)
+        .transactionDateGreaterThan(
+          startDate,
+          include: true,
+        )
+        .findAll();
 
     final Map<String, double>
         incomeMap = {};
@@ -93,6 +111,14 @@ final monthlyChartProvider =
         bDate,
       );
     });
+
+    if (months.length > 6) {
+
+      months.removeRange(
+        0,
+        months.length - 6,
+      );
+    }
 
     return months.map((month) {
 

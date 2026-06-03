@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/utils/provider_refresh_helper.dart' show ProviderRefreshHelper;
 import '../../../dashboard/presentation/providers/balance_provider.dart';
 import '../../../dashboard/presentation/providers/expense_provider.dart';
 import '../../../dashboard/presentation/providers/income_provider.dart';
@@ -96,20 +98,9 @@ class TransactionListScreen
         transaction,
       );
 
-      ref.invalidate(
-        totalBalanceProvider,
-      );
-
-      ref.invalidate(
-        totalIncomeProvider,
-      );
-
-      ref.invalidate(
-        totalExpenseProvider,
-      );
-
-      ref.invalidate(
-        transactionsStreamProvider,
+      await ProviderRefreshHelper
+          .refreshAllFinancialData(
+        ref,
       );
 
       if (context.mounted) {
@@ -199,7 +190,12 @@ class TransactionListScreen
         }
 
         return ListView.builder(
+          
+          shrinkWrap: true,
 
+          physics:
+              const NeverScrollableScrollPhysics(),
+              
           itemCount:
               (limit != null && limit < transactions.length)
                   ? limit
@@ -286,11 +282,11 @@ class TransactionListScreen
                     ),
 
                     Text(
-                      transaction
-                          .transactionDate
-                          .toLocal()
-                          .toString()
-                          .split(' ')[0],
+                      DateFormat(
+                        'dd MMM yyyy',
+                      ).format(
+                        transaction.transactionDate,
+                      ),
 
                       style: const TextStyle(
                         fontSize: 12,
