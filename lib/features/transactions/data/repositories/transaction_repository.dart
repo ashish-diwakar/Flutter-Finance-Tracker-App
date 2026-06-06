@@ -73,16 +73,16 @@ class TransactionRepository {
         );
   }
 
-  Future<List<TransactionModel>>
-      getTransactions() async {
+  // Future<List<TransactionModel>>
+  //     getTransactions() async {
 
-    return await isar.transactionModels
-        .filter()
-        .isDeletedEqualTo(false)
-        .typeEqualTo('income')
-        .sortByTransactionDateDesc()
-        .findAll();
-  }
+  //   return await isar.transactionModels
+  //       .filter()
+  //       .isDeletedEqualTo(false)
+  //       .typeEqualTo('income')
+  //       .sortByTransactionDateDesc()
+  //       .findAll();
+  // }
 
   Future<int> getTotalIncome() async {
 

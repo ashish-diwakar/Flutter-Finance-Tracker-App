@@ -35,22 +35,44 @@ class FinancialInsightService {
       1,
     );
 
-    final previousMonthEnd =
-        DateTime(
+    // final previousMonthEnd =
+    //     DateTime(
+    //   now.year,
+    //   now.month,
+    //   0,
+    // );
+
+    // final currentTransactions =
+    //     await isar
+    //         .transactionModels
+    //         .filter()
+    //         .transactionDateGreaterThan(
+    //           currentMonthStart,
+    //         )
+    //         .isDeletedEqualTo(
+    //           false,
+    //         )
+    //         .findAll();
+
+    final currentMonthEnd =
+    DateTime(
       now.year,
-      now.month,
-      0,
+      now.month + 1,
+      1,
     );
 
     final currentTransactions =
         await isar
             .transactionModels
             .filter()
-            .transactionDateGreaterThan(
-              currentMonthStart,
-            )
             .isDeletedEqualTo(
               false,
+            )
+            .transactionDateBetween(
+              currentMonthStart,
+              currentMonthEnd,
+              includeLower: true,
+              includeUpper: false,
             )
             .findAll();
 
@@ -60,7 +82,10 @@ class FinancialInsightService {
             .filter()
             .transactionDateBetween(
               previousMonthStart,
-              previousMonthEnd,
+              //previousMonthEnd,
+              currentMonthStart,
+              includeLower: true,
+              includeUpper: true,
             )
             .isDeletedEqualTo(
               false,
@@ -185,7 +210,8 @@ class FinancialInsightService {
             top.key,
           );
 
-      if (category != null) {
+      if (category != null &&
+          !category.isDeleted) {
 
         insights.add(
 

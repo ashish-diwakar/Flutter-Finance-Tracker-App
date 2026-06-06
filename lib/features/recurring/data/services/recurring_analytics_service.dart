@@ -55,11 +55,19 @@ class RecurringAnalyticsService {
     // LOAD CATEGORIES
     // =========================================
 
+    // final categories =
+    //     await isar
+    //         .categoryModels
+    //         .where()
+    //         .findAll();
     final categories =
-        await isar
-            .categoryModels
-            .where()
-            .findAll();
+          await isar
+              .categoryModels
+              .filter()
+              .isDeletedEqualTo(
+                false,
+              )
+              .findAll();
 
     final Map<
             int,
@@ -116,21 +124,24 @@ class RecurringAnalyticsService {
 
         case 'daily':
 
-          amount *= 30;
+          // amount *= 30;
+          amount *= (30 / r.interval);
           break;
 
         case 'weekly':
 
-          amount *= 4;
+          // amount *= 4;
+          amount *= (4.345 / r.interval);
           break;
 
         case 'monthly':
-
+          amount /= r.interval;
           break;
 
         case 'yearly':
 
-          amount /= 12;
+          // amount /= 12;
+          amount /= (12 * r.interval);
           break;
       }
 

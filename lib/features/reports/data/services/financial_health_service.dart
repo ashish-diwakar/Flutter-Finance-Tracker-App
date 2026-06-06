@@ -17,6 +17,29 @@ class FinancialHealthService {
       FinancialHealthModel>
       calculateHealth()
   async {
+    final now = DateTime.now();
+
+    final startOfMonth =
+        DateTime(
+          now.year,
+          now.month,
+          1,
+        );
+
+    final startOfNextMonth =
+        now.month == 12
+
+            ? DateTime(
+                now.year + 1,
+                1,
+                1,
+              )
+
+            : DateTime(
+                now.year,
+                now.month + 1,
+                1,
+              );
 
     final transactions =
         await isar
@@ -24,6 +47,12 @@ class FinancialHealthService {
             .filter()
             .isDeletedEqualTo(
               false,
+            )
+            .transactionDateBetween(
+              startOfMonth,
+              startOfNextMonth,
+              includeLower: true,
+              includeUpper: false,
             )
             .findAll();
 
@@ -89,10 +118,13 @@ class FinancialHealthService {
     // =========================================
 
     final categories =
-        await isar
-            .categoryModels
-            .where()
-            .findAll();
+    await isar
+        .categoryModels
+        .filter()
+        .isDeletedEqualTo(
+          false,
+        )
+        .findAll();
 
     double totalBudget = 0;
 
@@ -141,10 +173,20 @@ class FinancialHealthService {
 
     // Budget discipline (30)
 
-    score +=
-        ((100 -
-                    budgetUsage) *
-                0.3);
+    // score +=
+    //     ((100 -
+    //                 budgetUsage) *
+    //             0.3);
+    if (totalBudget > 0) {
+
+      score +=
+          ((100 - budgetUsage) * 0.3);
+
+    } else {
+
+      // Neutral score when no budgets exist
+      score += 15;
+    }
 
     score =
         score.clamp(

@@ -26,6 +26,28 @@ class ExpenseForecastService {
       1,
     );
 
+    // final transactions =
+    //     await isar
+    //         .transactionModels
+    //         .filter()
+    //         .typeEqualTo(
+    //           'expense',
+    //         )
+    //         .transactionDateGreaterThan(
+    //           monthStart,
+    //         )
+    //         .isDeletedEqualTo(
+    //           false,
+    //         )
+    //         .findAll();
+
+    final startOfNextMonth =
+        DateTime(
+          now.year,
+          now.month + 1,
+          1,
+        );
+
     final transactions =
         await isar
             .transactionModels
@@ -33,11 +55,14 @@ class ExpenseForecastService {
             .typeEqualTo(
               'expense',
             )
-            .transactionDateGreaterThan(
-              monthStart,
-            )
             .isDeletedEqualTo(
               false,
+            )
+            .transactionDateBetween(
+              monthStart,
+              startOfNextMonth,
+              includeLower: true,
+              includeUpper: false,
             )
             .findAll();
 
@@ -66,6 +91,27 @@ class ExpenseForecastService {
     final projected =
         dailyAverage *
             totalDays;
+
+    if (daysPassed < 3) {
+
+      return ExpenseForecastModel(
+
+        currentExpense:
+            expense,
+
+        projectedExpense:
+            expense,
+
+        dailyAverage:
+            expense,
+
+        daysPassed:
+            daysPassed,
+
+        totalDays:
+            totalDays,
+      );
+    }
 
     return ExpenseForecastModel(
 

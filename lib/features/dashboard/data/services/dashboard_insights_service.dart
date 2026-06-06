@@ -29,17 +29,38 @@ class DashboardInsightsService {
       1,
     );
 
+    final startOfNextMonth =
+        DateTime(
+          now.year,
+          now.month + 1,
+          1,
+        );
+
     final transactions =
         await isar
             .transactionModels
             .filter()
-            .transactionDateGreaterThan(
-              monthStart,
-            )
             .isDeletedEqualTo(
               false,
             )
+            .transactionDateBetween(
+              monthStart,
+              startOfNextMonth,
+              includeLower: true,
+              includeUpper: false,
+            )
             .findAll();
+    // final transactions =
+    //     await isar
+    //         .transactionModels
+    //         .filter()
+    //         .transactionDateGreaterThan(
+    //           monthStart,
+    //         )
+    //         .isDeletedEqualTo(
+    //           false,
+    //         )
+    //         .findAll();
 
     final categories =
         await isar
@@ -112,6 +133,23 @@ class DashboardInsightsService {
         ),
       );
     }
+    else {
+      insights.add(
+
+        FinanceInsightModel(
+
+          title:
+              'Overspending Alert',
+
+          description:
+              'You spent ₹${(-savings).toStringAsFixed(0)} more than you earned this month.',
+
+          type:
+              FinanceInsightType
+                  .warning,
+        ),
+      );
+    }
 
     // =====================================
     // HIGHEST EXPENSE CATEGORY
@@ -161,28 +199,41 @@ class DashboardInsightsService {
         },
       );
 
-      final category =
-          categories.firstWhere(
+      // final category =
+      //     categories.firstWhere(
+      //   (c) =>
+      //       c.id ==
+      //       highest.key,
+      // );
+
+      final matchingCategories =
+          categories.where(
         (c) =>
             c.id ==
             highest.key,
       );
 
-      insights.add(
+      if (matchingCategories.isNotEmpty) {
 
-        FinanceInsightModel(
+        final category = matchingCategories.first;
+          
+        insights.add(
 
-          title:
-              'Highest Expense',
+          FinanceInsightModel(
 
-          description:
-              '${category.name} consumed ₹${highest.value.toStringAsFixed(0)}.',
+            title:
+                'Highest Expense',
 
-          type:
-              FinanceInsightType
-                  .warning,
-        ),
-      );
+            description:
+                '${category.name} consumed ₹${highest.value.toStringAsFixed(0)}.',
+
+            type:
+                FinanceInsightType
+                    .warning,
+          ),
+        );
+      }
+
     }
 
     // =====================================
@@ -193,9 +244,16 @@ class DashboardInsightsService {
         recurring.where(
       (r) {
 
-        return r.nextRunDate
-            .difference(now)
-            .inDays <= 7;
+        // return r.nextRunDate
+        //     .difference(now)
+        //     .inDays <= 7;
+
+        return
+          r.nextRunDate.isAfter(now) &&
+          r.nextRunDate
+                  .difference(now)
+                  .inDays <=
+              7;
       },
     ).length;
 

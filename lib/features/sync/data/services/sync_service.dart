@@ -8,6 +8,7 @@ import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../../shared/models/recurring_transaction_model.dart';
 import '../../../../shared/models/investment_model.dart';
+import '../../../../shared/utils/device_name_helper.dart';
 
 class SyncService {
 
@@ -46,56 +47,91 @@ class SyncService {
       );
     }
 
-    await executeSafely(
-      syncCategories,
-    );
+    bool success = true;
 
-    await executeSafely(
-      pullCategories,
-    );
+    success &= await executeSafely(syncCategories);
+    success &= await executeSafely(pullCategories);
 
-    await executeSafely(
-      syncAccounts,
-    );
+    
+    success &= await executeSafely(syncAccounts);
+    success &= await executeSafely(pullAccounts);
 
-    await executeSafely(
-      pullAccounts,
-    );
+    
+    success &= await executeSafely(syncRecurringTransactions);
+    success &= await executeSafely(pullRecurringTransactions);
 
-    await executeSafely(
-      syncRecurringTransactions,
-    );
+    
+    success &= await executeSafely(syncTransactions);
+    success &= await executeSafely(pullTransactions);
 
-     await executeSafely(
-      pullRecurringTransactions,
-    );
+    
+    success &= await executeSafely(syncInvestments);
+    success &= await executeSafely(pullInvestments);
 
-    await executeSafely(
-      syncTransactions,
-    );
+    // await executeSafely(
+    //   syncCategories,
+    // );
 
-    await executeSafely(
-      pullTransactions,
-    );
+    // await executeSafely(
+    //   pullCategories,
+    // );
 
-    await executeSafely(
-      syncInvestments,
-    );
-    await executeSafely(
-      pullInvestments,
-    );
+    // await executeSafely(
+    //   syncAccounts,
+    // );
 
-    await client
-        .from('sync_metadata')
-        .upsert({
-      'user_id':
-          client.auth.currentUser!.id,
-      'last_sync_at':
-          DateTime.now()
-              .toIso8601String(),
-      'last_device':
-          'Android',
-    });
+    // await executeSafely(
+    //   pullAccounts,
+    // );
+
+    // await executeSafely(
+    //   syncRecurringTransactions,
+    // );
+
+    //  await executeSafely(
+    //   pullRecurringTransactions,
+    // );
+
+    // await executeSafely(
+    //   syncTransactions,
+    // );
+
+    // await executeSafely(
+    //   pullTransactions,
+    // );
+
+    // await executeSafely(
+    //   syncInvestments,
+    // );
+    // await executeSafely(
+    //   pullInvestments,
+    // );
+
+    // await client
+    //     .from('sync_metadata')
+    //     .upsert({
+    //   'user_id':
+    //       client.auth.currentUser!.id,
+    //   'last_sync_at':
+    //       DateTime.now()
+    //           .toIso8601String(),
+    //   'last_device':
+    //       getCurrentDevice(),
+    // });
+
+    if (success) {
+      await client
+          .from('sync_metadata')
+          .upsert({
+        'user_id':
+            client.auth.currentUser!.id,
+        'last_sync_at':
+            DateTime.now()
+                .toIso8601String(),
+        'last_device':
+            getCurrentDevice(),
+      });
+    }
 
   }
 
@@ -117,57 +153,120 @@ class SyncService {
       return;
     }
 
+    // final unsynced =
+    //     await isar.categoryModels
+    //         .filter()
+    //         .isSyncedEqualTo(false)
+    //         .findAll();
+
+    // for (final category
+    //     in unsynced) {
+    // logger.d(
+    //   '----------------------------------------------------------------------------------------------', 
+    // );
+    // logger.d(
+    //   'category to sync ${category.name}, ${category.type}, ${category.isDefault}, ${category.monthlyBudget},', 
+    // );
+
+
+    //   await client
+    //       .from('categories')
+    //       .upsert({
+
+    //     'id': category.id,
+
+    //     'user_id': user.id,
+
+    //     'name': category.name,
+
+    //     'type': category.type,
+
+    //     'is_default':
+    //         category.isDefault,
+
+    //     'is_deleted':
+    //         category.isDeleted,
+
+    //     'monthly_budget':
+    //         category.monthlyBudget,
+
+    //     'updated_at':
+    //         (category.updatedAt ??
+    //                 DateTime.now())
+    //             .toIso8601String(),
+    //   });
+
+    //   category.isSynced = true;
+
+    //   await isar.writeTxn(() async {
+
+    //     await isar.categoryModels
+    //         .put(category);
+    //   });
+    // }
+
     final unsynced =
-        await isar.categoryModels
-            .filter()
-            .isSyncedEqualTo(false)
-            .findAll();
+          await isar.categoryModels
+              .filter()
+              .isSyncedEqualTo(false)
+              .findAll();
 
-    for (final category
-        in unsynced) {
-    logger.d(
-      '----------------------------------------------------------------------------------------------', 
-    );
-    logger.d(
-      'category to sync ${category.name}, ${category.type}, ${category.isDefault}, ${category.monthlyBudget},', 
-    );
+      if (unsynced.isEmpty) {
+        return;
+      }
 
+      for (final category in unsynced) {
+
+        logger.d(
+          '----------------------------------------------------------------------------------------------',
+        );
+
+        logger.d(
+          'category to sync ${category.name}, ${category.type}, ${category.isDefault}, ${category.monthlyBudget}',
+        );
+      }
 
       await client
           .from('categories')
-          .upsert({
+          .upsert(
 
-        'id': category.id,
+            unsynced.map((category) => {
 
-        'user_id': user.id,
+              'id': category.id,
 
-        'name': category.name,
+              'user_id': user.id,
 
-        'type': category.type,
+              'name': category.name,
 
-        'is_default':
-            category.isDefault,
+              'type': category.type,
 
-        'is_deleted':
-            category.isDeleted,
+              'is_default':
+                  category.isDefault,
 
-        'monthly_budget':
-            category.monthlyBudget,
+              'is_deleted':
+                  category.isDeleted,
 
-        'updated_at':
-            (category.updatedAt ??
-                    DateTime.now())
-                .toIso8601String(),
-      });
+              'monthly_budget':
+                  category.monthlyBudget,
 
-      category.isSynced = true;
+              'updated_at':
+                  (category.updatedAt ??
+                          DateTime.now())
+                      .toIso8601String(),
+            }).toList(),
+          );
 
       await isar.writeTxn(() async {
 
+        for (final category
+            in unsynced) {
+
+          category.isSynced = true;
+        }
+
         await isar.categoryModels
-            .put(category);
+            .putAll(unsynced);
       });
-    }
   }
 
   Future<void> pullCategories()
@@ -283,6 +382,61 @@ class SyncService {
   // ACCOUNT SYNC
   // =========================================================
 
+  // Future<void> syncAccounts()
+  // async {
+
+  //   final user =
+  //       client.auth.currentUser;
+
+  //   if (user == null) {
+  //     return;
+  //   }
+
+  //   final unsynced =
+  //       await isar.accountModels
+  //           .filter()
+  //           .isSyncedEqualTo(false)
+  //           .findAll();
+
+  //   for (final account
+  //       in unsynced) {
+
+  //     await client
+  //         .from('accounts')
+  //         .upsert({
+
+  //       'id': account.id,
+
+  //       'user_id': user.id,
+
+  //       'name': account.name,
+
+  //       'type': account.type,
+
+  //       'current_balance':
+  //           account.currentBalance,
+
+  //       'is_default':
+  //           account.isDefault,
+
+  //       'is_deleted':
+  //           account.isDeleted,
+
+  //       'updated_at':
+  //           (account.updatedAt ??
+  //                   DateTime.now())
+  //               .toIso8601String(),
+  //     });
+
+  //     account.isSynced = true;
+
+  //     await isar.writeTxn(() async {
+
+  //       await isar.accountModels
+  //           .put(account);
+  //     });
+  //   }
+  // }
   Future<void> syncAccounts()
   async {
 
@@ -299,44 +453,51 @@ class SyncService {
             .isSyncedEqualTo(false)
             .findAll();
 
-    for (final account
-        in unsynced) {
-
-      await client
-          .from('accounts')
-          .upsert({
-
-        'id': account.id,
-
-        'user_id': user.id,
-
-        'name': account.name,
-
-        'type': account.type,
-
-        'current_balance':
-            account.currentBalance,
-
-        'is_default':
-            account.isDefault,
-
-        'is_deleted':
-            account.isDeleted,
-
-        'updated_at':
-            (account.updatedAt ??
-                    DateTime.now())
-                .toIso8601String(),
-      });
-
-      account.isSynced = true;
-
-      await isar.writeTxn(() async {
-
-        await isar.accountModels
-            .put(account);
-      });
+    if (unsynced.isEmpty) {
+      return;
     }
+
+    await client
+        .from('accounts')
+        .upsert(
+
+          unsynced.map((account) => {
+
+            'id': account.id,
+
+            'user_id': user.id,
+
+            'name': account.name,
+
+            'type': account.type,
+
+            'current_balance':
+                account.currentBalance,
+
+            'is_default':
+                account.isDefault,
+
+            'is_deleted':
+                account.isDeleted,
+
+            'updated_at':
+                (account.updatedAt ??
+                        DateTime.now())
+                    .toIso8601String(),
+          }).toList(),
+        );
+
+    await isar.writeTxn(() async {
+
+      for (final account
+          in unsynced) {
+
+        account.isSynced = true;
+      }
+
+      await isar.accountModels
+          .putAll(unsynced);
+    });
   }
 
   Future<void> pullAccounts()
@@ -452,6 +613,71 @@ class SyncService {
   // TRANSACTION SYNC
   // =========================================================
 
+  // Future<void> syncTransactions()
+  // async {
+
+  //   final user =
+  //       client.auth.currentUser;
+
+  //   if (user == null) {
+  //     return;
+  //   }
+
+  //   final unsynced =
+  //       await isar.transactionModels
+  //           .filter()
+  //           .isSyncedEqualTo(false)
+  //           .findAll();
+
+  //   for (final transaction
+  //       in unsynced) {
+
+  //     await client
+  //         .from('transactions')
+  //         .upsert({
+
+  //       'id': transaction.id,
+
+  //       'user_id': user.id,
+
+  //       'amount':
+  //           transaction.amount,
+
+  //       'type':
+  //           transaction.type,
+
+  //       'category_id':
+  //           transaction.categoryId,
+
+  //       'account_id':
+  //           transaction.accountId,
+
+  //       'notes':
+  //           transaction.notes,
+
+  //       'transaction_date':
+  //           transaction
+  //               .transactionDate
+  //               .toIso8601String(),
+
+  //       'is_deleted':
+  //           transaction.isDeleted,
+
+  //       'updated_at':
+  //           (transaction.updatedAt ??
+  //                 DateTime.now())
+  //             .toIso8601String(), 
+  //     });
+
+  //     transaction.isSynced = true;
+
+  //     await isar.writeTxn(() async {
+
+  //       await isar.transactionModels
+  //           .put(transaction);
+  //     });
+  //   }
+  // }
   Future<void> syncTransactions()
   async {
 
@@ -468,54 +694,61 @@ class SyncService {
             .isSyncedEqualTo(false)
             .findAll();
 
-    for (final transaction
-        in unsynced) {
-
-      await client
-          .from('transactions')
-          .upsert({
-
-        'id': transaction.id,
-
-        'user_id': user.id,
-
-        'amount':
-            transaction.amount,
-
-        'type':
-            transaction.type,
-
-        'category_id':
-            transaction.categoryId,
-
-        'account_id':
-            transaction.accountId,
-
-        'notes':
-            transaction.notes,
-
-        'transaction_date':
-            transaction
-                .transactionDate
-                .toIso8601String(),
-
-        'is_deleted':
-            transaction.isDeleted,
-
-        'updated_at':
-            (transaction.updatedAt ??
-                  DateTime.now())
-              .toIso8601String(), 
-      });
-
-      transaction.isSynced = true;
-
-      await isar.writeTxn(() async {
-
-        await isar.transactionModels
-            .put(transaction);
-      });
+    if (unsynced.isEmpty) {
+      return;
     }
+
+    await client
+        .from('transactions')
+        .upsert(
+
+          unsynced.map((transaction) => {
+
+            'id': transaction.id,
+
+            'user_id': user.id,
+
+            'amount':
+                transaction.amount,
+
+            'type':
+                transaction.type,
+
+            'category_id':
+                transaction.categoryId,
+
+            'account_id':
+                transaction.accountId,
+
+            'notes':
+                transaction.notes,
+
+            'transaction_date':
+                transaction
+                    .transactionDate
+                    .toIso8601String(),
+
+            'is_deleted':
+                transaction.isDeleted,
+
+            'updated_at':
+                (transaction.updatedAt ??
+                        DateTime.now())
+                    .toIso8601String(),
+          }).toList(),
+        );
+
+    await isar.writeTxn(() async {
+
+      for (final transaction
+          in unsynced) {
+
+        transaction.isSynced = true;
+      }
+
+      await isar.transactionModels
+          .putAll(unsynced);
+    });
   }
 
   Future<void> pullTransactions()
@@ -648,6 +881,100 @@ class SyncService {
   // =========================================================
   // RECURRING TRANSACTIONS
   // =========================================================
+  // Future<void>
+  //     syncRecurringTransactions()
+  // async {
+
+  //   final user =
+  //       client.auth.currentUser;
+
+  //   if (user == null) {
+  //     return;
+  //   }
+
+  //   // =====================================
+  //   // LOCAL → SUPABASE
+  //   // =====================================
+
+  //   final unsynced =
+  //       await isar
+  //           .recurringTransactionModels
+  //           .filter()
+  //           .isSyncedEqualTo(false)
+  //           .findAll();
+
+  //   for (final recurring
+  //       in unsynced) {
+
+  //     await client
+  //         .from(
+  //           'recurring_transactions',
+  //         )
+  //         .upsert({
+
+  //       'id':
+  //           recurring.id,
+
+  //       'user_id':
+  //           user.id,
+
+  //       'amount':
+  //           recurring.amount,
+
+  //       'type':
+  //           recurring.type,
+
+  //       'category_id':
+  //           recurring.categoryId,
+
+  //       'account_id':
+  //           recurring.accountId,
+
+  //       'notes':
+  //           recurring.notes,
+
+  //       'start_date':
+  //           recurring.startDate
+  //               .toIso8601String(),
+
+  //       'end_date':
+  //           recurring.endDate
+  //               ?.toIso8601String(),
+
+  //       'frequency':
+  //           recurring.frequency,
+
+  //       'interval':
+  //           recurring.interval,
+
+  //       'is_active':
+  //           recurring.isActive,
+
+  //       'next_run_date':
+  //           recurring.nextRunDate
+  //               .toIso8601String(),
+
+  //       'updated_at':
+  //           recurring.updatedAt
+  //               .toIso8601String(),
+
+  //       'is_deleted':
+  //           recurring.isDeleted,
+  //     });
+
+  //     recurring.isSynced =
+  //         true;
+
+  //     await isar.writeTxn(
+  //       () async {
+
+  //         await isar
+  //             .recurringTransactionModels
+  //             .put(recurring);
+  //       },
+  //     );
+  //   }      
+  // }
   Future<void>
       syncRecurringTransactions()
   async {
@@ -670,77 +997,86 @@ class SyncService {
             .isSyncedEqualTo(false)
             .findAll();
 
-    for (final recurring
-        in unsynced) {
+    if (unsynced.isEmpty) {
+      return;
+    }
 
-      await client
-          .from(
-            'recurring_transactions',
-          )
-          .upsert({
+    await client
+        .from(
+          'recurring_transactions',
+        )
+        .upsert(
 
-        'id':
-            recurring.id,
+          unsynced.map((recurring) => {
 
-        'user_id':
-            user.id,
+            'id':
+                recurring.id,
 
-        'amount':
-            recurring.amount,
+            'user_id':
+                user.id,
 
-        'type':
-            recurring.type,
+            'amount':
+                recurring.amount,
 
-        'category_id':
-            recurring.categoryId,
+            'type':
+                recurring.type,
 
-        'account_id':
-            recurring.accountId,
+            'category_id':
+                recurring.categoryId,
 
-        'notes':
-            recurring.notes,
+            'account_id':
+                recurring.accountId,
 
-        'start_date':
-            recurring.startDate
-                .toIso8601String(),
+            'notes':
+                recurring.notes,
 
-        'end_date':
-            recurring.endDate
-                ?.toIso8601String(),
+            'start_date':
+                recurring.startDate
+                    .toIso8601String(),
 
-        'frequency':
-            recurring.frequency,
+            'end_date':
+                recurring.endDate
+                    ?.toIso8601String(),
 
-        'interval':
-            recurring.interval,
+            'frequency':
+                recurring.frequency,
 
-        'is_active':
-            recurring.isActive,
+            'interval':
+                recurring.interval,
 
-        'next_run_date':
-            recurring.nextRunDate
-                .toIso8601String(),
+            'is_active':
+                recurring.isActive,
 
-        'updated_at':
-            recurring.updatedAt
-                .toIso8601String(),
+            'next_run_date':
+                recurring.nextRunDate
+                    .toIso8601String(),
 
-        'is_deleted':
-            recurring.isDeleted,
-      });
+            'updated_at':
+                recurring.updatedAt
+                    .toIso8601String(),
 
-      recurring.isSynced =
-          true;
+            'is_deleted':
+                recurring.isDeleted,
+          }).toList(),
+        );
 
-      await isar.writeTxn(
-        () async {
+    await isar.writeTxn(
+      () async {
 
-          await isar
-              .recurringTransactionModels
-              .put(recurring);
-        },
-      );
-    }      
+        for (final recurring
+            in unsynced) {
+
+          recurring.isSynced =
+              true;
+        }
+
+        await isar
+            .recurringTransactionModels
+            .putAll(
+              unsynced,
+            );
+      },
+    );
   }
 
 
@@ -814,7 +1150,7 @@ class SyncService {
   // INVESTMENT SYNC
   // =========================================================
 
-  Future<void> syncInvestments()
+  Future<int> syncInvestments()
   async {
 
     final user =
@@ -825,71 +1161,144 @@ class SyncService {
     );
 
     if (user == null) {
-      return;
+      return 0;
     }
 
-    final unsynced =
+    // final unsynced =
+    //     await isar.investmentModels
+    //         .filter()
+    //         .isSyncedEqualTo(false)
+    //         .findAll();
+
+    // for (final investment
+    //     in unsynced) {
+
+    //   await client
+    //       .from(
+    //         'investments',
+    //       )
+    //       .upsert({
+
+    //     'id':
+    //         investment.id,
+
+    //     'user_id':
+    //         user.id,
+
+    //     'name':
+    //         investment.name,
+
+    //     'type':
+    //         investment.type,
+
+    //     'symbol':
+    //         investment.symbol,
+
+    //     'quantity':
+    //         investment.quantity,
+
+    //     'purchase_price':
+    //         investment.purchasePrice,
+
+    //     'current_price':
+    //         investment.currentPrice,
+
+    //     'purchase_date':
+    //         investment.purchaseDate
+    //             .toIso8601String(),
+
+    //     'notes':
+    //         investment.notes,
+
+    //     'is_deleted':
+    //         investment.isDeleted,
+
+    //     'updated_at':
+    //         (investment.updatedAt)
+    //             .toIso8601String(),
+    //   });
+
+    //   investment.isSynced = true;
+
+    //   await isar.writeTxn(() async {
+
+    //     await isar.investmentModels
+    //         .put(investment);
+    //   });
+    // }
+
+    final investments =
         await isar.investmentModels
             .filter()
+            //.isDeletedEqualTo(false)
             .isSyncedEqualTo(false)
             .findAll();
 
-    for (final investment
-        in unsynced) {
+    if (investments.isNotEmpty) {
 
-      await client
-          .from(
-            'investments',
-          )
-          .upsert({
+        await client
+            .from('investments')
+            .upsert(
 
-        'id':
-            investment.id,
+              investments.map(
+                (investment) => {
 
-        'user_id':
-            user.id,
+                  'id': investment.id,
 
-        'name':
-            investment.name,
+                  'user_id': user.id,
 
-        'type':
-            investment.type,
+                  'name': investment.name,
 
-        'symbol':
-            investment.symbol,
+                  'type': investment.type,
 
-        'quantity':
-            investment.quantity,
+                  'symbol': investment.symbol,
 
-        'purchase_price':
-            investment.purchasePrice,
+                  'quantity': investment.quantity,
 
-        'current_price':
-            investment.currentPrice,
+                  'purchase_price':
+                      investment.purchasePrice,
 
-        'purchase_date':
-            investment.purchaseDate
-                .toIso8601String(),
+                  'current_price':
+                      investment.currentPrice,
 
-        'notes':
-            investment.notes,
+                  'purchase_date':
+                      investment.purchaseDate
+                          .toIso8601String(),
 
-        'is_deleted':
-            investment.isDeleted,
+                  'notes':
+                      investment.notes,
 
-        'updated_at':
-            (investment.updatedAt)
-                .toIso8601String(),
-      });
+                  'is_deleted':
+                      investment.isDeleted,
 
-      investment.isSynced = true;
+                  'updated_at':
+                      investment.updatedAt
+                          .toIso8601String(),
+                },
+              ).toList(),
+            );
 
-      await isar.writeTxn(() async {
+        await isar.writeTxn(() async {
 
-        await isar.investmentModels
-            .put(investment);
-      });
-    }
+          for (final investment
+              in investments) {
+
+            investment.isSynced =
+                true;
+
+            investment.updatedAt =
+                DateTime.now();
+
+          }
+
+          await isar
+              .investmentModels
+              .putAll(
+            investments,
+          );
+        });
+      }
+    return investments.length;
   }
 
   Future<void> pullInvestments()
@@ -909,9 +1318,9 @@ class SyncService {
       return;
     }
     
-    logger.d(
-      'Step 2 investment pull',
-    );
+    // logger.d(
+    //   'Step 2 investment pull',
+    // );
 
     final response =
         await client
@@ -921,9 +1330,9 @@ class SyncService {
             .select()
             .eq('user_id', user.id);
 
-    logger.d(
-      'Step 2 investment pull ${response.length} items.',
-    );
+    // logger.d(
+    //   'Step 2 investment pull ${response.length} items.',
+    // );
 
     for (final item
         in response) {
@@ -941,9 +1350,9 @@ class SyncService {
           item['is_deleted'] ?? false;
 
       if (existing == null) {
-        logger.d(
-          'Step 3 investment pull existing is null',
-        );
+        // logger.d(
+        //   'Step 3 investment pull existing is null',
+        // );
 
         if (cloudDeleted) {
           continue;
@@ -988,9 +1397,9 @@ class SyncService {
 
               ..isSynced = true;
 
-        logger.d(
-          'Step 5 investment pull updating ${investment.name}. Cloud updated: ${cloudUpdated.toIso8601String()}, Local updated: ${investment.updatedAt.toIso8601String()}',
-        );
+        // logger.d(
+        //   'Step 5 investment pull updating ${investment.name}. Cloud updated: ${cloudUpdated.toIso8601String()}, Local updated: ${investment.updatedAt.toIso8601String()}',
+        // );
         await isar.writeTxn(() async {
 
           await isar.investmentModels
@@ -1000,17 +1409,17 @@ class SyncService {
         continue;
       }
 
-        logger.d(
-          'Step 4 investment pull existing is not null',
-        );
+        // logger.d(
+        //   'Step 4 investment pull existing is not null',
+        // );
       
         final localUpdated =
             existing.updatedAt;
 
         
-        logger.d(
-          'Step 4a investment pull existing is not null ${cloudUpdated.toIso8601String()} vs ${localUpdated.toIso8601String() }',
-        );
+        // logger.d(
+        //   'Step 4a investment pull existing is not null ${cloudUpdated.toIso8601String()} vs ${localUpdated.toIso8601String() }',
+        // );
       
 
         if (
@@ -1052,9 +1461,9 @@ class SyncService {
 
           existing.isSynced = true;
 
-        logger.d(
-          'Step 5 investment pull updating ${existing.name}. Cloud updated: ${cloudUpdated.toIso8601String()}, Local updated: ${localUpdated.toIso8601String()}',
-        );
+        // logger.d(
+        //   'Step 5 investment pull updating ${existing.name}. Cloud updated: ${cloudUpdated.toIso8601String()}, Local updated: ${localUpdated.toIso8601String()}',
+        // );
 
           await isar.writeTxn(() async {
 
@@ -1074,59 +1483,110 @@ class SyncService {
       getPendingSyncCount()
   async {
 
-    final categories =
-        await isar.categoryModels
+    // final categories =
+    //     await isar.categoryModels
+    //         .filter()
+    //         .isSyncedEqualTo(false)
+    //         .count();
+
+    // final accounts =
+    //     await isar.accountModels
+    //         .filter()
+    //         .isSyncedEqualTo(false)
+    //         .count();
+
+    // final transactions =
+    //     await isar.transactionModels
+    //         .filter()
+    //         .isSyncedEqualTo(false)
+    //         .count();
+
+    // final recurring =
+    //     await isar
+    //         .recurringTransactionModels
+    //         .filter()
+    //         .isSyncedEqualTo(false)
+    //         .count();
+
+    // final investments =
+    //     await isar
+    //         .investmentModels
+    //         .filter()
+    //         .isSyncedEqualTo(false)
+    //         .count();
+
+    // return categories +
+    //     accounts +
+    //     transactions +
+    //     recurring +
+    //     investments;
+
+    final results = await Future.wait([
+        isar.categoryModels
             .filter()
             .isSyncedEqualTo(false)
-            .count();
+            .count(),
 
-    final accounts =
-        await isar.accountModels
+        isar.accountModels
             .filter()
             .isSyncedEqualTo(false)
-            .count();
+            .count(),
 
-    final transactions =
-        await isar.transactionModels
+        isar.transactionModels
             .filter()
             .isSyncedEqualTo(false)
-            .count();
+            .count(),
 
-    final recurring =
-        await isar
-            .recurringTransactionModels
+        isar.recurringTransactionModels
             .filter()
             .isSyncedEqualTo(false)
-            .count();
+            .count(),
 
-    final investments =
-        await isar
-            .investmentModels
+        isar.investmentModels
             .filter()
             .isSyncedEqualTo(false)
-            .count();
+            .count(),
+      ]);
 
-    return categories +
-        accounts +
-        transactions +
-        recurring +
-        investments;
+      int total = 0;
+
+      for (final count in results) {
+        total += count;
+      }
+
+      return total;
   }
 
   // =========================================================
   // HELPERS
   // =========================================================
 
-  Future<void> executeSafely(
+  // Future<void> executeSafely(
+  //   Future<void> Function() action,
+  // ) async {
+
+  //   try {
+
+  //     await action();
+
+  //   } catch (e, stackTrace) {
+
+  //     LoggerService.error(
+  //       'Sync error: $e',
+  //     );
+
+  //     logger.e(
+  //       stackTrace.toString(),
+  //     );
+  //   }
+  // }
+  Future<bool> executeSafely(
     Future<void> Function() action,
   ) async {
-
     try {
-
       await action();
-
+      return true;
     } catch (e, stackTrace) {
-
       LoggerService.error(
         'Sync error: $e',
       );
@@ -1134,6 +1594,8 @@ class SyncService {
       logger.e(
         stackTrace.toString(),
       );
+
+      return false;
     }
   }
 

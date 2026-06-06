@@ -230,6 +230,12 @@ class ProviderRefreshHelper {
       refreshInvestmentData(
         ref,
       ),
+
+      refreshRecurringTransactionData(
+        ref,
+      ),
+
+      refreshReportsData(ref, DateTime.now()),
     ]);
   }
 }
