@@ -1,10 +1,14 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 part 'category_model.g.dart';
 
 @collection
 class CategoryModel {
-  Id id = Isar.autoIncrement;
+
+  Id id  = Isar.autoIncrement;
+
+  @Index(unique: true)
+  late String uuid;
 
   late String name;
 
@@ -28,7 +32,7 @@ class CategoryModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      'id': uuid,
       'name': name,
       'type': type,
       'isDefault': isDefault,

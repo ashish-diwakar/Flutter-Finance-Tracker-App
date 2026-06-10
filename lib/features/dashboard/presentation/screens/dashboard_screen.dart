@@ -1,4 +1,5 @@
 import 'package:finance_tracker/main.dart';
+import 'package:finance_tracker/shared/utils/logout_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -200,13 +201,10 @@ class _DashboardScreenState
 
             onPressed: () async {
 
-              final auth =
-                  ref.read(
-                authServiceProvider,
+              await LogoutAppHelper
+                  .processLogout(
+                ref,
               );
-
-              await auth
-                  .signOut();
 
               if (!context.mounted) {
                 return;

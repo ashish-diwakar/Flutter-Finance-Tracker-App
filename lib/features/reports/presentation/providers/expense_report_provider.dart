@@ -2,7 +2,7 @@ import 'package:finance_tracker/shared/models/category_model.dart';
 import 'package:finance_tracker/shared/models/transaction_model.dart';
 import 'package:finance_tracker/shared/providers/database_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../domain/models/category_expense_model_2.dart';
 

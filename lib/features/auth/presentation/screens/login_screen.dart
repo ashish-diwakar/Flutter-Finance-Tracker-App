@@ -1,3 +1,4 @@
+import 'package:finance_tracker/shared/providers/database_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +7,7 @@ import '../../../navigation/presentation/screens/main_navigation_screen.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
+import '../../../../shared/utils/provider_refresh_helper.dart';
 
 class LoginScreen
     extends ConsumerStatefulWidget {
@@ -103,11 +105,16 @@ class _LoginScreenState
                                     .text,
                           );
 
+                          ref.invalidate(isarProvider);
+                          ref.invalidate(syncServiceProvider);
+
                           final syncService = await ref.read(
                               syncServiceProvider.future,
                           );
 
                           await syncService.syncAll();
+
+                          await ProviderRefreshHelper.refreshAllFinancialData(ref);
 
                           if (mounted) {
 

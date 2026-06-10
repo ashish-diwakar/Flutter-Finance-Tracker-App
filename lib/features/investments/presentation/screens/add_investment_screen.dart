@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:finance_tracker/features/investments/domain/utils/investment_helper.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/isar_service.dart';
 import '../../../../shared/models/investment_model.dart';
@@ -228,6 +229,8 @@ class _AddInvestmentScreenState
 
       final investment =
     InvestmentModel()
+
+      ..uuid = const Uuid().v4()
 
       ..name =
           _nameController.text

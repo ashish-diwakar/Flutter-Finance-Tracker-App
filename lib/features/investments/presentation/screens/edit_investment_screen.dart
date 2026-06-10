@@ -2,6 +2,7 @@ import 'package:finance_tracker/shared/providers/currency_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/database/isar_service.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -300,6 +301,11 @@ class _EditInvestmentScreenState
 
       final investment =
           widget.investment;
+
+      investment.uuid =
+          investment.uuid.isNotEmpty
+              ? investment.uuid
+              : const Uuid().v4();
 
       investment.name =
           nameController.text

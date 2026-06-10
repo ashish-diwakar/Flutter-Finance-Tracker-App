@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
@@ -56,9 +57,9 @@ class _AddRecurringTransactionScreenState
 
   DateTime? endDate;
 
-  int? selectedCategoryId;
+  String? selectedCategoryId;
 
-  int? selectedAccountId;
+  String? selectedAccountId;
 
   bool active = true;
 
@@ -189,6 +190,9 @@ class _AddRecurringTransactionScreenState
       final recurring =
           widget.recurring ??
               RecurringTransactionModel();
+      recurring.uuid =
+          widget.recurring?.uuid ??
+              const Uuid().v4();
 
       recurring.amount =
           amount;
@@ -495,7 +499,7 @@ class _AddRecurringTransactionScreenState
                       ),
 
                       DropdownButtonFormField<
-                          int>(
+                          String>(
 
                         value:
                             selectedCategoryId,
@@ -520,7 +524,7 @@ class _AddRecurringTransactionScreenState
                             return DropdownMenuItem(
 
                               value:
-                                  category.id,
+                                  category.uuid,
 
                               child: Text(
                                 category.name,
@@ -545,7 +549,7 @@ class _AddRecurringTransactionScreenState
                       ),
 
                       DropdownButtonFormField<
-                          int>(
+                          String>(
 
                         value:
                             selectedAccountId,
@@ -570,7 +574,7 @@ class _AddRecurringTransactionScreenState
                             return DropdownMenuItem(
 
                               value:
-                                  account.id,
+                                  account.uuid,
 
                               child: Text(
                                 account.name,
@@ -883,6 +887,11 @@ class _AddRecurringTransactionScreenState
                                 ),
                         ),
                       ),
+                      
+                      const SizedBox(
+                        height: 24,
+                      ),
+
                     ],
                   ),
                 ),

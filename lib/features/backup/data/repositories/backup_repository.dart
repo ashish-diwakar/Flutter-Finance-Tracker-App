@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -36,6 +36,7 @@ class BackupRepository {
 
     final backup =
         BackupDataModel(
+
       transactions:
           transactions
               .map((e) => e.toJson())
@@ -109,78 +110,178 @@ class BackupRepository {
         jsonDecode(content);
 
     final backup =
-        BackupDataModel.fromJson(json);
+        BackupDataModel.fromJson(
+      json,
+    );
 
     await isar.writeTxn(() async {
 
       await isar.transactionModels
           .clear();
 
-      await isar.categoryModels.clear();
+      await isar.categoryModels
+          .clear();
 
-      await isar.accountModels.clear();
+      await isar.accountModels
+          .clear();
+
+      // ==========================
+      // TRANSACTIONS
+      // ==========================
 
       final transactions =
           backup.transactions
-              .map(
-                (e) =>
-                    TransactionModel()
-                      ..id = e['id']
-                      ..amount =
-                          e['amount']
-                      ..type =
-                          e['type']
-                      ..categoryId =
-                          e['categoryId']
-                      ..accountId =
-                          e['accountId']
-                      ..notes =
-                          e['notes']
-                      ..transactionDate =
-                          DateTime.parse(
-                        e['transactionDate'],
-                      ),
+              .map((e) {
+
+        if (e['id'] == null) {
+
+          throw Exception(
+            'Transaction UUID missing in backup.',
+          );
+        }
+
+        return TransactionModel()
+
+          ..uuid =
+              e['id']
+
+          ..amount =
+              e['amount']
+
+          ..type =
+              e['type']
+
+          ..categoryId =
+              e['categoryId']
+
+          ..accountId =
+              e['accountId']
+
+          ..notes =
+              e['notes']
+
+          ..transactionDate =
+              DateTime.parse(
+                e['transactionDate'],
               )
-              .toList();
+
+          ..updatedAt =
+              e['updatedAt'] != null
+                  ? DateTime.parse(
+                      e['updatedAt'],
+                    )
+                  : DateTime.now()
+
+          ..isDeleted =
+              e['isDeleted'] ?? false
+
+          ..isSynced = false;
+      }).toList();
+
+      // ==========================
+      // CATEGORIES
+      // ==========================
 
       final categories =
           backup.categories
-              .map(
-                (e) =>
-                    CategoryModel()
-                      ..id = e['id']
-                      ..name =
-                          e['name']
-                      ..type =
-                          e['type']
-                      ..isDefault =
-                          e['isDefault'],
-              )
-              .toList();
+              .map((e) {
+
+        if (e['id'] == null) {
+
+          throw Exception(
+            'Category UUID missing in backup.',
+          );
+        }
+
+        return CategoryModel()
+
+          ..uuid =
+              e['id']
+
+          ..name =
+              e['name']
+
+          ..type =
+              e['type']
+
+          ..isDefault =
+              e['isDefault'] ?? false
+
+          ..monthlyBudget =
+              e['monthlyBudget']
+
+          ..updatedAt =
+              e['updatedAt'] != null
+                  ? DateTime.parse(
+                      e['updatedAt'],
+                    )
+                  : DateTime.now()
+
+          ..isDeleted =
+              e['isDeleted'] ?? false
+
+          ..isSynced = false;
+      }).toList();
+
+      // ==========================
+      // ACCOUNTS
+      // ==========================
 
       final accounts =
           backup.accounts
-              .map(
-                (e) =>
-                    AccountModel()
-                      ..id = e['id']
-                      ..name =
-                          e['name']
-                      ..type =
-                          e['type']
-                      ..currentBalance =
-                          e['currentBalance'],
-              )
-              .toList();
+              .map((e) {
+
+        if (e['id'] == null) {
+
+          throw Exception(
+            'Account UUID missing in backup.',
+          );
+        }
+
+        return AccountModel()
+
+          ..uuid =
+              e['id']
+
+          ..name =
+              e['name']
+
+          ..type =
+              e['type']
+
+          ..currentBalance =
+              e['currentBalance']
+
+          ..isDefault =
+              e['isDefault'] ?? false
+
+          ..updatedAt =
+              e['updatedAt'] != null
+                  ? DateTime.parse(
+                      e['updatedAt'],
+                    )
+                  : DateTime.now()
+
+          ..isDeleted =
+              e['isDeleted'] ?? false
+
+          ..isSynced = false;
+      }).toList();
 
       await isar.transactionModels
-          .putAll(transactions);
+          .putAll(
+        transactions,
+      );
 
       await isar.categoryModels
-          .putAll(categories);
+          .putAll(
+        categories,
+      );
 
       await isar.accountModels
-          .putAll(accounts);
+          .putAll(
+        accounts,
+      );
     });
   }
 }

@@ -1,45 +1,27 @@
+import '../../../../shared/enums/fixed_return_type.dart';
+
 class InvestmentHelper {
 
   static bool isFixedReturn(
     String type,
   ) {
 
-    return [
+    return fixedReturnTypes.contains(type);
 
-      'FD',
-      'RD',
-      'PPF',
-      'EPF',
-      'NPS',
-      'Bond',
-
-    ].contains(type);
   }
 
   static bool supportsAutoMaturityCalculation(
     String type,
   ) {
 
-    return [
-
-      'FD',
-      'RD',
-      'Bond',
-
-    ].contains(type);
+    return fixedReturnTypesThatSupportsAutoMaturityCalculation.contains(type);
   }
 
   static bool requiresInterestRate(
     String type,
   ) {
 
-    return [
-
-      'FD',
-      'RD',
-      'Bond',
-
-    ].contains(type);
+    return fixedReturnTypesThatRequiresInterestRate.contains(type);
   }
 
   static bool isMarketLinked(

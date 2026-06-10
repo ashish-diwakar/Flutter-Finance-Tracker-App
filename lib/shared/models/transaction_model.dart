@@ -1,10 +1,14 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 part 'transaction_model.g.dart';
 
 @collection
 class TransactionModel {
-  Id id = Isar.autoIncrement;
+  
+  Id id  = Isar.autoIncrement;
+
+  @Index(unique: true)
+  late String uuid;
 
   late int amount;
 
@@ -14,9 +18,9 @@ class TransactionModel {
 
   String? notes;
 
-  late int categoryId;
+  late String categoryId;
 
-  late int accountId;
+  late String accountId;
 
   DateTime createdAt = DateTime.now();
 
@@ -28,7 +32,7 @@ class TransactionModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      'id': uuid,
       'amount': amount,
       'type': type,
       'categoryId': categoryId,

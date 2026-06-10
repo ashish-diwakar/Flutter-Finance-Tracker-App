@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
@@ -72,7 +72,7 @@ class BudgetAlertChecker {
             )
             .findAll();
 
-    final Map<int, double>
+    final Map<String, double>
         spending = {};
 
     for (final transaction
@@ -116,7 +116,7 @@ class BudgetAlertChecker {
 
       final spent =
           spending[
-                  category.id] ??
+                  category.uuid] ??
               0;
 
       final percentage =

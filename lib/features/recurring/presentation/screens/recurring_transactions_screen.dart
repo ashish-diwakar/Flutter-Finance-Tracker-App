@@ -337,7 +337,7 @@ class RecurringTransactionsScreen
 
                           await repository
                               .deleteRecurring(
-                            item.id,
+                            item,
                           );
 
                           await ProviderRefreshHelper

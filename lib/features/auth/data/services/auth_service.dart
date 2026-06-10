@@ -1,4 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:finance_tracker/shared/utils/local_data_cleaner.dart';
+import 'package:finance_tracker/core/database/isar_service.dart';
 
 class AuthService {
 
@@ -54,7 +56,7 @@ class AuthService {
     if (user.emailConfirmedAt ==
         null) {
 
-      await supabase.auth.signOut();
+      await signOut();
 
       throw Exception(
         'Please verify your email before login.',
@@ -64,7 +66,11 @@ class AuthService {
 
   Future<void> signOut() async {
 
-    await supabase.auth.signOut();
+    await IsarService
+        .closeCurrentDatabase();
+
+    await supabase.auth
+        .signOut();        
   }
 
   User? get currentUser {

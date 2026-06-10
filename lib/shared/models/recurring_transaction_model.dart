@@ -1,19 +1,23 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 part 'recurring_transaction_model.g.dart';
 
 @collection
 class RecurringTransactionModel {
+  
+  Id id  = Isar.autoIncrement;
 
-  Id id = Isar.autoIncrement;
+
+  @Index(unique: true)
+  late String uuid;
 
   late int amount;
 
   late String type;
 
-  late int categoryId;
+  late String categoryId;
 
-  late int accountId;
+  late String accountId;
 
   String? notes;
 

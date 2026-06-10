@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../shared/models/account_model.dart';
 
@@ -12,7 +12,8 @@ class AccountRepository {
       getAccounts() async {
 
     return await isar.accountModels
-        .where()
+        .filter()
+        .isDeletedEqualTo(false)
         .findAll();
   }
 
@@ -21,7 +22,11 @@ class AccountRepository {
   ) async {
 
     await isar.writeTxn(() async {
+      account.updatedAt =
+          DateTime.now();
 
+      account.isSynced =
+          false;
       await isar.accountModels.put(
         account,
       );
@@ -45,25 +50,52 @@ class AccountRepository {
     });
   }
 
+  // Future<void> deleteAccount(
+  //   int id,
+  // ) async {
+
+  //   final account =
+  //       await isar.accountModels.get(id);
+
+  //   if (account != null &&
+  //       account.isDefault) {
+
+  //     throw StateError(
+  //       'Default accounts cannot be deleted.',
+  //     );
+  //   }
+
+  //   await isar.writeTxn(() async {
+
+  //     await isar.accountModels.delete(
+  //       id,
+  //     );
+  //   });
+  // }
+
   Future<void> deleteAccount(
-    int id,
-  ) async {
+    AccountModel account,
+  )
+  async {
 
-    final account =
-        await isar.accountModels.get(id);
-
-    if (account != null &&
-        account.isDefault) {
+    if (account.isDefault) {
 
       throw StateError(
         'Default accounts cannot be deleted.',
       );
     }
 
+    account.isDeleted = true;
+
+    account.isSynced = false;
+
+    account.updatedAt =
+        DateTime.now();
+
     await isar.writeTxn(() async {
 
-      await isar.accountModels.delete(
-        id,
+      await isar.accountModels.put(
+        account,
       );
     });
   }

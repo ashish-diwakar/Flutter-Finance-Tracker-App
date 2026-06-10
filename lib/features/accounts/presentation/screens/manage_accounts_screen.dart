@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:uuid/uuid.dart';
 import '../../../../shared/models/account_model.dart';
 import '../providers/account_repository_provider.dart';
 
@@ -188,6 +188,7 @@ class _ManageAccountsScreenState
 
                       final newAccount =
                           AccountModel()
+                            ..uuid = const Uuid().v4()
 
                             ..name =
                                 nameController
@@ -339,7 +340,7 @@ class _ManageAccountsScreenState
 
                               await repository
                                   .deleteAccount(
-                                account.id,
+                                account,
                               );
 
                               await loadAccounts();

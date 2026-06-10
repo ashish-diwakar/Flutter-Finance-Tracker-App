@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
@@ -79,7 +79,7 @@ class ReportsRepository {
             .where()
             .findAll();
 
-    final Map<int, int> totals = {};
+    final Map<String, int> totals = {};
 
     for (final transaction
         in transactions) {

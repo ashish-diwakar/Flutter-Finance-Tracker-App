@@ -94,16 +94,26 @@ class _PortfolioScreenState
     BuildContext context,
   ) {
 
+    debugPrint(
+      'analyticsAsync started building',
+    );
+
     final analyticsAsync =
         ref.watch(
       investmentAnalyticsProvider,
     );
 
+    debugPrint(
+      'investmentsAsync started building',
+    );
     final investmentsAsync =
         ref.watch(
       investmentsProvider,
     );
 
+    debugPrint(
+      'currency started building',
+    );
     final currency =
         ref.watch(
       currencyProvider,
@@ -304,6 +314,11 @@ class _PortfolioScreenState
             investmentsAsync.when(
 
               data: (investments) {
+
+                
+                debugPrint(
+                  'investments count: ${investments.length}',
+                );
 
                 if (investments
                     .isEmpty) {

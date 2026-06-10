@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/recurring_transaction_model.dart';
@@ -155,7 +155,7 @@ class DashboardInsightsService {
     // HIGHEST EXPENSE CATEGORY
     // =====================================
 
-    final Map<int, double>
+    final Map<String, double>
         categorySpending = {};
 
     for (final transaction

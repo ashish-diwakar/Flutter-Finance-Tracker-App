@@ -1,5 +1,6 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
+import '../../../../shared/enums/fixed_return_type.dart';
 import '../../../../shared/models/investment_model.dart';
 
 import '../../domain/models/investment_analytics_model.dart';
@@ -92,17 +93,21 @@ class InvestmentAnalyticsService {
     for (final investment
         in investments) {
 
-      final isFixedReturn = [
+      // final isFixedReturn = [
 
-        'FD',
-        'RD',
-        'PPF',
-        'EPF',
-        'NPS',
-        'Bond',
+      //   'FD',
+      //   'RD',
+      //   'PPF',
+      //   'EPF',
+      //   'NPS',
+      //   'Bond',
 
-      ].contains(
-        investment.type,
+      // ].contains(
+      //   investment.type,
+      // );
+      final isFixedReturn =
+      fixedReturnTypes.contains(
+        investment.type.trim(),
       );
 
       if (isFixedReturn) {

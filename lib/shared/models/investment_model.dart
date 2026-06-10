@@ -1,11 +1,15 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 part 'investment_model.g.dart';
 
 @collection
 class InvestmentModel {
+  
+  Id id  = Isar.autoIncrement;
 
-  Id id = Isar.autoIncrement;
+
+  @Index(unique: true)
+  late String uuid;
 
   // ===========================================
   // BASIC INFO

@@ -1,5 +1,5 @@
 import 'package:finance_tracker/main.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../core/services/logger_service.dart';
 import '../../../../core/services/supabase_service.dart';
@@ -215,16 +215,28 @@ class SyncService {
         return;
       }
 
+      logger.d(
+        'Current auth user: ${client.auth.currentUser?.id}',
+      );
+
+      logger.d(
+        'Row user_id: ${user.id}',
+      );
+
       for (final category in unsynced) {
 
         logger.d(
           '----------------------------------------------------------------------------------------------',
         );
-
+        logger.d(
+          'Category ID: ${category.uuid}',
+        );
         logger.d(
           'category to sync ${category.name}, ${category.type}, ${category.isDefault}, ${category.monthlyBudget}',
         );
       }
+
+
 
       await client
           .from('categories')
@@ -232,7 +244,7 @@ class SyncService {
 
             unsynced.map((category) => {
 
-              'id': category.id,
+              'id': category.uuid,
 
               'user_id': user.id,
 
@@ -262,10 +274,18 @@ class SyncService {
             in unsynced) {
 
           category.isSynced = true;
+
+          logger.d(
+            'Category ${category.name} -> user_id=${user.id}',
+          );
         }
 
         await isar.categoryModels
             .putAll(unsynced);
+
+          logger.d(
+            'Category Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+          );
       });
   }
 
@@ -279,6 +299,10 @@ class SyncService {
       return;
     }
 
+    logger.d(
+      'Category Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
+
     final response =
         await client
             .from('categories')
@@ -289,8 +313,10 @@ class SyncService {
         in response) {
 
       final existing =
-          await isar.categoryModels
-              .get(item['id']);
+        await isar.categoryModels
+            .filter()
+            .uuidEqualTo(item['id'])
+            .findFirst();
 
       final cloudUpdated =
           DateTime.parse(
@@ -310,7 +336,7 @@ class SyncService {
         final category =
             CategoryModel()
 
-              ..id = item['id']
+              ..uuid  = item['id']
 
               ..name =
                   item['name']
@@ -374,6 +400,9 @@ class SyncService {
           await isar.categoryModels
               .put(existing);
         });
+          logger.d(
+            'Category Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+          );
       }
     }
   }
@@ -447,6 +476,9 @@ class SyncService {
       return;
     }
 
+    logger.d(
+      'Account Sync Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
     final unsynced =
         await isar.accountModels
             .filter()
@@ -463,7 +495,7 @@ class SyncService {
 
           unsynced.map((account) => {
 
-            'id': account.id,
+            'id': account.uuid,
 
             'user_id': user.id,
 
@@ -493,10 +525,19 @@ class SyncService {
           in unsynced) {
 
         account.isSynced = true;
+          
+          logger.d(
+            'Account ${account.name} -> user_id=${user.id}',
+          );
       }
 
       await isar.accountModels
           .putAll(unsynced);
+
+      logger.d(
+        'Account Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+      );
+
     });
   }
 
@@ -509,6 +550,9 @@ class SyncService {
     if (user == null) {
       return;
     }
+    logger.d(
+      'Account Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
 
     final response =
         await client
@@ -520,8 +564,10 @@ class SyncService {
         in response) {
 
       final existing =
-          await isar.accountModels
-              .get(item['id']);
+        await isar.accountModels
+            .filter()
+            .uuidEqualTo(item['id'])
+            .findFirst();
 
       final cloudUpdated =
           DateTime.parse(
@@ -541,7 +587,7 @@ class SyncService {
         final account =
             AccountModel()
 
-              ..id = item['id']
+              ..uuid  = item['id']
 
               ..name =
                   item['name']
@@ -605,6 +651,10 @@ class SyncService {
           await isar.accountModels
               .put(existing);
         });
+        
+        logger.d(
+          'Account Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+        );
       }
     }
   }
@@ -688,6 +738,9 @@ class SyncService {
       return;
     }
 
+    logger.d(
+      'Transaction Sync Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
     final unsynced =
         await isar.transactionModels
             .filter()
@@ -704,7 +757,7 @@ class SyncService {
 
           unsynced.map((transaction) => {
 
-            'id': transaction.id,
+            'id': transaction.uuid,
 
             'user_id': user.id,
 
@@ -748,6 +801,10 @@ class SyncService {
 
       await isar.transactionModels
           .putAll(unsynced);
+
+      logger.d(
+        'Transaction Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+      );
     });
   }
 
@@ -761,6 +818,10 @@ class SyncService {
       return;
     }
 
+    logger.d(
+      'Transaction Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
+
     final response =
         await client
             .from('transactions')
@@ -771,8 +832,10 @@ class SyncService {
         in response) {
 
       final existing =
-          await isar.transactionModels
-              .get(item['id']);
+        await isar.transactionModels
+            .filter()
+            .uuidEqualTo(item['id'])
+            .findFirst();
 
       final cloudUpdated =
           DateTime.parse(
@@ -792,7 +855,7 @@ class SyncService {
         final transaction =
             TransactionModel()
 
-              ..id = item['id']
+              ..uuid  = item['id']
 
               ..amount =
                   item['amount']
@@ -874,6 +937,9 @@ class SyncService {
         });
       }
     }
+    logger.d(
+      'Transaction Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
   }
 
 
@@ -986,6 +1052,10 @@ class SyncService {
       return;
     }
 
+    logger.d(
+      'Recurring Transaction Sync Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
+
     // =====================================
     // LOCAL → SUPABASE
     // =====================================
@@ -1010,7 +1080,7 @@ class SyncService {
           unsynced.map((recurring) => {
 
             'id':
-                recurring.id,
+                recurring.uuid,
 
             'user_id':
                 user.id,
@@ -1066,6 +1136,10 @@ class SyncService {
         for (final recurring
             in unsynced) {
 
+          logger.d(
+            'Recurring Transaction Sync --- ${recurring.uuid} -> user_id=${user.id}, amount=${recurring.amount}, type=${recurring.type}, categoryId=${recurring.categoryId}, accountId=${recurring.accountId}, notes=${recurring.notes}, startDate=${recurring.startDate}, endDate=${recurring.endDate}, frequency=${recurring.frequency}, interval=${recurring.interval}, isActive=${recurring.isActive}, nextRunDate=${recurring.nextRunDate}, updatedAt=${recurring.updatedAt}, isDeleted=${recurring.isDeleted}',
+          );
+
           recurring.isSynced =
               true;
         }
@@ -1075,6 +1149,9 @@ class SyncService {
             .putAll(
               unsynced,
             );
+          logger.d(
+            'Recurring Transaction Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+          );
       },
     );
   }
@@ -1082,6 +1159,9 @@ class SyncService {
 
   Future<void> pullRecurringTransactions() async {
     final user = client.auth.currentUser;
+    logger.d(
+      'Recurring Transaction Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
     if (user == null) {
       return;
     }
@@ -1089,7 +1169,11 @@ class SyncService {
     final remote = await client.from('recurring_transactions').select().eq('user_id', user.id);
 
     for (final item in remote) {
-      final local = await isar.recurringTransactionModels.get(item['id']);
+      final local =
+        await isar.recurringTransactionModels
+            .filter()
+            .uuidEqualTo(item['id'])
+            .findFirst();
       final remoteUpdated = DateTime.parse(item['updated_at']);
       final cloudDeleted = item['is_deleted'] ?? false;
 
@@ -1099,7 +1183,7 @@ class SyncService {
         }
 
         final recurring = RecurringTransactionModel()
-          ..id = item['id']
+          ..uuid  = item['id']
           ..amount = item['amount']
           ..type = item['type']
           ..categoryId = item['category_id']
@@ -1143,6 +1227,9 @@ class SyncService {
         });
       }
     }
+    logger.d(
+      'Recurring Transaction Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
   }
 
 
@@ -1163,6 +1250,10 @@ class SyncService {
     if (user == null) {
       return 0;
     }
+
+    logger.d(
+      'Investment Sync Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
 
     // final unsynced =
     //     await isar.investmentModels
@@ -1243,7 +1334,7 @@ class SyncService {
               investments.map(
                 (investment) => {
 
-                  'id': investment.id,
+                  'id': investment.uuid,
 
                   'user_id': user.id,
 
@@ -1296,6 +1387,9 @@ class SyncService {
               .putAll(
             investments,
           );
+        logger.d(
+          'Investment Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+        );
         });
       }
     return investments.length;
@@ -1322,6 +1416,10 @@ class SyncService {
     //   'Step 2 investment pull',
     // );
 
+    logger.d(
+      'Investment Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
+
     final response =
         await client
             .from(
@@ -1338,8 +1436,10 @@ class SyncService {
         in response) {
 
       final existing =
-          await isar.investmentModels
-              .get(item['id']);
+        await isar.investmentModels
+            .filter()
+            .uuidEqualTo(item['id'])
+            .findFirst();
 
       final cloudUpdated =
           DateTime.parse(
@@ -1361,7 +1461,7 @@ class SyncService {
         final investment =
             InvestmentModel()
 
-              ..id = item['id']
+              ..uuid  = item['id']
 
               ..name =
                   item['name']
@@ -1473,6 +1573,9 @@ class SyncService {
         }
           
     }
+    logger.d(
+      'Investment Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
   }
 
 
@@ -1521,6 +1624,10 @@ class SyncService {
     //     recurring +
     //     investments;
 
+    logger.d(
+      'Get Pending Sync Count Started!!!!!!!!!!!!!!!!!!!!!!!!!',
+    );
+
     final results = await Future.wait([
         isar.categoryModels
             .filter()
@@ -1553,6 +1660,10 @@ class SyncService {
       for (final count in results) {
         total += count;
       }
+
+      logger.d(
+        'Get Pending Sync Count Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+      );
 
       return total;
   }
@@ -1587,6 +1698,8 @@ class SyncService {
       await action();
       return true;
     } catch (e, stackTrace) {
+
+      
       LoggerService.error(
         'Sync error: $e',
       );

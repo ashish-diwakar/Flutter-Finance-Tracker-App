@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/recurring_transaction_model.dart';
@@ -70,14 +70,14 @@ class RecurringAnalyticsService {
               .findAll();
 
     final Map<
-            int,
+            String,
             String>
         categoryMap = {
 
       for (final c
           in categories)
 
-        c.id: c.name,
+        c.uuid: c.name,
     };
 
     // =========================================

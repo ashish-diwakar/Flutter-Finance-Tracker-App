@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../shared/models/transaction_model.dart';
 
@@ -14,6 +14,12 @@ class TransactionRepository {
 
     await isar.writeTxn(() async {
 
+      transaction.updatedAt =
+          DateTime.now();
+
+      transaction.isSynced =
+          false;
+          
       await isar.transactionModels.put(
         transaction,
       );

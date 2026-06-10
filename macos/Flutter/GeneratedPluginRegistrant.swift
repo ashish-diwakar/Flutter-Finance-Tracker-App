@@ -10,7 +10,7 @@ import connectivity_plus
 import file_picker
 import flutter_local_notifications
 import flutter_secure_storage_macos
-import isar_flutter_libs
+import isar_community_flutter_libs
 import local_auth_darwin
 import printing
 import share_plus

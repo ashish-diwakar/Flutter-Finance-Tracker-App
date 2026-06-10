@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
@@ -171,7 +171,7 @@ class FinancialInsightService {
     // CATEGORY ANALYSIS
     // =========================================
 
-    final Map<int, double>
+    final Map<String, double>
         categoryTotals = {};
 
     for (final t
@@ -204,11 +204,13 @@ class FinancialInsightService {
       );
 
       final category =
-          await isar
-              .categoryModels
-              .get(
+        await isar
+          .categoryModels
+          .filter()
+          .uuidEqualTo(
             top.key,
-          );
+          )
+          .findFirst();
 
       if (category != null &&
           !category.isDeleted) {

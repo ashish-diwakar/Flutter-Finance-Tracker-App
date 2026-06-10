@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../shared/models/recurring_transaction_model.dart';
 
@@ -46,17 +46,8 @@ class RecurringRepository {
   }
 
   Future<void> deleteRecurring(
-    Id id,
+    RecurringTransactionModel model,
   ) async {
-
-    final model =
-        await isar
-            .recurringTransactionModels
-            .get(id);
-
-    if (model == null) {
-      return;
-    }
 
     model.isDeleted = true;
 

@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../shared/models/category_model.dart';
 
@@ -57,14 +57,34 @@ class CategoryRepository {
   }
 
   Future<void> deleteCategory(
-    int id,
+    CategoryModel category,
   ) async {
+
+    if (category.isDefault) {
+
+      throw StateError(
+        'Default categories cannot be deleted.',
+      );
+    }
+
+    category.isDeleted = true;
+
+    category.isSynced = false;
+
+    category.updatedAt =
+        DateTime.now();
 
     await isar.writeTxn(() async {
 
-      await isar.categoryModels.delete(
-        id,
+      await isar.categoryModels.put(
+        category,
       );
     });
+    // await isar.writeTxn(() async {
+
+    //   await isar.categoryModels.delete(
+    //     category.id,
+    //   );
+    // });
   }
 }

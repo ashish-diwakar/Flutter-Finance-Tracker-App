@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:uuid/uuid.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/category_model.dart';
 import '../providers/category_repository_provider.dart';
@@ -200,6 +200,7 @@ class _ManageCategoriesScreenState
 
                   final newCategory =
                       CategoryModel()
+                        ..uuid = const Uuid().v4()
 
                         ..name =
                             nameController
@@ -236,7 +237,7 @@ class _ManageCategoriesScreenState
                   final updatedCategory =
                     CategoryModel()
 
-                      ..id = category.id
+                      ..uuid = category.uuid
 
                       ..name =
                           nameController.text
@@ -664,7 +665,7 @@ class _ManageCategoriesScreenState
 
       await repository
           .deleteCategory(
-        category.id,
+        category,
       );
 
       await loadCategories();

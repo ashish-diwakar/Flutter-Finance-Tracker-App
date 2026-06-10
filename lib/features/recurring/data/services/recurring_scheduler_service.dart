@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 import '../../../../shared/models/recurring_transaction_model.dart';
 import '../../../../shared/models/transaction_model.dart';
@@ -52,6 +52,7 @@ class RecurringSchedulerService {
         final transaction =
             TransactionModel()
 
+              ..uuid = DateTime.now().toIso8601String()
               ..amount =
                   item.amount
 

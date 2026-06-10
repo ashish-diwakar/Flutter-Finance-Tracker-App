@@ -40,8 +40,11 @@ dependencies:
   go_router: ^14.2.0
 
   # Database
-  isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
+  #isar: ^3.1.0+1
+  #isar_flutter_libs: ^3.1.0+1
+  # Replace isar and isar_flutter_libs with these:
+  isar_community: ^3.3.2
+  isar_community_flutter_libs: ^3.3.2
 
   # Path
   path_provider: ^2.1.5
@@ -84,7 +87,9 @@ dev_dependencies:
     sdk: flutter
 
   build_runner: ^2.4.12
-  isar_generator: ^3.1.0+1
+  #isar_generator: ^3.1.0+1
+  # Replace isar_generator with this:
+  isar_community_generator: ^3.3.2
 
   flutter_launcher_icons: ^0.14.1
   flutter_native_splash: ^2.4.1

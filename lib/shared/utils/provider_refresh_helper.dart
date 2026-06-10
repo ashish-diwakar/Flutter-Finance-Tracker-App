@@ -1,3 +1,4 @@
+import 'package:finance_tracker/features/investments/presentation/providers/investments_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/dashboard/presentation/providers/balance_provider.dart';
@@ -119,12 +120,20 @@ class ProviderRefreshHelper {
   ) async {
 
     ref.invalidate(
-      investmentAnalyticsProvider,
+      investmentsProvider,
     );
 
-    await ref.read(
-      investmentAnalyticsProvider.future,
+    ref.invalidate(
+      investmentAnalyticsProvider,
     );
+    await Future.wait([
+        ref.read(
+          investmentsProvider.future,
+        ),
+        ref.read(
+          investmentAnalyticsProvider.future,
+        )
+    ]);
   }
 
 

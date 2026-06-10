@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../shared/models/account_model.dart';
@@ -474,11 +475,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                               final amount = (parsedAmount * 100).toInt();
 
                               final transaction = TransactionModel()
+                                ..uuid = widget.transaction?.uuid ?? const Uuid().v4()
                                 ..amount = amount
                                 ..type = transactionType
                                 ..transactionDate = selectedDate
-                                ..categoryId = selectedCategory!.id
-                                ..accountId = selectedAccount!.id
+                                ..categoryId = selectedCategory!.uuid
+                                ..accountId = selectedAccount!.uuid
                                 ..notes = notesController.text.trim()
                                 ..isSynced = false
                                 ..updatedAt = DateTime.now();
@@ -491,7 +493,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
                               } else {
 
-                                transaction.id = widget.transaction!.id;
+                                transaction.uuid = widget.transaction!.uuid;
 
                                 await repository.updateTransaction(
                                   transaction,
