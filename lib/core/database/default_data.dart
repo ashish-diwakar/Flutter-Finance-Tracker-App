@@ -7,36 +7,9 @@ class DefaultData {
   // DEFAULT CATEGORY UUIDS
   // ==========================================
 
-  static const foodCategoryUuid =
+  static const defaultUuid =
       '11111111-1111-1111-1111-111111111111';
 
-  static const shoppingCategoryUuid =
-      '22222222-2222-2222-2222-222222222222';
-
-  static const fuelCategoryUuid =
-      '33333333-3333-3333-3333-333333333333';
-
-  static const medicalCategoryUuid =
-      '44444444-4444-4444-4444-444444444444';
-
-  static const salaryCategoryUuid =
-      '55555555-5555-5555-5555-555555555555';
-
-  static const freelanceCategoryUuid =
-      '66666666-6666-6666-6666-666666666666';
-
-  // ==========================================
-  // DEFAULT ACCOUNT UUIDS
-  // ==========================================
-
-  static const cashAccountUuid =
-      'aaaaaaaa-1111-1111-1111-111111111111';
-
-  static const bankAccountUuid =
-      'bbbbbbbb-2222-2222-2222-222222222222';
-
-  static const creditCardAccountUuid =
-      'cccccccc-3333-3333-3333-333333333333';
 
   // ==========================================
   // DEFAULT CATEGORIES
@@ -45,7 +18,7 @@ class DefaultData {
   static List<CategoryModel> categories = [
 
     CategoryModel()
-      ..uuid = foodCategoryUuid
+      ..uuid = defaultUuid
       ..name = 'Food'
       ..type = 'expense'
       ..isDefault = true
@@ -53,7 +26,7 @@ class DefaultData {
       ..updatedAt = DateTime.now(),
 
     CategoryModel()
-      ..uuid = shoppingCategoryUuid
+      ..uuid = defaultUuid
       ..name = 'Shopping'
       ..type = 'expense'
       ..isDefault = true
@@ -61,7 +34,7 @@ class DefaultData {
       ..updatedAt = DateTime.now(),
 
     CategoryModel()
-      ..uuid = fuelCategoryUuid
+      ..uuid = defaultUuid
       ..name = 'Fuel'
       ..type = 'expense'
       ..isDefault = true
@@ -69,7 +42,7 @@ class DefaultData {
       ..updatedAt = DateTime.now(),
 
     CategoryModel()
-      ..uuid = medicalCategoryUuid
+      ..uuid = defaultUuid
       ..name = 'Medical'
       ..type = 'expense'
       ..isDefault = true
@@ -77,7 +50,7 @@ class DefaultData {
       ..updatedAt = DateTime.now(),
 
     CategoryModel()
-      ..uuid = salaryCategoryUuid
+      ..uuid = defaultUuid
       ..name = 'Salary'
       ..type = 'income'
       ..isDefault = true
@@ -85,7 +58,7 @@ class DefaultData {
       ..updatedAt = DateTime.now(),
 
     CategoryModel()
-      ..uuid = freelanceCategoryUuid
+      ..uuid = defaultUuid
       ..name = 'Freelance'
       ..type = 'income'
       ..isDefault = true
@@ -100,7 +73,7 @@ class DefaultData {
   static List<AccountModel> accounts = [
 
     AccountModel()
-      ..uuid = cashAccountUuid
+      ..uuid = defaultUuid
       ..name = 'Cash'
       ..type = 'cash'
       ..currentBalance = 0
@@ -109,7 +82,7 @@ class DefaultData {
       ..updatedAt = DateTime.now(),
 
     AccountModel()
-      ..uuid = bankAccountUuid
+      ..uuid = defaultUuid
       ..name = 'Bank Account'
       ..type = 'bank'
       ..currentBalance = 0
@@ -118,7 +91,7 @@ class DefaultData {
       ..updatedAt = DateTime.now(),
 
     AccountModel()
-      ..uuid = creditCardAccountUuid
+      ..uuid = defaultUuid
       ..name = 'Credit Card'
       ..type = 'credit_card'
       ..currentBalance = 0
