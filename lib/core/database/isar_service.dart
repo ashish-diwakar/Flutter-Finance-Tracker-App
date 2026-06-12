@@ -1,3 +1,4 @@
+
 import 'package:finance_tracker/shared/models/recurring_transaction_model.dart';
 import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
@@ -7,6 +8,7 @@ import '../../shared/models/account_model.dart';
 import '../../shared/models/category_model.dart';
 import '../../shared/models/transaction_model.dart';
 import '../../shared/models/investment_model.dart';
+import '../../shared/models/financial_goal_model.dart';
 
 class IsarService {
 
@@ -85,6 +87,8 @@ class IsarService {
         RecurringTransactionModelSchema,
 
         InvestmentModelSchema,
+
+        FinancialGoalModelSchema
       ],
 
       name: databaseName,

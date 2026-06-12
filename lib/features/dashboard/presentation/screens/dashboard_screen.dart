@@ -9,6 +9,7 @@ import '../../../../core/widgets/summary_card.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart';
 //import '../../../reports/presentation/providers/budget_alerts_provider.dart';
+import '../../../goals/presentation/widgets/goals_summary_card.dart';
 import '../../../transactions/presentation/screens/add_transaction_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_screen.dart';
 //import '../../../auth/presentation/providers/auth_provider.dart';
@@ -377,6 +378,25 @@ class _DashboardScreenState
                     ),
                   ),
                 ),
+              ),
+            ),
+
+            // =========================================
+            // FINANCIAL GOALS
+            // =========================================
+
+            const SliverToBoxAdapter(
+
+              child: Padding(
+
+                padding: EdgeInsets.fromLTRB(
+                  12,
+                  20,
+                  12,
+                  0,
+                ),
+
+                child: GoalsSummaryCard(),
               ),
             ),
 

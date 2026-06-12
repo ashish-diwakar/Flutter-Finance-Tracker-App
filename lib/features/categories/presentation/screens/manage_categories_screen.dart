@@ -5,7 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/category_model.dart';
 import '../providers/category_repository_provider.dart';
-import '../../../sync/presentation/providers/sync_provider.dart';
+//import '../../../sync/presentation/providers/sync_provider.dart';
 import '../../../../shared/providers/currency_provider.dart';
 
 class ManageCategoriesScreen

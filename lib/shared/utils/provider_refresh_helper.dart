@@ -6,6 +6,7 @@ import '../../features/dashboard/presentation/providers/dashboard_insights_provi
 import '../../features/dashboard/presentation/providers/expense_provider.dart';
 import '../../features/dashboard/presentation/providers/income_provider.dart';
 import '../../features/dashboard/presentation/providers/transactions_provider.dart';
+import '../../features/goals/presentation/providers/goal_analytics_provider.dart';
 import '../../features/recurring/presentation/providers/recurring_analytics_provider.dart';
 import '../../features/recurring/presentation/providers/recurring_provider.dart';
 import '../../features/reports/presentation/providers/budget_alerts_provider.dart';
@@ -105,9 +106,30 @@ class ProviderRefreshHelper {
       dashboardInsightsProvider,
     );
 
+    ref.invalidate(
+      goalAnalyticsProvider,
+    );
+
     await ref.read(
       dashboardInsightsProvider.future,
     );
+  }
+
+  static Future<void> 
+    refreshFinancialGoalsData(
+    WidgetRef ref,
+  ) async {
+
+    ref.invalidate(
+      goalAnalyticsProvider,
+    );
+
+    await Future.wait([
+        ref.read(
+          goalAnalyticsProvider.future,
+        )
+    ]);
+
   }
 
   // ==========================================
@@ -186,6 +208,10 @@ class ProviderRefreshHelper {
     ref.invalidate(
       recurringAnalyticsProvider,
     );
+    
+    ref.invalidate(
+      goalAnalyticsProvider,
+    );
 
 
     await Future.wait([
@@ -241,6 +267,10 @@ class ProviderRefreshHelper {
       ),
 
       refreshRecurringTransactionData(
+        ref,
+      ),
+
+      refreshFinancialGoalsData(
         ref,
       ),
 

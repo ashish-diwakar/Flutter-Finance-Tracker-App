@@ -11,6 +11,7 @@ import '../../../reports/presentation/screens/budget_alerts_screen.dart';
 import 'currency_settings_screen.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../investments/presentation/screens/portfolio_screen.dart';
+import '../../../goals/presentation/screens/manage_goals_screen.dart';
 
 class SettingsScreen
     extends ConsumerWidget {
@@ -318,6 +319,56 @@ class SettingsScreen
                 fontWeight:
                     FontWeight.bold,
               ),
+            ),
+          ),
+
+          // =====================================================
+          // FINANCIAL GOALS
+          // =====================================================
+
+          Card(
+
+            margin:
+                const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+
+            child: ListTile(
+
+              leading:
+                  const Icon(
+                Icons.flag,
+              ),
+
+              title:
+                  const Text(
+                'Financial Goals',
+              ),
+
+              subtitle:
+                  const Text(
+                'Track savings goals and progress',
+              ),
+
+              trailing:
+                  const Icon(
+                Icons.chevron_right,
+              ),
+
+              onTap: () {
+
+                Navigator.push(
+
+                  context,
+
+                  MaterialPageRoute(
+
+                    builder: (_) =>
+                        const ManageGoalsScreen(),
+                  ),
+                );
+              },
             ),
           ),
 
