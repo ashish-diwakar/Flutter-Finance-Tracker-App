@@ -130,9 +130,9 @@ class _ManageCategoriesScreenState
           .future,
     );
     
-    final syncService = await ref.read(
-        syncServiceProvider.future,
-    );
+    // final syncService = await ref.read(
+    //     syncServiceProvider.future,
+    // );
 
     if (!mounted) {
       return;

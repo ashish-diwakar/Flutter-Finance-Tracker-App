@@ -72,10 +72,20 @@ Future<void> main() async {
       isar,
     );
 
-    await recurringScheduler
+    final generatedCount = await recurringScheduler
         .processRecurringTransactions();
 
+    // =====================================================
+    // Trigger Sync Only When Needed
+    if (generatedCount > 0) {
 
+      LoggerService.info(
+        '$generatedCount recurring transactions generated',
+      );
+    }
+    // =====================================================
+
+    
     // =====================================================
     // BUDGET ALERTS
     // =====================================================
@@ -139,12 +149,11 @@ Future<void> main() async {
 
   } catch (e, stack) {
 
-    LoggerService.error('Application startup failed');    
-    LoggerService.error('-------------------------------------------------');
-    LoggerService.error('Error: $e');
-    LoggerService.error('-------------------------------------------------');    
-    LoggerService.error('Stack Trace: $stack');
-    LoggerService.error('-------------------------------------------------');
+    LoggerService.exception(
+      "Application Startup Failed",
+      e,
+      stack,
+    );
 
     runApp(
 

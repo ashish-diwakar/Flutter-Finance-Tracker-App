@@ -17,9 +17,16 @@ class LoggerService {
     logger.e(message);
   }
   
-  static void debug(
-    String message,
-  ) {
+  static void debug(String message) {
     logger.d(message);
   }
+  
+  static void exception(String message, Object error, StackTrace stackTrace) {
+    logger.e(
+      message,
+      error: error,
+      stackTrace: stackTrace,
+    );
+  }
+  
 }

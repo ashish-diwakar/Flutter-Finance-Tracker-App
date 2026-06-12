@@ -1,4 +1,6 @@
+import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:isar_community/isar.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../shared/models/recurring_transaction_model.dart';
 import '../../../../shared/models/transaction_model.dart';
@@ -11,7 +13,7 @@ class RecurringSchedulerService {
     this.isar,
   );
 
-  Future<void>
+  Future<int>
       processRecurringTransactions()
   async {
 
@@ -29,15 +31,29 @@ class RecurringSchedulerService {
             )
             .findAll();
 
+    if (recurring.isEmpty) {
+      return 0;
+    }
+
+    final allTransactions =
+        <TransactionModel>[];
+
+    final updatedRecurring =
+        <RecurringTransactionModel>[];
+
     for (final item
         in recurring) {
 
       while (
-          item.nextRunDate
-              .isBefore(now)) {
+        !item.nextRunDate.isAfter(
+          now,
+        )
+      ) {
 
-        // Stop processing if recurring
-        // has crossed its end date.
+        // =====================================
+        // END DATE CHECK
+        // =====================================
+
         if (item.endDate != null &&
             item.nextRunDate.isAfter(
               item.endDate!,
@@ -52,7 +68,9 @@ class RecurringSchedulerService {
         final transaction =
             TransactionModel()
 
-              ..uuid = DateTime.now().toUtc().toIso8601String()
+              ..uuid =
+                  const Uuid().v4()
+
               ..amount =
                   item.amount
 
@@ -80,15 +98,13 @@ class RecurringSchedulerService {
               ..isSynced =
                   false;
 
-        await isar.writeTxn(
-          () async {
+        LoggerService.info(
+          'Generated recurring transaction: '
+          '${transaction.uuid}',
+        );
 
-            await isar
-                .transactionModels
-                .put(
-              transaction,
-            );
-          },
+        allTransactions.add(
+          transaction,
         );
 
         item.nextRunDate =
@@ -103,15 +119,41 @@ class RecurringSchedulerService {
       item.isSynced =
           false;
 
-      await isar.writeTxn(
-        () async {
+      updatedRecurring.add(
+        item,
+      );
+    }
+
+    await isar.writeTxn(
+      () async {
+
+        if (allTransactions
+            .isNotEmpty) {
+
+          await isar
+              .transactionModels
+              .putAll(
+            allTransactions,
+          );
+        }
+
+        if (updatedRecurring
+            .isNotEmpty) {
 
           await isar
               .recurringTransactionModels
-              .put(item);
-        },
-      );
-    }
+              .putAll(
+            updatedRecurring,
+          );
+        }
+      },
+    );
+
+    LoggerService.info(
+      'Recurring Scheduler completed. '
+      'Generated ${allTransactions.length} transactions.',
+    );
+    return allTransactions.length;
   }
 
   DateTime calculateNextRunDate(
