@@ -16,7 +16,7 @@ class RecurringSchedulerService {
   async {
 
     final now =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     final recurring =
         await isar
@@ -52,7 +52,7 @@ class RecurringSchedulerService {
         final transaction =
             TransactionModel()
 
-              ..uuid = DateTime.now().toIso8601String()
+              ..uuid = DateTime.now().toUtc().toIso8601String()
               ..amount =
                   item.amount
 
@@ -72,7 +72,7 @@ class RecurringSchedulerService {
                   item.nextRunDate
 
               ..updatedAt =
-                  DateTime.now()
+                  DateTime.now().toUtc()
 
               ..isDeleted =
                   false
@@ -98,7 +98,7 @@ class RecurringSchedulerService {
       }
 
       item.updatedAt =
-          DateTime.now();
+          DateTime.now().toUtc();
 
       item.isSynced =
           false;

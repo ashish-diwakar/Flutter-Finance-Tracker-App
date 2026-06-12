@@ -64,8 +64,7 @@ class _BiometricLockScreenState extends ConsumerState<BiometricLockScreen> {
     });
 
     final success = await BiometricService.authenticate();
-    logger.d('BIOMETRIC RESULT: $success');
-
+    
     if (success && mounted) {
       Navigator.pushReplacement(
         context,

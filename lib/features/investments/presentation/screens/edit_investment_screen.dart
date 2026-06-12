@@ -243,10 +243,10 @@ class _EditInvestmentScreenState
 
       initialDate:
           maturityDate ??
-          DateTime.now(),
+          DateTime.now().toUtc(),
 
       firstDate:
-          DateTime.now(),
+          DateTime.now().toUtc(),
 
       lastDate:
           DateTime(2100),
@@ -431,7 +431,7 @@ class _EditInvestmentScreenState
       }
 
       investment.updatedAt =
-          DateTime.now();
+          DateTime.now().toUtc();
 
       investment.isSynced =
           false;
@@ -544,7 +544,7 @@ class _EditInvestmentScreenState
         false;
 
     investment.updatedAt =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     await isar.writeTxn(
       () async {

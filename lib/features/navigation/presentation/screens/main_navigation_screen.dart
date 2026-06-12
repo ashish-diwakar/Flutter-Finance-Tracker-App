@@ -5,6 +5,7 @@ import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../../../reports/presentation/screens/reports_screen.dart';
 import '../../../settings/presentation/screens/settings_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_container_screen.dart';
+import '../../../sync/presentation/providers/background_sync_provider.dart';
 
 class MainNavigationScreen
     extends ConsumerStatefulWidget {
@@ -41,10 +42,28 @@ class _MainNavigationScreenState
 
       SettingsScreen(),
     ];
+
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) async {
+
+      try {
+
+        await ref.read(
+          backgroundSyncProvider.future,
+        );
+
+      } catch (_) {
+
+        // Ignore initialization failures.
+        // Background sync will retry on next app resume.
+      }
+    });
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
 
     return Scaffold(
 
@@ -53,19 +72,25 @@ class _MainNavigationScreenState
         index: currentIndex,
 
         children: screens,
-      
       ),
 
       bottomNavigationBar:
           NavigationBar(
-        
-        backgroundColor: Color.fromRGBO(176, 211, 245, 0.498), // Theme.of(context).scaffoldBackgroundColor,
+
+        backgroundColor:
+            const Color.fromRGBO(
+          176,
+          211,
+          245,
+          0.498,
+        ),
 
         selectedIndex:
             currentIndex,
 
         onDestinationSelected:
             (index) {
+
           setState(() {
 
             currentIndex = index;

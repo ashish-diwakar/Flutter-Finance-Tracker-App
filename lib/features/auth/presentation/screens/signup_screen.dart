@@ -142,8 +142,6 @@ class _SignupScreenState
     dynamic error,
   ) {
 
-    logger.d('SIGNUP RESULT: $error');
-
     final message =
         error.toString().toLowerCase();
 

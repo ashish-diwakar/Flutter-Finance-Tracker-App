@@ -44,7 +44,7 @@ class CategoryRepository {
   ) async {
 
     category.updatedAt =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     category.isSynced = false;
 
@@ -72,7 +72,7 @@ class CategoryRepository {
     category.isSynced = false;
 
     category.updatedAt =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     await isar.writeTxn(() async {
 

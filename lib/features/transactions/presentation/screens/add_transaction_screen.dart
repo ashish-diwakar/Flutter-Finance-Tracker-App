@@ -1,12 +1,15 @@
-import 'package:finance_tracker/features/dashboard/presentation/providers/balance_provider.dart';
-import 'package:finance_tracker/features/dashboard/presentation/providers/expense_provider.dart';
-import 'package:finance_tracker/features/dashboard/presentation/providers/income_provider.dart';
+// import 'package:finance_tracker/features/dashboard/presentation/providers/balance_provider.dart';
+// import 'package:finance_tracker/features/dashboard/presentation/providers/expense_provider.dart';
+// import 'package:finance_tracker/features/dashboard/presentation/providers/income_provider.dart';
+
+//import 'package:finance_tracker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/services/logger_service.dart';
 import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
@@ -44,7 +47,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   AccountModel? selectedAccount;
 
-  DateTime selectedDate = DateTime.now();
+  DateTime selectedDate = DateTime.now().toUtc();
 
   bool saving = false;
 
@@ -370,7 +373,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                             context: context,
                             initialDate: selectedDate,
                             firstDate: DateTime(2020),
-                            lastDate: DateTime.now(),
+                            lastDate: DateTime.now().toUtc(),
                           );
 
                           if (picked != null) {
@@ -437,7 +440,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                                   ? 'Please select an account'
                                   : null;
 
-                              dateError = selectedDate.isAfter(DateTime.now())
+                              dateError = selectedDate.isAfter(DateTime.now().toUtc())
                                   ? 'Future dates are not allowed'
                                   : null;
                             });
@@ -483,7 +486,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                                 ..accountId = selectedAccount!.uuid
                                 ..notes = notesController.text.trim()
                                 ..isSynced = false
-                                ..updatedAt = DateTime.now();
+                                ..updatedAt = DateTime.now().toUtc();
 
                               if (widget.transaction == null) {
 

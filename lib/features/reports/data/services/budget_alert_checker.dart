@@ -19,7 +19,7 @@ class BudgetAlertChecker {
   })
   async {
 
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final startOfMonth =
         DateTime(
           now.year,

@@ -17,7 +17,7 @@ class ExpenseForecastService {
   async {
 
     final now =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     final monthStart =
         DateTime(

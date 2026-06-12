@@ -223,7 +223,7 @@ class _ManageCategoriesScreenState
                             false
 
                         ..updatedAt =
-                            DateTime.now();
+                            DateTime.now().toUtc();
 
                   await repository
                       .addCategory(
@@ -257,7 +257,7 @@ class _ManageCategoriesScreenState
                       ..isSynced = false
 
                       ..updatedAt =
-                          DateTime.now();
+                          DateTime.now().toUtc();
 
                   await repository
                       .updateCategory(

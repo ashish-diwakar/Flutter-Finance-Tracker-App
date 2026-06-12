@@ -16,7 +16,7 @@ class MonthlyTrendService {
       MonthlyTrendModel>>
       getMonthlyTrends()
   async {
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
 
     final startDate = DateTime(
       now.year,

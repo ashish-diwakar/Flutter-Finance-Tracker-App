@@ -20,9 +20,9 @@ class CategoryModel {
 
   bool isDefault = false;
 
-  DateTime createdAt = DateTime.now();
+  DateTime createdAt = DateTime.now().toUtc();
 
-  DateTime? updatedAt = DateTime.now();
+  DateTime? updatedAt = DateTime.now().toUtc();
 
   bool isSynced = false;
 

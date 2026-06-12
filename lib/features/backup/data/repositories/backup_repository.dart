@@ -170,7 +170,7 @@ class BackupRepository {
                   ? DateTime.parse(
                       e['updatedAt'],
                     )
-                  : DateTime.now()
+                  : DateTime.now().toUtc()
 
           ..isDeleted =
               e['isDeleted'] ?? false
@@ -215,7 +215,7 @@ class BackupRepository {
                   ? DateTime.parse(
                       e['updatedAt'],
                     )
-                  : DateTime.now()
+                  : DateTime.now().toUtc()
 
           ..isDeleted =
               e['isDeleted'] ?? false
@@ -260,7 +260,7 @@ class BackupRepository {
                   ? DateTime.parse(
                       e['updatedAt'],
                     )
-                  : DateTime.now()
+                  : DateTime.now().toUtc()
 
           ..isDeleted =
               e['isDeleted'] ?? false

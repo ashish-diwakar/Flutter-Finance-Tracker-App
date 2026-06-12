@@ -229,7 +229,7 @@ class RecurringTransactionsScreen
                               !item.isActive;
 
                           item.updatedAt =
-                              DateTime.now();
+                              DateTime.now().toUtc();
 
                           item.isSynced =
                               false;

@@ -23,7 +23,7 @@ class DefaultData {
       ..type = 'expense'
       ..isDefault = true
       ..isSynced = false
-      ..updatedAt = DateTime.now(),
+      ..updatedAt = DateTime.now().toUtc(),
 
     CategoryModel()
       ..uuid = defaultUuid
@@ -31,7 +31,7 @@ class DefaultData {
       ..type = 'expense'
       ..isDefault = true
       ..isSynced = false
-      ..updatedAt = DateTime.now(),
+      ..updatedAt = DateTime.now().toUtc(),
 
     CategoryModel()
       ..uuid = defaultUuid
@@ -39,7 +39,7 @@ class DefaultData {
       ..type = 'expense'
       ..isDefault = true
       ..isSynced = false
-      ..updatedAt = DateTime.now(),
+      ..updatedAt = DateTime.now().toUtc(),
 
     CategoryModel()
       ..uuid = defaultUuid
@@ -47,7 +47,7 @@ class DefaultData {
       ..type = 'expense'
       ..isDefault = true
       ..isSynced = false
-      ..updatedAt = DateTime.now(),
+      ..updatedAt = DateTime.now().toUtc(),
 
     CategoryModel()
       ..uuid = defaultUuid
@@ -55,7 +55,7 @@ class DefaultData {
       ..type = 'income'
       ..isDefault = true
       ..isSynced = false
-      ..updatedAt = DateTime.now(),
+      ..updatedAt = DateTime.now().toUtc(),
 
     CategoryModel()
       ..uuid = defaultUuid
@@ -63,7 +63,7 @@ class DefaultData {
       ..type = 'income'
       ..isDefault = true
       ..isSynced = false
-      ..updatedAt = DateTime.now(),
+      ..updatedAt = DateTime.now().toUtc(),
   ];
 
   // ==========================================
@@ -79,7 +79,7 @@ class DefaultData {
       ..currentBalance = 0
       ..isDefault = true
       ..isSynced = false
-      ..updatedAt = DateTime.now(),
+      ..updatedAt = DateTime.now().toUtc(),
 
     AccountModel()
       ..uuid = defaultUuid
@@ -88,7 +88,7 @@ class DefaultData {
       ..currentBalance = 0
       ..isDefault = true
       ..isSynced = false
-      ..updatedAt = DateTime.now(),
+      ..updatedAt = DateTime.now().toUtc(),
 
     AccountModel()
       ..uuid = defaultUuid
@@ -97,6 +97,6 @@ class DefaultData {
       ..currentBalance = 0
       ..isDefault = true
       ..isSynced = false
-      ..updatedAt = DateTime.now(),
+      ..updatedAt = DateTime.now().toUtc(),
   ];
 }

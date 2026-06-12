@@ -204,7 +204,7 @@ class _ManageAccountsScreenState
                                 false
 
                             ..updatedAt =
-                                DateTime.now();
+                                DateTime.now().toUtc();
 
                       await repository
                           .addAccount(

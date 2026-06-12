@@ -1,10 +1,11 @@
 import 'package:finance_tracker/features/auth/presentation/screens/auth_gate.dart';
+//import 'package:finance_tracker/shared/utils/logger_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:logger/logger.dart';
 
+import '../../../../core/services/logger_service.dart';
 import 'core/config/supabase_config.dart';
 import 'core/database/isar_service.dart';
 import 'core/services/deep_link_service.dart';
@@ -13,7 +14,6 @@ import 'features/recurring/data/services/recurring_scheduler_service.dart';
 import 'features/reports/data/services/budget_alert_checker.dart';
 import 'features/reports/data/services/budget_notification_service.dart';
 
-final logger = Logger();
 
 final navigatorKey =
     GlobalKey<NavigatorState>();
@@ -22,17 +22,6 @@ Future<void> main() async {
 
   WidgetsFlutterBinding
       .ensureInitialized();
-
-  FlutterError.onError =
-      (details) {
-
-    logger.e(
-      'Flutter Error',
-      error: details.exception,
-      stackTrace:
-          details.stack,
-    );
-  };
 
   try {
 
@@ -113,7 +102,7 @@ Future<void> main() async {
           navigatorKey,
     );
 
-    logger.i(
+    LoggerService.info(
       'Application initialized successfully',
     );
 
@@ -150,14 +139,12 @@ Future<void> main() async {
 
   } catch (e, stack) {
 
-    logger.e(
-
-      'Application startup failed',
-
-      error: e,
-
-      stackTrace: stack,
-    );
+    LoggerService.error('Application startup failed');    
+    LoggerService.error('-------------------------------------------------');
+    LoggerService.error('Error: $e');
+    LoggerService.error('-------------------------------------------------');    
+    LoggerService.error('Stack Trace: $stack');
+    LoggerService.error('-------------------------------------------------');
 
     runApp(
 

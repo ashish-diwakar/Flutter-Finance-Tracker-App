@@ -57,7 +57,7 @@ class _AddInvestmentScreenState
       investmentTypes.first;
 
   DateTime purchaseDate =
-      DateTime.now();
+      DateTime.now().toUtc();
 
   DateTime? maturityDate;
 
@@ -430,7 +430,7 @@ class _AddInvestmentScreenState
           DateTime(2000),
 
       lastDate:
-          DateTime.now(),
+          DateTime.now().toUtc(),
     );
 
     if (picked != null) {
@@ -452,10 +452,10 @@ class _AddInvestmentScreenState
 
       initialDate:
           maturityDate ??
-          DateTime.now(),
+          DateTime.now().toUtc(),
 
       firstDate:
-          DateTime.now(),
+          DateTime.now().toUtc(),
 
       lastDate:
           DateTime(2100),

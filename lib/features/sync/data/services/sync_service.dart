@@ -1,4 +1,3 @@
-import 'package:finance_tracker/main.dart';
 import 'package:isar_community/isar.dart';
 
 import '../../../../core/services/logger_service.dart';
@@ -9,6 +8,7 @@ import '../../../../shared/models/transaction_model.dart';
 import '../../../../shared/models/recurring_transaction_model.dart';
 import '../../../../shared/models/investment_model.dart';
 import '../../../../shared/utils/device_name_helper.dart';
+import '../../../../core/sync/conflict_resolver.dart';
 
 class SyncService {
 
@@ -21,15 +21,15 @@ class SyncService {
 
   Future<void> syncAll() async {
 
-    logger.d(
+    LoggerService.logger.d(
       '--------------------------------------------------------------------',
     );
 
-    logger.d(
+    LoggerService.logger.d(
       'Starting full sync for user: ${client.auth.currentUser?.id}',
     );
 
-    logger.d(
+    LoggerService.logger.d(
       '--------------------------------------------------------------------',
     );
 
@@ -38,7 +38,7 @@ class SyncService {
 
     if (!sessionReady) {
 
-      logger.e(
+      LoggerService.error(
         'Aborting sync: no valid Supabase session',
       );
 
@@ -49,24 +49,20 @@ class SyncService {
 
     bool success = true;
 
-    success &= await executeSafely(syncCategories);
     success &= await executeSafely(pullCategories);
-
+    success &= await executeSafely(syncCategories);
     
-    success &= await executeSafely(syncAccounts);
     success &= await executeSafely(pullAccounts);
-
+    success &= await executeSafely(syncAccounts);
     
-    success &= await executeSafely(syncRecurringTransactions);
     success &= await executeSafely(pullRecurringTransactions);
-
+    success &= await executeSafely(syncRecurringTransactions);
     
-    success &= await executeSafely(syncTransactions);
     success &= await executeSafely(pullTransactions);
-
+    success &= await executeSafely(syncTransactions);
     
-    success &= await executeSafely(syncInvestments);
     success &= await executeSafely(pullInvestments);
+    success &= await executeSafely(syncInvestments);
 
     // await executeSafely(
     //   syncCategories,
@@ -113,7 +109,7 @@ class SyncService {
     //   'user_id':
     //       client.auth.currentUser!.id,
     //   'last_sync_at':
-    //       DateTime.now()
+    //       DateTime.now().toUtc()
     //           .toIso8601String(),
     //   'last_device':
     //       getCurrentDevice(),
@@ -126,7 +122,7 @@ class SyncService {
         'user_id':
             client.auth.currentUser!.id,
         'last_sync_at':
-            DateTime.now()
+            DateTime.now().toUtc()
                 .toIso8601String(),
         'last_device':
             getCurrentDevice(),
@@ -145,7 +141,7 @@ class SyncService {
     final user =
         client.auth.currentUser;
 
-    logger.d(
+    LoggerService.logger.d(
       'Starting category sync',
     );
 
@@ -161,10 +157,10 @@ class SyncService {
 
     // for (final category
     //     in unsynced) {
-    // logger.d(
+    // LoggerService.logger.d(
     //   '----------------------------------------------------------------------------------------------', 
     // );
-    // logger.d(
+    // LoggerService.logger.d(
     //   'category to sync ${category.name}, ${category.type}, ${category.isDefault}, ${category.monthlyBudget},', 
     // );
 
@@ -192,7 +188,7 @@ class SyncService {
 
     //     'updated_at':
     //         (category.updatedAt ??
-    //                 DateTime.now())
+    //                 DateTime.now().toUtc())
     //             .toIso8601String(),
     //   });
 
@@ -215,23 +211,23 @@ class SyncService {
         return;
       }
 
-      logger.d(
+      LoggerService.logger.d(
         'Current auth user: ${client.auth.currentUser?.id}',
       );
 
-      logger.d(
+      LoggerService.logger.d(
         'Row user_id: ${user.id}',
       );
 
       for (final category in unsynced) {
 
-        logger.d(
+        LoggerService.logger.d(
           '----------------------------------------------------------------------------------------------',
         );
-        logger.d(
+        LoggerService.logger.d(
           'Category ID: ${category.uuid}',
         );
-        logger.d(
+        LoggerService.logger.d(
           'category to sync ${category.name}, ${category.type}, ${category.isDefault}, ${category.monthlyBudget}',
         );
       }
@@ -263,7 +259,7 @@ class SyncService {
 
               'updated_at':
                   (category.updatedAt ??
-                          DateTime.now())
+                          DateTime.now().toUtc())
                       .toIso8601String(),
             }).toList(),
           );
@@ -275,7 +271,7 @@ class SyncService {
 
           category.isSynced = true;
 
-          logger.d(
+          LoggerService.logger.d(
             'Category ${category.name} -> user_id=${user.id}',
           );
         }
@@ -283,7 +279,7 @@ class SyncService {
         await isar.categoryModels
             .putAll(unsynced);
 
-          logger.d(
+          LoggerService.logger.d(
             'Category Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
           );
       });
@@ -299,7 +295,7 @@ class SyncService {
       return;
     }
 
-    logger.d(
+    LoggerService.logger.d(
       'Category Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
 
@@ -308,6 +304,9 @@ class SyncService {
             .from('categories')
             .select()
             .eq('user_id', user.id);
+
+
+    final categoriesToSave = <CategoryModel>[];
 
     for (final item
         in response) {
@@ -358,11 +357,12 @@ class SyncService {
               ..monthlyBudget = 
                   item['monthly_budget'];
 
-        await isar.writeTxn(() async {
+        // await isar.writeTxn(() async {
 
-          await isar.categoryModels
-              .put(category);
-        });
+        //   await isar.categoryModels
+        //       .put(category);
+        // });
+        categoriesToSave.add(category);
 
         continue;
       }
@@ -370,10 +370,14 @@ class SyncService {
       final localUpdated =
           existing.updatedAt;
 
-      if (localUpdated == null ||
-          cloudUpdated.isAfter(
-            localUpdated,
-          )) {
+      if (
+        ConflictResolver.shouldReplaceLocal(
+          localUpdatedAt:
+              localUpdated,
+          remoteUpdatedAt:
+              cloudUpdated,
+        )
+      ) {
 
         existing.name =
             item['name'];
@@ -395,15 +399,30 @@ class SyncService {
         existing.monthlyBudget = 
             item['monthly_budget'];
 
-        await isar.writeTxn(() async {
+        // await isar.writeTxn(() async {
 
-          await isar.categoryModels
-              .put(existing);
-        });
-          logger.d(
-            'Category Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
-          );
+        //   await isar.categoryModels
+        //       .put(existing);
+        // });
+        categoriesToSave.add(existing);
+          
       }
+    }
+
+    if(categoriesToSave.isNotEmpty) {
+      await isar.writeTxn(() async {
+        await isar.categoryModels.putAll(
+          categoriesToSave,
+        );
+      });
+      LoggerService.logger.d(
+        '[${categoriesToSave.length}] Category Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+      );
+    } else {
+      
+      LoggerService.logger.d(
+        'No Category To Pull, Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
+      );
     }
   }
 
@@ -453,7 +472,7 @@ class SyncService {
 
   //       'updated_at':
   //           (account.updatedAt ??
-  //                   DateTime.now())
+  //                   DateTime.now().toUtc())
   //               .toIso8601String(),
   //     });
 
@@ -476,7 +495,7 @@ class SyncService {
       return;
     }
 
-    logger.d(
+    LoggerService.logger.d(
       'Account Sync Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
     final unsynced =
@@ -514,7 +533,7 @@ class SyncService {
 
             'updated_at':
                 (account.updatedAt ??
-                        DateTime.now())
+                        DateTime.now().toUtc())
                     .toIso8601String(),
           }).toList(),
         );
@@ -526,7 +545,7 @@ class SyncService {
 
         account.isSynced = true;
           
-          logger.d(
+          LoggerService.logger.d(
             'Account ${account.name} -> user_id=${user.id}',
           );
       }
@@ -534,7 +553,7 @@ class SyncService {
       await isar.accountModels
           .putAll(unsynced);
 
-      logger.d(
+      LoggerService.logger.d(
         'Account Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
       );
 
@@ -550,7 +569,7 @@ class SyncService {
     if (user == null) {
       return;
     }
-    logger.d(
+    LoggerService.logger.d(
       'Account Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
 
@@ -621,10 +640,14 @@ class SyncService {
       final localUpdated =
           existing.updatedAt;
 
-      if (localUpdated == null ||
-          cloudUpdated.isAfter(
-            localUpdated,
-          )) {
+      if (
+          ConflictResolver.shouldReplaceLocal(
+            localUpdatedAt:
+                localUpdated,
+            remoteUpdatedAt:
+                cloudUpdated,
+          )
+      ) {
 
         existing.name =
             item['name'];
@@ -652,7 +675,7 @@ class SyncService {
               .put(existing);
         });
         
-        logger.d(
+        LoggerService.logger.d(
           'Account Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
         );
       }
@@ -715,7 +738,7 @@ class SyncService {
 
   //       'updated_at':
   //           (transaction.updatedAt ??
-  //                 DateTime.now())
+  //                 DateTime.now().toUtc())
   //             .toIso8601String(), 
   //     });
 
@@ -738,7 +761,7 @@ class SyncService {
       return;
     }
 
-    logger.d(
+    LoggerService.logger.d(
       'Transaction Sync Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
     final unsynced =
@@ -751,6 +774,18 @@ class SyncService {
       return;
     }
 
+    
+
+    for (final trans in unsynced) {
+
+      LoggerService.logger.d(
+        'Unsynced Transaction ------  Amount: ${trans.amount} ------id: ${trans.id} ------uuid: ${trans.uuid}',
+      );
+    }
+
+      LoggerService.logger.d(
+        'Unsynced Transaction step 1',
+      );
     await client
         .from('transactions')
         .upsert(
@@ -786,23 +821,31 @@ class SyncService {
 
             'updated_at':
                 (transaction.updatedAt ??
-                        DateTime.now())
+                        DateTime.now().toUtc())
                     .toIso8601String(),
           }).toList(),
         );
+
+      LoggerService.logger.d(
+        'Unsynced Transaction step 2',
+      );
+
 
     await isar.writeTxn(() async {
 
       for (final transaction
           in unsynced) {
 
+        LoggerService.logger.d(
+          'Transaction uuid=${transaction.uuid} ------id: ${transaction.id} ------uuid: ${transaction.uuid}',
+        );
         transaction.isSynced = true;
       }
 
       await isar.transactionModels
           .putAll(unsynced);
 
-      logger.d(
+      LoggerService.logger.d(
         'Transaction Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
       );
     });
@@ -818,7 +861,7 @@ class SyncService {
       return;
     }
 
-    logger.d(
+    LoggerService.logger.d(
       'Transaction Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
 
@@ -897,10 +940,14 @@ class SyncService {
       final localUpdated =
           existing.updatedAt;
 
-      if (localUpdated == null ||
-          cloudUpdated.isAfter(
-            localUpdated,
-          )) {
+      if (
+        ConflictResolver.shouldReplaceLocal(
+          localUpdatedAt:
+              localUpdated,
+          remoteUpdatedAt:
+              cloudUpdated,
+        )
+      ) {
 
         existing.amount =
             item['amount'];
@@ -937,7 +984,7 @@ class SyncService {
         });
       }
     }
-    logger.d(
+    LoggerService.logger.d(
       'Transaction Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
   }
@@ -1052,7 +1099,7 @@ class SyncService {
       return;
     }
 
-    logger.d(
+    LoggerService.logger.d(
       'Recurring Transaction Sync Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
 
@@ -1136,7 +1183,7 @@ class SyncService {
         for (final recurring
             in unsynced) {
 
-          logger.d(
+          LoggerService.logger.d(
             'Recurring Transaction Sync --- ${recurring.uuid} -> user_id=${user.id}, amount=${recurring.amount}, type=${recurring.type}, categoryId=${recurring.categoryId}, accountId=${recurring.accountId}, notes=${recurring.notes}, startDate=${recurring.startDate}, endDate=${recurring.endDate}, frequency=${recurring.frequency}, interval=${recurring.interval}, isActive=${recurring.isActive}, nextRunDate=${recurring.nextRunDate}, updatedAt=${recurring.updatedAt}, isDeleted=${recurring.isDeleted}',
           );
 
@@ -1149,7 +1196,7 @@ class SyncService {
             .putAll(
               unsynced,
             );
-          logger.d(
+          LoggerService.logger.d(
             'Recurring Transaction Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
           );
       },
@@ -1159,7 +1206,7 @@ class SyncService {
 
   Future<void> pullRecurringTransactions() async {
     final user = client.auth.currentUser;
-    logger.d(
+    LoggerService.logger.d(
       'Recurring Transaction Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
     if (user == null) {
@@ -1206,7 +1253,14 @@ class SyncService {
         continue;
       }
 
-      if (remoteUpdated.isAfter(local.updatedAt)) {
+      if (
+          ConflictResolver.shouldReplaceLocal(
+            localUpdatedAt:
+                local.updatedAt,
+            remoteUpdatedAt:
+                remoteUpdated,
+          )
+        ) {
         local.amount = item['amount'];
         local.type = item['type'];
         local.categoryId = item['category_id'];
@@ -1227,7 +1281,7 @@ class SyncService {
         });
       }
     }
-    logger.d(
+    LoggerService.logger.d(
       'Recurring Transaction Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
   }
@@ -1243,7 +1297,7 @@ class SyncService {
     final user =
         client.auth.currentUser;
 
-    logger.d(
+    LoggerService.logger.d(
       'Starting investment sync',
     );
 
@@ -1251,7 +1305,7 @@ class SyncService {
       return 0;
     }
 
-    logger.d(
+    LoggerService.logger.d(
       'Investment Sync Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
 
@@ -1378,7 +1432,7 @@ class SyncService {
                 true;
 
             investment.updatedAt =
-                DateTime.now();
+                DateTime.now().toUtc();
 
           }
 
@@ -1387,7 +1441,7 @@ class SyncService {
               .putAll(
             investments,
           );
-        logger.d(
+        LoggerService.logger.d(
           'Investment Sync Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
         );
         });
@@ -1401,22 +1455,22 @@ class SyncService {
     final user =
         client.auth.currentUser;
 
-    logger.d(
+    LoggerService.logger.d(
       'Starting investment pull',
     );
 
     if (user == null) {
-      logger.d(
+      LoggerService.logger.d(
         'User is null, aborting investment pull',
       );
       return;
     }
     
-    // logger.d(
+    // LoggerService.logger.d(
     //   'Step 2 investment pull',
     // );
 
-    logger.d(
+    LoggerService.logger.d(
       'Investment Pull Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
 
@@ -1428,7 +1482,7 @@ class SyncService {
             .select()
             .eq('user_id', user.id);
 
-    // logger.d(
+    // LoggerService.logger.d(
     //   'Step 2 investment pull ${response.length} items.',
     // );
 
@@ -1450,7 +1504,7 @@ class SyncService {
           item['is_deleted'] ?? false;
 
       if (existing == null) {
-        // logger.d(
+        // LoggerService.logger.d(
         //   'Step 3 investment pull existing is null',
         // );
 
@@ -1497,7 +1551,7 @@ class SyncService {
 
               ..isSynced = true;
 
-        // logger.d(
+        // LoggerService.logger.d(
         //   'Step 5 investment pull updating ${investment.name}. Cloud updated: ${cloudUpdated.toIso8601String()}, Local updated: ${investment.updatedAt.toIso8601String()}',
         // );
         await isar.writeTxn(() async {
@@ -1509,7 +1563,7 @@ class SyncService {
         continue;
       }
 
-        // logger.d(
+        // LoggerService.logger.d(
         //   'Step 4 investment pull existing is not null',
         // );
       
@@ -1517,15 +1571,19 @@ class SyncService {
             existing.updatedAt;
 
         
-        // logger.d(
+        // LoggerService.logger.d(
         //   'Step 4a investment pull existing is not null ${cloudUpdated.toIso8601String()} vs ${localUpdated.toIso8601String() }',
         // );
       
 
         if (
-            cloudUpdated.isAfter(
-              localUpdated,
-            )) {
+            ConflictResolver.shouldReplaceLocal(
+              localUpdatedAt:
+                  localUpdated,
+              remoteUpdatedAt:
+                  cloudUpdated,
+            )
+          ) {
 
           existing.name =
               item['name'];
@@ -1561,7 +1619,7 @@ class SyncService {
 
           existing.isSynced = true;
 
-        // logger.d(
+        // LoggerService.logger.d(
         //   'Step 5 investment pull updating ${existing.name}. Cloud updated: ${cloudUpdated.toIso8601String()}, Local updated: ${localUpdated.toIso8601String()}',
         // );
 
@@ -1573,7 +1631,7 @@ class SyncService {
         }
           
     }
-    logger.d(
+    LoggerService.logger.d(
       'Investment Pull Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
   }
@@ -1624,7 +1682,7 @@ class SyncService {
     //     recurring +
     //     investments;
 
-    logger.d(
+    LoggerService.logger.d(
       'Get Pending Sync Count Started!!!!!!!!!!!!!!!!!!!!!!!!!',
     );
 
@@ -1661,7 +1719,7 @@ class SyncService {
         total += count;
       }
 
-      logger.d(
+      LoggerService.logger.d(
         'Get Pending Sync Count Completed!!!!!!!!!!!!!!!!!!!!!!!!!',
       );
 
@@ -1686,7 +1744,7 @@ class SyncService {
   //       'Sync error: $e',
   //     );
 
-  //     logger.e(
+  //     LoggerService.error(
   //       stackTrace.toString(),
   //     );
   //   }
@@ -1704,7 +1762,7 @@ class SyncService {
         'Sync error: $e',
       );
 
-      logger.e(
+      LoggerService.error(
         stackTrace.toString(),
       );
 
@@ -1720,7 +1778,7 @@ class SyncService {
 
     if (user == null) {
 
-      logger.e(
+      LoggerService.error(
         'ensureValidSession: no currentUser',
       );
 
@@ -1732,7 +1790,7 @@ class SyncService {
 
     if (session == null) {
 
-      logger.e(
+      LoggerService.error(
         'ensureValidSession: session is null',
       );
 
@@ -1743,7 +1801,7 @@ class SyncService {
       return true;
     }
 
-    logger.d(
+    LoggerService.logger.d(
       'Session expired, refreshing',
     );
 
@@ -1760,7 +1818,7 @@ class SyncService {
 
     } catch (e) {
 
-      logger.e(
+      LoggerService.error(
         'Session refresh failed: $e',
       );
 

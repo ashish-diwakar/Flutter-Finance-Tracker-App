@@ -40,10 +40,10 @@ class InvestmentModel {
   late DateTime purchaseDate;
 
   DateTime createdAt =
-      DateTime.now();
+      DateTime.now().toUtc();
 
   DateTime updatedAt =
-      DateTime.now();
+      DateTime.now().toUtc();
 
   // ===========================================
   // FIXED RETURN INVESTMENTS

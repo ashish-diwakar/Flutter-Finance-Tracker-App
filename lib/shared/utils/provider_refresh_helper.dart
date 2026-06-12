@@ -244,7 +244,7 @@ class ProviderRefreshHelper {
         ref,
       ),
 
-      refreshReportsData(ref, DateTime.now()),
+      refreshReportsData(ref, DateTime.now().toUtc()),
     ]);
   }
 }

@@ -52,7 +52,7 @@ class RecurringRepository {
     model.isDeleted = true;
 
     model.updatedAt =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     model.isSynced = false;
 

@@ -19,7 +19,7 @@ class FinancialInsightService {
   async {
 
     final now =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     final currentMonthStart =
         DateTime(

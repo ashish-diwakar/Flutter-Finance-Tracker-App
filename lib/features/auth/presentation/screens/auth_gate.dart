@@ -1,61 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// import '../../../dashboard/presentation/dashboard_screen.dart';
 import 'login_screen.dart';
 import '../../../security/presentation/screens/biometric_lock_screen.dart';
 
 class AuthGate
-    extends StatelessWidget {
+    extends ConsumerWidget {
 
   const AuthGate({
     super.key,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
 
-    final session =
-        Supabase.instance.client.auth
-            .currentSession;
+    return StreamBuilder<AuthState>(
 
-    if (session != null) {
-      // return const DashboardScreen();
-      return const BiometricLockScreen();
-    }
+      stream: Supabase.instance.client.auth
+          .onAuthStateChange,
 
-    return const LoginScreen();
+      builder: (
+        context,
+        snapshot,
+      ) {
 
-    
-      // return Scaffold(
-      //   body: FutureBuilder(
-      //     // Fetch data from Supabase 'todos' table
-      //     future: Supabase.instance.client.from('todos').select('*'),
-      //     builder: (context, snapshot) {
-      //       if (!snapshot.hasData) {
-      //         return const Center(child: CircularProgressIndicator());
-      //       }
-            
-      //       final todos = snapshot.data as List<dynamic>;
-            
-      //       if(todos.isEmpty) {
-      //         return const Center(child: Text('No todos found'));
-      //       }
+        final session =
+            Supabase.instance.client.auth
+                .currentSession;
 
-      //       return ListView.builder(
-      //         itemCount: todos.length,
-      //         itemBuilder: (context, index) {
-      //           final todo = todos[index];
-      //           return ListTile(
-      //             title: Text(todo['name']),
-      //           );
-      //         },
-      //       );
-      //     },
-      //   ),
-      // );
-    
+        if (session != null) {
 
+          return const BiometricLockScreen();
+        }
 
+        return const LoginScreen();
+      },
+    );
   }
 }

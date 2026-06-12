@@ -53,7 +53,7 @@ class _AddRecurringTransactionScreenState
   int interval = 1;
 
   DateTime startDate =
-      DateTime.now();
+      DateTime.now().toUtc();
 
   DateTime? endDate;
 
@@ -232,7 +232,7 @@ class _AddRecurringTransactionScreenState
           active;
 
       recurring.updatedAt =
-          DateTime.now();
+          DateTime.now().toUtc();
 
       recurring.isDeleted =
           false;

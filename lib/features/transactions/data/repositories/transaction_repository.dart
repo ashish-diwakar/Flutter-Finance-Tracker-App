@@ -15,7 +15,7 @@ class TransactionRepository {
     await isar.writeTxn(() async {
 
       transaction.updatedAt =
-          DateTime.now();
+          DateTime.now().toUtc();
 
       transaction.isSynced =
           false;
@@ -30,7 +30,7 @@ class TransactionRepository {
     TransactionModel transaction,
   ) async {
 
-    transaction.updatedAt = DateTime.now();
+    transaction.updatedAt = DateTime.now().toUtc();
 
     transaction.isSynced = false;
 
@@ -59,7 +59,7 @@ class TransactionRepository {
     transaction.isSynced = false;
 
     transaction.updatedAt =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     await isar.writeTxn(() async {
       await isar.transactionModels

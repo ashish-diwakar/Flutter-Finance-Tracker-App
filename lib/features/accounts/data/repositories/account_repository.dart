@@ -23,7 +23,7 @@ class AccountRepository {
 
     await isar.writeTxn(() async {
       account.updatedAt =
-          DateTime.now();
+          DateTime.now().toUtc();
 
       account.isSynced =
           false;
@@ -38,7 +38,7 @@ class AccountRepository {
   ) async {
 
     account.updatedAt =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     account.isSynced = false;
 
@@ -90,7 +90,7 @@ class AccountRepository {
     account.isSynced = false;
 
     account.updatedAt =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     await isar.writeTxn(() async {
 

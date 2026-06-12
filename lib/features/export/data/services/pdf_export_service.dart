@@ -73,7 +73,7 @@ class PdfExportService {
     );
 
     final generatedDate =
-        DateTime.now();
+        DateTime.now().toUtc();
 
     final savingsRate =
         income <= 0

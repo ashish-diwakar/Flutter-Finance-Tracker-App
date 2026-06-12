@@ -16,4 +16,10 @@ class LoggerService {
 
     logger.e(message);
   }
+  
+  static void debug(
+    String message,
+  ) {
+    logger.d(message);
+  }
 }
