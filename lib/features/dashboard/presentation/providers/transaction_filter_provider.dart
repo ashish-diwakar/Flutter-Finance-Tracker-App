@@ -69,23 +69,56 @@ enum TransactionTypeFilter {
 
 class TransactionFilter {
 
-  const TransactionFilter({
-    this.limit = TransactionLimit.last10,
-    this.type = TransactionTypeFilter.all,
-  });
-
   final TransactionLimit limit;
 
   final TransactionTypeFilter type;
 
+  final String searchText;
+
+  final String? categoryId;
+
+  final String? accountId;
+
+  final DateTime? fromDate;
+
+  final DateTime? toDate;
+
+  const TransactionFilter({
+
+    this.limit = TransactionLimit.last10,
+
+    this.type = TransactionTypeFilter.all,
+
+    this.searchText = '',
+
+    this.categoryId,
+
+    this.accountId,
+
+    this.fromDate,
+
+    this.toDate,
+  });
+
+
   TransactionFilter copyWith({
     TransactionLimit? limit,
     TransactionTypeFilter? type,
+    String? searchText,
+    String? categoryId,
+    String? accountId,
+    DateTime? fromDate,
+    DateTime? toDate,
   }) {
 
     return TransactionFilter(
       limit: limit ?? this.limit,
       type: type ?? this.type,
+      searchText: searchText ?? this.searchText,
+      categoryId: categoryId ?? this.categoryId,
+      accountId: accountId ?? this.accountId,
+      fromDate: fromDate ?? this.fromDate,
+      toDate: toDate ?? this.toDate,
     );
   }
 }
@@ -102,6 +135,26 @@ class TransactionFilterNotifier
 
   void setType(TransactionTypeFilter type) {
     state = state.copyWith(type: type);
+  }
+
+  void setSearchText(String searchText) {
+    state = state.copyWith(searchText: searchText);
+  }
+
+  void setCategoryId(String? categoryId) {
+    state = state.copyWith(categoryId: categoryId);
+  }
+
+  void setAccountId(String? accountId) {
+    state = state.copyWith(accountId: accountId);
+  }
+
+  void setFromDate(DateTime? fromDate) {
+    state = state.copyWith(fromDate: fromDate);
+  }
+
+  void setToDate(DateTime? toDate) {
+    state = state.copyWith(toDate: toDate);
   }
 }
 
@@ -132,12 +185,82 @@ final filteredTransactionsProvider =
       );
     }
 
-    final limit = filter.limit.count;
-
-    if (limit != null) {
-      result = result.take(limit);
+    if (filter.searchText.isNotEmpty) {
+      result = result.where(
+        (t) =>
+          t.notes
+              ?.toLowerCase()
+              .contains(
+                filter.searchText
+                    .toLowerCase(),
+              ) ??
+          false,
+      );
     }
 
-    return result.toList();
+    if (filter.categoryId != null) {
+      result = result.where(
+        (t) => t.categoryId == filter.categoryId,
+      );
+    }
+
+    if (filter.accountId != null) {
+      result = result.where(
+        (t) => t.accountId == filter.accountId,
+      );
+    }
+
+    if (filter.fromDate != null) {
+      final startOfDay = DateTime(
+        filter.fromDate!.year,
+        filter.fromDate!.month,
+        filter.fromDate!.day,
+      );
+
+      result = result.where(
+        (t) => !t.transactionDate.isBefore(startOfDay),
+      );
+    }
+
+    if (filter.toDate != null) {
+
+      final endOfDay = DateTime(
+        filter.toDate!.year,
+        filter.toDate!.month,
+        filter.toDate!.day,
+        23,
+        59,
+        59,
+        999,
+      );
+
+      result = result.where(
+        (t) => !t.transactionDate.isAfter(endOfDay),
+      );
+    }
+
+    final list = result.toList()
+      ..sort(
+      (a, b) =>
+        b.transactionDate.compareTo(
+          a.transactionDate,
+        ),
+    );
+
+
+
+    final limit = filter.limit.count;
+
+    // if (limit != null) {
+    //   result = result.take(limit);
+    // }
+
+    // return result.toList();
+
+    if (limit != null) {
+      return list.take(limit).toList();
+    }
+
+    return list;
   });
 });

@@ -73,9 +73,10 @@ class _TransactionListContainerScreenState
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
-        title: const Text('Finance Tracker'),
+        title: const Text('Transactions'),
         actions: [
           IconButton(
+            tooltip: 'Sync',
             onPressed: syncing ? null : syncData,
             icon: syncing
                 ? const SizedBox(
@@ -86,6 +87,7 @@ class _TransactionListContainerScreenState
                 : const Icon(Icons.sync),
           ),
           IconButton(
+            tooltip: 'Logout',
             onPressed: () async {
               await LogoutAppHelper.processLogout(ref);
               if (context.mounted) {
@@ -100,89 +102,285 @@ class _TransactionListContainerScreenState
           ),
         ],
       ),
-      body: const Column(
+      body: Column(
+        // children: [
+        //   SizedBox(height: 16),
+        //   Padding(
+        //     padding: const EdgeInsets.symmetric(horizontal: 16),
+        //     child: Row(
+        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //       children: [
+        //         Text(
+        //           'Recent Transactions',
+        //           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        //         ),
+        //         _LimitDropdown(), // FIXED: Added const anchor if applicable
+        //       ],
+        //     ),
+        //   ),
+        //   SizedBox(height: 8),
+        //   Padding(
+        //     padding: EdgeInsets.symmetric(horizontal: 12),
+        //     child: _TypeFilterChips(),
+        //   ),
+        //   SizedBox(height: 8),
+        //   Expanded(
+        //     child: TransactionListScreen(),
+        //   ),
+        // ],
+
         children: [
-          SizedBox(height: 16),
+          const SizedBox(
+            height: 12,
+          ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recent Transactions',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 12,
+            ),
+            child: Card(
+              elevation: 1,
+              shape:
+                  RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(
+                  16,
                 ),
-                _LimitDropdown(), // FIXED: Added const anchor if applicable
-              ],
+              ),
+              child: const Padding(
+                padding:
+                    const EdgeInsets.all(
+                  16,
+                ),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        // const Expanded(
+                        //   child: Text(
+                        //     'Recent Transactions',
+                        //     style: TextStyle(
+                        //       fontSize: 20,
+                        //       fontWeight:
+                        //           FontWeight.bold,
+                        //     ),
+                        //   ),
+                        // ),
+                        const Text(
+                          'Show',
+                        ),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        const _LimitDropdown(),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 16,
+                    ),
+                    const _TypeFilterChips(),
+                  ],
+                ),
+              ),
             ),
           ),
-          SizedBox(height: 8),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: _TypeFilterChips(),
+          const SizedBox(
+            height: 8,
           ),
-          SizedBox(height: 8),
-          Expanded(
-            child: TransactionListScreen(),
+          const Expanded(
+            child:
+                TransactionListScreen(),
           ),
-        ],
+        ],    
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'transactions_fab',
-        onPressed: () {
-          Navigator.push(
+      // floatingActionButton: FloatingActionButton(
+      //   heroTag: 'transactions_fab',
+      //   onPressed: () {
+      //     Navigator.push(
+      //       context,
+      //       MaterialPageRoute(builder: (_) => const AddTransactionScreen()),
+      //     );
+      //     ref.invalidate(
+      //       filteredTransactionsProvider,
+      //     );
+      //   },
+      //   child: const Icon(Icons.add),
+      // ),
+      floatingActionButton:
+          FloatingActionButton(
+
+        heroTag:
+            'transactions_fab',
+
+        child: const Icon(
+          Icons.add,
+        ),
+
+        onPressed: () async {
+
+          await Navigator.push(
+
             context,
-            MaterialPageRoute(builder: (_) => const AddTransactionScreen()),
+
+            MaterialPageRoute(
+
+              builder: (_) =>
+                  const AddTransactionScreen(),
+            ),
+          );
+
+          if (!mounted) {
+            return;
+          }
+
+          await ProviderRefreshHelper
+              .refreshTransactionData(
+            ref,
           );
         },
-        child: const Icon(Icons.add),
       ),
     );
   }
 }
 
 class _LimitDropdown extends ConsumerWidget {
-  const _LimitDropdown(); // FIXED: Added missing constructor
+
+  const _LimitDropdown({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final filter = ref.watch(transactionFilterProvider);
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
 
-    return DropdownButton<dynamic>( // FIXED: Changed explicit type to prevent filter mismatch
-      value: filter.limit,
-      underline: const SizedBox.shrink(),
-      isDense: true,
-      icon: const Icon(Icons.arrow_drop_down),
-      onChanged: (value) {
-        if (value == null) return;
-        ref.read(transactionFilterProvider.notifier).setLimit(value);
-      },
-      // FIXED: Fallback to dynamically match your model's implementation
-      items: (filter.limit.runtimeType.toString().contains('Enum') || true) 
-          ? [
-              DropdownMenuItem(value: filter.limit, child: Text(filter.limit.toString().split('.').last)),
-            ]
-          : [], 
+    final filter =
+        ref.watch(
+      transactionFilterProvider,
+    );
+
+    return DropdownButtonHideUnderline(
+
+      child: DropdownButton<TransactionLimit>(
+
+        value: filter.limit,
+
+        isDense: true,
+
+        borderRadius:
+            BorderRadius.circular(
+          12,
+        ),
+
+        icon: const Icon(
+          Icons.expand_more,
+        ),
+
+        onChanged: (value) {
+
+          if (value == null) {
+            return;
+          }
+
+          ref
+              .read(
+                transactionFilterProvider.notifier,
+              )
+              .setLimit(
+                value,
+              );
+        },
+
+        items: TransactionLimit.values
+
+            .map(
+
+              (limit) => DropdownMenuItem(
+
+                value: limit,
+
+                child: Text(
+                  limit.label,
+                ),
+              ),
+            )
+
+            .toList(),
+      ),
     );
   }
 }
 
 class _TypeFilterChips extends ConsumerWidget {
-  const _TypeFilterChips();
+
+  const _TypeFilterChips({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final filter = ref.watch(transactionFilterProvider);
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
 
-    // FIXED: Handled list parsing context for filter type iterations safely
-    return Row(
-      children: [
-        ChoiceChip(
-          label: Text(filter.type.toString().split('.').last),
-          selected: true,
-          onSelected: (_) {},
-        ),
-      ],
+    final filter =
+        ref.watch(
+      transactionFilterProvider,
+    );
+
+    return SingleChildScrollView(
+
+      scrollDirection:
+          Axis.horizontal,
+
+      child: Row(
+
+        children:
+
+            TransactionTypeFilter.values
+
+                .map(
+
+                  (type) => Padding(
+
+                    padding:
+                        const EdgeInsets.only(
+                      right: 8,
+                    ),
+
+                    child: ChoiceChip(
+
+                      label:
+                          Text(
+                        type.label,
+                      ),
+
+                      selected:
+                          filter.type ==
+                          type,
+
+                      showCheckmark:
+                          false,
+
+                      onSelected: (_) {
+
+                        ref
+                            .read(
+                              transactionFilterProvider.notifier,
+                            )
+                            .setType(
+                              type,
+                            );
+                      },
+                    ),
+                  ),
+                )
+
+                .toList(),
+      ),
     );
   }
 }

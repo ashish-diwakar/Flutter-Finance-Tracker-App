@@ -370,12 +370,32 @@ class _ManageCategoriesScreenState
                             return 'Category name is required';
                           }
 
-                          if (value
-                                  .trim()
-                                  .length <
+                          final trimmedName =
+                              value.trim();
+
+                          if (trimmedName.length <
                               2) {
 
                             return 'Minimum 2 characters required';
+                          }
+
+                          final normalizedName =
+                              trimmedName.toLowerCase();
+
+                          final isDuplicate = categories.any(
+                            (existing) {
+                              return existing.uuid !=
+                                      category?.uuid &&
+                                  existing.type == type &&
+                                  existing.name
+                                          .trim()
+                                          .toLowerCase() ==
+                                      normalizedName;
+                            },
+                          );
+
+                          if (isDuplicate) {
+                            return 'Category name already exists for this type';
                           }
 
                           return null;
@@ -386,6 +406,8 @@ class _ManageCategoriesScreenState
 
                           labelText:
                               'Category Name',
+
+                          errorMaxLines: 2,
 
                           border:
                               OutlineInputBorder(),

@@ -78,6 +78,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
       selectedDate =
           transaction.transactionDate;
+      
+      loadSelectedValues();
     }
   }
 
@@ -87,6 +89,56 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     notesController.dispose();
     super.dispose();
   }
+
+  Future<void> loadSelectedValues()
+    async {
+
+      final transaction =
+          widget.transaction;
+
+      if (transaction == null) {
+        return;
+      }
+
+      final categories =
+          await ref.read(
+        categoriesProvider(
+          transaction.type,
+        ).future,
+      );
+
+      final accounts =
+          await ref.read(
+        accountsProvider.future,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+
+        selectedCategory =
+            categories.cast<CategoryModel?>().firstWhere(
+
+          (c) =>
+              c?.uuid ==
+              transaction.categoryId,
+
+          orElse: () => null,
+        );
+
+        selectedAccount =
+            accounts.cast<AccountModel?>().firstWhere(
+
+          (a) =>
+              a?.uuid ==
+              transaction.accountId,
+
+          orElse: () => null,
+        );
+      });
+    }
 
   void showMessage(String message) {
     if (!mounted) {
@@ -116,9 +168,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Add Transaction',
-        ),
+        title: Text(
+          widget.transaction == null
+              ? 'Add Transaction'
+              : 'Edit Transaction',
+          ),
       ),
       body: SafeArea(
         child: Padding(
@@ -477,16 +531,24 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
                               final amount = (parsedAmount * 100).toInt();
 
-                              final transaction = TransactionModel()
-                                ..uuid = widget.transaction?.uuid ?? const Uuid().v4()
+                              final transaction =
+                                  widget.transaction ??
+                                  TransactionModel()
+                                    ..uuid = const Uuid().v4();
+
+                              transaction
                                 ..amount = amount
                                 ..type = transactionType
                                 ..transactionDate = selectedDate
                                 ..categoryId = selectedCategory!.uuid
                                 ..accountId = selectedAccount!.uuid
                                 ..notes = notesController.text.trim()
-                                ..isSynced = false
-                                ..updatedAt = DateTime.now().toUtc();
+                                ..updatedAt = DateTime.now().toUtc()
+                                ..isSynced = false;
+
+                              LoggerService.info(
+                                'IsarId=${transaction.id}, UUID=${transaction.uuid}',
+                              );
 
                               if (widget.transaction == null) {
 
@@ -537,6 +599,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                                 );
                               }
                             } catch (e) {
+                              LoggerService.exception(
+                                'Error saving transaction',
+                                e,
+                                StackTrace.current,
+                              );
                               showMessage(
                                 'Unable to save transaction. Please try again.',
                               );

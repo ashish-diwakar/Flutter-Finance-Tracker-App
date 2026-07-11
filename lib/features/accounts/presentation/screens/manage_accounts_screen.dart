@@ -63,6 +63,8 @@ class _ManageAccountsScreenState
       text: account?.name ?? '',
     );
 
+    final formKey = GlobalKey<FormState>();
+
     String type =
         account?.type ?? 'bank';
 
@@ -95,26 +97,63 @@ class _ManageAccountsScreenState
                     : 'Edit Account',
               ),
 
-              content: Column(
-                mainAxisSize:
-                    MainAxisSize.min,
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize:
+                      MainAxisSize.min,
 
-                children: [
+                  children: [
 
-                  TextField(
-                    controller:
-                        nameController,
+                    TextFormField(
+                      controller:
+                          nameController,
 
-                    decoration:
-                        const InputDecoration(
-                      labelText:
-                          'Account Name',
+                      decoration:
+                          const InputDecoration(
+                        labelText:
+                            'Account Name',
+                        errorMaxLines: 2,
+                      ),
+
+                      validator: (value) {
+                        if (value == null ||
+                            value.trim().isEmpty) {
+                          return 'Account name is required';
+                        }
+
+                        final trimmedName =
+                            value.trim();
+                        if (trimmedName.length <
+                            2) {
+                          return 'Minimum 2 characters required';
+                        }
+
+                        final normalizedName =
+                            trimmedName.toLowerCase();
+
+                        final isDuplicate =
+                            accounts.any((existing) {
+                          return existing.uuid !=
+                                  account?.uuid &&
+                              existing.type == type &&
+                              existing.name
+                                      .trim()
+                                      .toLowerCase() ==
+                                  normalizedName;
+                        });
+
+                        if (isDuplicate) {
+                          return 'Account name already exists\nfor this type';
+                        }
+
+                        return null;
+                      },
                     ),
-                  ),
 
-                  const SizedBox(
-                    height: 16,
-                  ),
+                    const SizedBox(
+                      height: 16,
+                    ),
 
                   DropdownButton<String>(
 
@@ -157,6 +196,7 @@ class _ManageAccountsScreenState
                   ),
                 ],
               ),
+            ),
 
               actions: [
 
@@ -176,10 +216,8 @@ class _ManageAccountsScreenState
 
                   onPressed: () async {
 
-                    if (nameController
-                        .text
-                        .trim()
-                        .isEmpty) {
+                    if (!formKey.currentState!
+                        .validate()) {
                       return;
                     }
 

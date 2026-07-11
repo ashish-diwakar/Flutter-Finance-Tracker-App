@@ -75,8 +75,7 @@ class AccountRepository {
 
   Future<void> deleteAccount(
     AccountModel account,
-  )
-  async {
+  ) async {
 
     if (account.isDefault) {
 
@@ -85,14 +84,15 @@ class AccountRepository {
       );
     }
 
-    account.isDeleted = true;
-
-    account.isSynced = false;
-
-    account.updatedAt =
-        DateTime.now().toUtc();
-
     await isar.writeTxn(() async {
+      if (!account.isSynced) {
+        await isar.accountModels.delete(account.id);
+        return;
+      }
+
+      account.isDeleted = true;
+      account.isSynced = false;
+      account.updatedAt = DateTime.now().toUtc();
 
       await isar.accountModels.put(
         account,

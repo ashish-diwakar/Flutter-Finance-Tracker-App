@@ -1,14 +1,12 @@
+import 'package:finance_tracker/features/accounts/presentation/providers/accounts_provider.dart';
+import 'package:finance_tracker/features/categories/presentation/providers/categories_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart' show ProviderRefreshHelper;
-import '../../../dashboard/presentation/providers/balance_provider.dart';
-import '../../../dashboard/presentation/providers/expense_provider.dart';
-import '../../../dashboard/presentation/providers/income_provider.dart';
 import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
-import '../../../dashboard/presentation/providers/transactions_provider.dart';
 import '../providers/transaction_repository_provider.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import 'add_transaction_screen.dart';
@@ -141,9 +139,7 @@ class TransactionListScreen
     WidgetRef ref,
   ) {
 
-    final limit = (defaultLimit != null)
-        ? defaultLimit
-        : 5;
+    final int? limit = defaultLimit;
 
     final transactionsAsync =
         ref.watch(
@@ -155,237 +151,299 @@ class TransactionListScreen
       currencyProvider,
     );
 
+    final accountsAsync = ref.watch(
+      accountsProvider,
+    );
+    final categoriesAsync = ref.watch(
+      allCategoriesProvider,
+    );
+
     return transactionsAsync.when(
 
       data: (transactions) {
 
-        if (transactions.isEmpty) {
+        return accountsAsync.when(
 
-          return const Center(
+          data: (accounts) {
 
-            child: Column(
+            return categoriesAsync.when(
 
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
+              data: (categories) {
 
-              children: [
+                if (transactions.isEmpty) {
 
-                Icon(
-                  Icons.receipt_long,
-                  size: 64,
-                  color: Colors.grey,
-                ),
+                  return const Center(
 
-                SizedBox(height: 12),
+                    child: Column(
 
-                Text(
-                  'No Transactions',
-                  style: TextStyle(
-                    fontSize: 18,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
 
-        return ListView.builder(
-          
-          shrinkWrap: true,
+                      children: [
 
-          physics:
-              const NeverScrollableScrollPhysics(),
-              
-          itemCount:
-              (limit != null && limit < transactions.length)
-                  ? limit
-                  : transactions.length,
+                        Icon(
+                          Icons.receipt_long,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
 
-          itemBuilder:
-              (context, index) {
+                        SizedBox(height: 12),
 
-            final transaction =
-                transactions[index];
-
-            final isIncome =
-                transaction.type ==
-                    'income';
-
-            return Card(
-
-              margin:
-                  const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 4,
-              ),
-
-              child: ListTile(
-
-                onTap: () {
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          TransactionDetailsScreen(
-                        transaction:
-                            transaction,
-                      ),
+                        Text(
+                          'No Transactions',
+                          style: TextStyle(
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
                     ),
                   );
-                },
+                }
 
-                leading: CircleAvatar(
+                final accountMap = {
 
-                  child: isIncome
-                    ? const Icon(
-                        Icons.attach_money,
-                        color: Colors.green,
-                      )
-                    : const Icon(
-                        Icons.money_off,
-                        color: Colors.red,
+                  for (final account in accounts)
+
+                    account.uuid: account.name,
+                };
+
+                final categoryMap = {
+                  for (final category in categories)
+                    category.uuid: category.name,
+                };
+
+                return ListView.builder(
+
+                  itemCount:
+                      (limit != null &&
+                              limit < transactions.length)
+                          ? limit
+                          : transactions.length,
+
+                  itemBuilder: (context, index) {
+
+                    final transaction =
+                        transactions[index];
+
+                    final isIncome =
+                        transaction.type ==
+                            'income';
+
+                    final accountName =
+                        accountMap[transaction.accountId] ??
+                            'Unknown Account';
+
+                    final categoryName =
+                          categoryMap[transaction.categoryId] ??
+                          'Unknown Category';
+
+                    return Card(
+
+                      margin:
+                          const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
                       ),
 
-                  // child: Icon(
-                  //   isIncome
-                  //       ? Icons.money
-                  //       : Icons.money_off,
-                  // ),
-                ),
+                      child: ListTile(
 
-                title: Text(
-                  CurrencyFormatter.format(
-                    amount: transaction.amount,
-                    currency: currency,
-                  ),
-                ),
-
-                subtitle: Column(
-
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-
-                  children: [
-
-                    if ((transaction.notes ??
-                            '')
-                        .trim()
-                        .isNotEmpty)
-
-                      Text(
-                        transaction.notes!,
-                      ),
-
-                    const SizedBox(
-                      height: 4,
-                    ),
-
-                    Text(
-                      DateFormat(
-                        'dd MMM yyyy',
-                      ).format(
-                        transaction.transactionDate,
-                      ),
-
-                      style: const TextStyle(
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-
-                trailing: Row(
-
-                  mainAxisSize:
-                      MainAxisSize.min,
-
-                  children: [
-
-                    Icon(
-                      transaction.isSynced
-                          ? Icons.cloud_done
-                          : Icons.cloud_off,
-
-                      size: 18,
-                    ),
-
-
-                    PopupMenuButton<String>(
-
-                      padding: EdgeInsets.zero,
-
-                      constraints:
-                          const BoxConstraints(),
-
-                      onSelected:
-                          (value) async {
-
-                        if (value == 'edit') {
+                        onTap: () {
 
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) =>
-                                  AddTransactionScreen(
+                                  TransactionDetailsScreen(
                                 transaction:
                                     transaction,
                               ),
                             ),
                           );
-                        }
+                        },
 
-                        if (value == 'delete') {
+                        leading: CircleAvatar(
 
-                          await deleteTransaction(
-                            context: context,
-                            ref: ref,
-                            transaction: transaction,
-                          );
-                        }
-                      },
+                          child: isIncome
 
-                      itemBuilder: (_) => [
+                              ? const Icon(
+                                  Icons.attach_money,
+                                  color: Colors.green,
+                                )
 
-                        const PopupMenuItem(
+                              : const Icon(
+                                  Icons.money_off,
+                                  color: Colors.red,
+                                ),
+                        ),
 
-                          value: 'edit',
-
-                          child: Text(
-                            'Edit',
+                        title: Text(
+                          CurrencyFormatter.format(
+                            amount: transaction.amount,
+                            currency: currency,
                           ),
                         ),
 
-                        const PopupMenuItem(
+                        subtitle: Column(
 
-                          value: 'delete',
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
 
-                          child: Text(
-                            'Delete',
-                          ),
+                          children: [
+
+                            Text(
+                              '$accountName • $categoryName',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: categoryName == 'Loan'? Colors.purple : (isIncome ? Colors.green : Colors.red),
+                              ),
+                            ),
+
+                            if ((transaction.notes ?? '').trim().isNotEmpty)
+                              Text(transaction.notes!),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              DateFormat('dd MMM yyyy')
+                                  .format(transaction.transactionDate),
+                              style: const TextStyle(
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+
+                        trailing: Row(
+
+                          mainAxisSize:
+                              MainAxisSize.min,
+
+                          children: [
+
+                            Icon(
+
+                              transaction.isSynced
+
+                                  ? Icons.cloud_done
+
+                                  : Icons.cloud_off,
+
+                              size: 18,
+                            ),
+
+                            PopupMenuButton<String>(
+
+                              padding:
+                                  EdgeInsets.zero,
+
+                              constraints:
+                                  const BoxConstraints(),
+
+                              onSelected:
+                                  (value) async {
+
+                                if (value ==
+                                    'edit') {
+
+                                  Navigator.push(
+
+                                    context,
+
+                                    MaterialPageRoute(
+
+                                      builder: (_) =>
+                                          AddTransactionScreen(
+                                        transaction:
+                                            transaction,
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                if (value ==
+                                    'delete') {
+
+                                  await deleteTransaction(
+
+                                    context:
+                                        context,
+
+                                    ref: ref,
+
+                                    transaction:
+                                        transaction,
+                                  );
+                                }
+                              },
+
+                              itemBuilder: (_) => [
+
+                                const PopupMenuItem(
+
+                                  value: 'edit',
+
+                                  child: Text(
+                                    'Edit',
+                                  ),
+                                ),
+
+                                const PopupMenuItem(
+
+                                  value: 'delete',
+
+                                  child: Text(
+                                    'Delete',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            loading: () =>
+
+                const Center(
+                  child:
+                      CircularProgressIndicator(),
+                ),
+
+                error: (_, __) =>
+
+                    const Center(
+                      child: Text(
+                        'Unable to load categories',
+                      ),
                     ),
+              );
+            },
 
-                    // const SizedBox(
-                    //   height: 2,
-                    // ),
+          loading: () =>
 
-                    // Icon(
+              const Center(
+                child:
+                    CircularProgressIndicator(),
+              ),
 
-                    //   transaction.isSynced
-                    //       ? Icons.cloud_done
-                    //       : Icons.cloud_off,
+          error: (_, __) =>
 
-                    //   size: 14,
-                    // ),
-                  ],
+              const Center(
+                child: Text(
+                  'Unable to load accounts',
                 ),
               ),
-            );
-          },
         );
       },
+
+      loading: () =>
+
+          const Center(
+            child:
+                CircularProgressIndicator(),
+          ),
 
       error: (_, __) =>
 
@@ -393,13 +451,6 @@ class TransactionListScreen
             child: Text(
               'Unable to load transactions',
             ),
-          ),
-
-      loading: () =>
-
-          const Center(
-            child:
-                CircularProgressIndicator(),
           ),
     );
   }

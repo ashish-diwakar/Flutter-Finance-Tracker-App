@@ -23,9 +23,11 @@ class CategoryRepository {
       getAllCategories() async {
 
     return await isar.categoryModels
-        .where()
+        .filter()
+        .isDeletedEqualTo(false)
         .findAll();
   }
+
 
   Future<void> addCategory(
     CategoryModel category,
@@ -67,24 +69,17 @@ class CategoryRepository {
       );
     }
 
-    category.isDeleted = true;
-
-    category.isSynced = false;
-
-    category.updatedAt =
-        DateTime.now().toUtc();
-
     await isar.writeTxn(() async {
+      if (!category.isSynced) {
+        await isar.categoryModels.delete(category.id);
+        return;
+      }
 
-      await isar.categoryModels.put(
-        category,
-      );
+      category.isDeleted = true;
+      category.isSynced = false;
+      category.updatedAt = DateTime.now().toUtc();
+
+      await isar.categoryModels.put(category);
     });
-    // await isar.writeTxn(() async {
-
-    //   await isar.categoryModels.delete(
-    //     category.id,
-    //   );
-    // });
   }
 }
