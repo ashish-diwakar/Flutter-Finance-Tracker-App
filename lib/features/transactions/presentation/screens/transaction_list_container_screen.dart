@@ -186,10 +186,6 @@ class _TransactionListContainerScreenState
                     const SizedBox(
                       height: 16,
                     ),
-                    const TransactionSearchBar(),
-                    const SizedBox(
-                      height: 16,
-                    ),
                     const TransactionFilterButton(),
                   ],
                 ),
