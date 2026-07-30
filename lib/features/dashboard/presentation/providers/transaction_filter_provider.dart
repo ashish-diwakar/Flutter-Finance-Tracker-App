@@ -156,6 +156,9 @@ class TransactionFilterNotifier
   void setToDate(DateTime? toDate) {
     state = state.copyWith(toDate: toDate);
   }
+  void clearFilters() {
+    state = const TransactionFilter();
+  }
 }
 
 final transactionFilterProvider = StateNotifierProvider<
@@ -185,17 +188,42 @@ final filteredTransactionsProvider =
       );
     }
 
-    if (filter.searchText.isNotEmpty) {
-      result = result.where(
-        (t) =>
-          t.notes
-              ?.toLowerCase()
-              .contains(
-                filter.searchText
-                    .toLowerCase(),
-              ) ??
-          false,
-      );
+    if (filter.searchText.trim().isNotEmpty) {
+      // result = result.where(
+      //   (t) =>
+      //     t.notes
+      //         ?.toLowerCase()
+      //         .contains(
+      //           filter.searchText
+      //               .toLowerCase(),
+      //         ) ??
+      //     false,
+      // );      
+      final search =
+          filter.searchText
+              .toLowerCase()
+              .trim();
+
+      result = result.where((t) {
+
+        return
+
+            (t.notes ?? '')
+                .toLowerCase()
+                .contains(search)
+
+            ||
+
+            t.type
+                .toLowerCase()
+                .contains(search)
+
+            ||
+
+            (t.amount / 100)
+                .toString()
+                .contains(search);
+      });
     }
 
     if (filter.categoryId != null) {
@@ -224,18 +252,27 @@ final filteredTransactionsProvider =
 
     if (filter.toDate != null) {
 
+      // final endOfDay = DateTime(
+      //   filter.toDate!.year,
+      //   filter.toDate!.month,
+      //   filter.toDate!.day,
+      //   23,
+      //   59,
+      //   59,
+      //   999,
+      // );
+      // result = result.where(
+      //   (t) => !t.transactionDate.isAfter(endOfDay),
+      // );
+      
       final endOfDay = DateTime(
         filter.toDate!.year,
         filter.toDate!.month,
-        filter.toDate!.day,
-        23,
-        59,
-        59,
-        999,
+        filter.toDate!.day + 1,
       );
 
       result = result.where(
-        (t) => !t.transactionDate.isAfter(endOfDay),
+        (t) => t.transactionDate.isBefore(endOfDay),
       );
     }
 

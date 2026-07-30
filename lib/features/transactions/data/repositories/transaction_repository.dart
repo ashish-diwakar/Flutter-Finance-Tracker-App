@@ -54,12 +54,10 @@ class TransactionRepository {
     TransactionModel transaction,
   ) async {
 
-    transaction.isDeleted = true;
-
-    transaction.isSynced = false;
-
-    transaction.updatedAt =
-        DateTime.now().toUtc();
+    transaction
+      ..isDeleted = true
+      ..isSynced = false
+      ..updatedAt = DateTime.now().toUtc();
 
     await isar.writeTxn(() async {
       await isar.transactionModels

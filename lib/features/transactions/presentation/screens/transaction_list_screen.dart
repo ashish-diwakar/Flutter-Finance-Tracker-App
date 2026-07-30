@@ -5,11 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../../shared/utils/provider_refresh_helper.dart' show ProviderRefreshHelper;
+import '../../../../shared/models/transaction_model.dart';
+import '../../../../shared/utils/transaction_date_helper.dart';
 import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
-import '../providers/transaction_repository_provider.dart';
 import '../../../../shared/providers/currency_provider.dart';
-import 'add_transaction_screen.dart';
+import '../widgets/transaction_popup_menu.dart';
+import '../widgets/transaction_section_header.dart';
+import '../widgets/transaction_sync_icon.dart';
+import '../widgets/transaction_tile.dart';
 import 'transaction_details_screen.dart';
 
 class TransactionListScreen
@@ -21,117 +24,6 @@ class TransactionListScreen
     this.defaultLimit,
   });
 
-  Future<void> deleteTransaction({
-    required BuildContext context,
-    required WidgetRef ref,
-    required dynamic transaction,
-  }) async {
-
-    final confirm =
-        await showDialog<bool>(
-      context: context,
-
-      builder: (_) {
-
-        return AlertDialog(
-
-          title: const Text(
-            'Delete Transaction',
-          ),
-
-          content: const Text(
-            'Are you sure you want to delete this transaction?',
-          ),
-
-          actions: [
-
-            TextButton(
-
-              onPressed: () {
-
-                Navigator.pop(
-                  context,
-                  false,
-                );
-              },
-
-              child: const Text(
-                'Cancel',
-              ),
-            ),
-
-            ElevatedButton(
-
-              onPressed: () {
-
-                Navigator.pop(
-                  context,
-                  true,
-                );
-              },
-
-              child: const Text(
-                'Delete',
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirm != true) {
-      return;
-    }
-
-    try {
-
-      final repository =
-          await ref.read(
-        transactionRepositoryProvider
-            .future,
-      );
-
-      await repository
-          .deleteTransaction(
-        transaction,
-      );
-
-      await ProviderRefreshHelper
-          .refreshAllFinancialData(
-        ref,
-      );
-
-      if (context.mounted) {
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
-
-          const SnackBar(
-            content: Text(
-              'Transaction deleted',
-            ),
-          ),
-        );
-      }
-
-    } catch (_) {
-
-      if (context.mounted) {
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
-
-          const SnackBar(
-            content: Text(
-              'Unable to delete transaction',
-            ),
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(
@@ -212,194 +104,101 @@ class TransactionListScreen
                     category.uuid: category.name,
                 };
 
+                // =====================================================
+                // GROUP TRANSACTIONS
+                // =====================================================
+
+                final visibleTransactions =
+                    (limit != null && limit < transactions.length)
+                        ? transactions.take(limit).toList()
+                        : transactions;
+
+                final groupedTransactions =
+                    <String, List<TransactionModel>>{};
+
+                for (final transaction in visibleTransactions) {
+
+                  final group = TransactionDateHelper.getGroupTitle(
+                    transaction.transactionDate,
+                  );
+
+                  groupedTransactions.putIfAbsent(
+                    group,
+                    () => [],
+                  );
+
+                  groupedTransactions[group]!.add(
+                    transaction,
+                  );
+                }
+
+                final sectionTitles =
+                    groupedTransactions.keys.toList();
+
                 return ListView.builder(
 
-                  itemCount:
-                      (limit != null &&
-                              limit < transactions.length)
-                          ? limit
-                          : transactions.length,
+                  padding: const EdgeInsets.only(
+                    bottom: 74,
+                  ),
 
-                  itemBuilder: (context, index) {
+                  itemCount: sectionTitles.length,
 
-                    final transaction =
-                        transactions[index];
+                  itemBuilder: (context, sectionIndex) {
 
-                    final isIncome =
-                        transaction.type ==
-                            'income';
+                    final sectionTitle =
+                        sectionTitles[sectionIndex];
 
-                    final accountName =
-                        accountMap[transaction.accountId] ??
-                            'Unknown Account';
+                    final sectionTransactions =
+                        groupedTransactions[sectionTitle]!;
 
-                    final categoryName =
-                          categoryMap[transaction.categoryId] ??
-                          'Unknown Category';
+                    return Column(
 
-                    return Card(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
 
-                      margin:
-                          const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
+                      children: [
 
-                      child: ListTile(
+                        // ======================================
+                        // SECTION HEADER
+                        // ======================================
 
-                        onTap: () {
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  TransactionDetailsScreen(
-                                transaction:
-                                    transaction,
-                              ),
-                            ),
-                          );
-                        },
-
-                        leading: CircleAvatar(
-
-                          child: isIncome
-
-                              ? const Icon(
-                                  Icons.attach_money,
-                                  color: Colors.green,
-                                )
-
-                              : const Icon(
-                                  Icons.money_off,
-                                  color: Colors.red,
-                                ),
+                        TransactionSectionHeader(
+                          title: sectionTitle,
                         ),
 
-                        title: Text(
-                          CurrencyFormatter.format(
-                            amount: transaction.amount,
-                            currency: currency,
-                          ),
+                        // ======================================
+                        // TRANSACTIONS
+                        // ======================================
+
+                        ...sectionTransactions.map(
+
+                          (transaction) {
+
+                            // final isIncome =
+                            //     transaction.type ==
+                            //         'income';
+
+                            final accountName =
+                                accountMap[
+                                        transaction.accountId] ??
+                                    'Unknown Account';
+
+                            final categoryName =
+                                categoryMap[
+                                        transaction.categoryId] ??
+                                    'Unknown Category';
+
+                            return TransactionTile(
+
+                              transaction: transaction,
+
+                              accountName: accountName,
+
+                              categoryName: categoryName,
+                            );
+                          },
                         ),
-
-                        subtitle: Column(
-
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-
-                          children: [
-
-                            Text(
-                              '$accountName • $categoryName',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: categoryName == 'Loan'? Colors.purple : (isIncome ? Colors.green : Colors.red),
-                              ),
-                            ),
-
-                            if ((transaction.notes ?? '').trim().isNotEmpty)
-                              Text(transaction.notes!),
-
-                            const SizedBox(height: 4),
-
-                            Text(
-                              DateFormat('dd MMM yyyy')
-                                  .format(transaction.transactionDate),
-                              style: const TextStyle(
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        trailing: Row(
-
-                          mainAxisSize:
-                              MainAxisSize.min,
-
-                          children: [
-
-                            Icon(
-
-                              transaction.isSynced
-
-                                  ? Icons.cloud_done
-
-                                  : Icons.cloud_off,
-
-                              size: 18,
-                            ),
-
-                            PopupMenuButton<String>(
-
-                              padding:
-                                  EdgeInsets.zero,
-
-                              constraints:
-                                  const BoxConstraints(),
-
-                              onSelected:
-                                  (value) async {
-
-                                if (value ==
-                                    'edit') {
-
-                                  Navigator.push(
-
-                                    context,
-
-                                    MaterialPageRoute(
-
-                                      builder: (_) =>
-                                          AddTransactionScreen(
-                                        transaction:
-                                            transaction,
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                if (value ==
-                                    'delete') {
-
-                                  await deleteTransaction(
-
-                                    context:
-                                        context,
-
-                                    ref: ref,
-
-                                    transaction:
-                                        transaction,
-                                  );
-                                }
-                              },
-
-                              itemBuilder: (_) => [
-
-                                const PopupMenuItem(
-
-                                  value: 'edit',
-
-                                  child: Text(
-                                    'Edit',
-                                  ),
-                                ),
-
-                                const PopupMenuItem(
-
-                                  value: 'delete',
-
-                                  child: Text(
-                                    'Delete',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      ],
                     );
                   },
                 );

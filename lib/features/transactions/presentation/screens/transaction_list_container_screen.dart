@@ -9,6 +9,8 @@ import '../../../transactions/presentation/screens/transaction_list_screen.dart'
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../sync/presentation/providers/sync_provider.dart';
 import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
+import '../widgets/transaction_filter_button.dart';
+import '../widgets/transaction_search_bar.dart';
 
 class TransactionListContainerScreen extends ConsumerStatefulWidget {
   const TransactionListContainerScreen({super.key});
@@ -181,6 +183,14 @@ class _TransactionListContainerScreenState
                       height: 16,
                     ),
                     const _TypeFilterChips(),
+                    const SizedBox(
+                      height: 16,
+                    ),
+                    const TransactionSearchBar(),
+                    const SizedBox(
+                      height: 16,
+                    ),
+                    const TransactionFilterButton(),
                   ],
                 ),
               ),
@@ -381,6 +391,44 @@ class _TypeFilterChips extends ConsumerWidget {
 
                 .toList(),
       ),
+    );
+  }
+}
+
+class TransactionFilter {
+
+  const TransactionFilter({
+
+    this.limit = TransactionLimit.last10,
+
+    this.type = TransactionTypeFilter.all,
+
+    this.searchText = '',
+  });
+
+  final TransactionLimit limit;
+
+  final TransactionTypeFilter type;
+
+  final String searchText;
+
+  TransactionFilter copyWith({
+
+    TransactionLimit? limit,
+
+    TransactionTypeFilter? type,
+
+    String? searchText,
+  }) {
+
+    return TransactionFilter(
+
+      limit: limit ?? this.limit,
+
+      type: type ?? this.type,
+
+      searchText:
+          searchText ?? this.searchText,
     );
   }
 }

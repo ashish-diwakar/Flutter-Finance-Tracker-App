@@ -22,6 +22,8 @@ class CurrencyFormatter {
 
     required CurrencyConfig
         currency,
+
+    int decimalDigits = 2,
   }) {
 
     final value = amount / 100;
@@ -33,6 +35,8 @@ class CurrencyFormatter {
 
       symbol:
           currency.symbol,
+      decimalDigits:
+          decimalDigits,
     );
 
     return formatter.format(
