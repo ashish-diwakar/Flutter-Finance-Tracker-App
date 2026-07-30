@@ -2,18 +2,13 @@ import 'package:finance_tracker/features/accounts/presentation/providers/account
 import 'package:finance_tracker/features/categories/presentation/providers/categories_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
-import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../../shared/utils/transaction_date_helper.dart';
 import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
 import '../../../../shared/providers/currency_provider.dart';
-import '../widgets/transaction_popup_menu.dart';
 import '../widgets/transaction_section_header.dart';
-import '../widgets/transaction_sync_icon.dart';
 import '../widgets/transaction_tile.dart';
-import 'transaction_details_screen.dart';
 
 class TransactionListScreen
     extends ConsumerWidget {

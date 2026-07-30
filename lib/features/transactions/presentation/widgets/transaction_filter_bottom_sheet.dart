@@ -4,6 +4,7 @@ import '../../../dashboard/presentation/providers/transaction_filter_provider.da
 import 'account_filter_dropdown.dart';
 import 'category_filter_dropdown.dart';
 import 'date_range_filter.dart';
+import 'transaction_search_bar.dart';
 
 class TransactionFilterBottomSheet
     extends ConsumerWidget {
@@ -81,6 +82,28 @@ class TransactionFilterBottomSheet
               // const SizedBox(
               //   height: 24,
               // ),
+              
+              // ==========================================================
+              // Search Bar
+              // ==========================================================
+
+              const Card(
+
+                elevation: 0,
+
+                child: Padding(
+
+                  padding: EdgeInsets.all(16),
+
+                  child: Column(
+
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+
+                    children: const [TransactionSearchBar()],
+                  ),
+                ),
+              ),
 
               // ==========================================================
               // ACCOUNT
