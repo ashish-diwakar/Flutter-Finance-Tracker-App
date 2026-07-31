@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../providers/backup_repository_provider.dart';
 
 class BackupScreen
@@ -75,28 +76,59 @@ class BackupScreen
 
               child: ElevatedButton(
 
+                // onPressed: () async {
+
+                //   final repository =
+                //       await ref.read(
+                //     backupRepositoryProvider
+                //         .future,
+                //   );
+
+                //   await repository
+                //       .importBackup();
+
+                //   if (context.mounted) {
+
+                //     ScaffoldMessenger.of(
+                //       context,
+                //     ).showSnackBar(
+                //       const SnackBar(
+                //         content: Text(
+                //           'Backup restored',
+                //         ),
+                //       ),
+                //     );
+                //   }
+                // },
                 onPressed: () async {
-
-                  final repository =
-                      await ref.read(
-                    backupRepositoryProvider
-                        .future,
-                  );
-
-                  await repository
-                      .importBackup();
-
-                  if (context.mounted) {
-
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Backup restored',
-                        ),
-                      ),
+                  try {
+                    final repository =
+                        await ref.read(
+                      backupRepositoryProvider.future,
                     );
+
+                    await repository.importBackup();
+
+                    await ProviderRefreshHelper.refreshAllFinancialData(ref);
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Backup restored successfully'),
+                        ),
+                      );
+                    }
+                  } catch (e, stack) {
+                    debugPrint(e.toString());
+                    debugPrint(stack.toString());
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Import failed: $e'),
+                        ),
+                      );
+                    }
                   }
                 },
 

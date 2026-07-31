@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
@@ -82,7 +83,9 @@ class BackupRepository {
     ]);
   }
 
-  Future<void> importBackup() async {
+Future<void> importBackup() async {
+
+  try {
 
     final result =
         await FilePicker.platform.pickFiles(
@@ -91,14 +94,20 @@ class BackupRepository {
     );
 
     if (result == null) {
+
+      print("User cancelled file picker");
+
       return;
     }
 
     final path =
         result.files.single.path;
 
+    print(path);
+
     if (path == null) {
-      return;
+
+      throw Exception("Selected file has no path.");
     }
 
     final file = File(path);
@@ -106,182 +115,311 @@ class BackupRepository {
     final content =
         await file.readAsString();
 
-    final json =
-        jsonDecode(content);
+    print(content);
 
-    final backup =
-        BackupDataModel.fromJson(
-      json,
-    );
+
+    final json = jsonDecode(content);
+
+    final backup = BackupDataModel.fromJson(json);
+
+    const uuid = Uuid();
 
     await isar.writeTxn(() async {
 
-      await isar.transactionModels
-          .clear();
+      await isar.transactionModels.clear();
+      await isar.categoryModels.clear();
+      await isar.accountModels.clear();
 
-      await isar.categoryModels
-          .clear();
+      // ======================================================
+      // CATEGORY ID -> UUID Mapping
+      // ======================================================
 
-      await isar.accountModels
-          .clear();
+      final Map<dynamic, String> categoryMap = {};
 
-      // ==========================
+      final categories = backup.categories.map((e) {
+
+        final category = CategoryModel()
+          ..uuid = uuid.v4()
+          ..name = e['name']
+          ..type = e['type']
+          ..isDefault = e['isDefault'] ?? false
+          ..monthlyBudget = e['monthlyBudget'] ?? 0
+          ..updatedAt = DateTime.now().toUtc()
+          ..isDeleted = false
+          ..isSynced = false;
+
+        categoryMap[e['id']] = category.uuid;
+
+        return category;
+
+      }).toList();
+
+      await isar.categoryModels.putAll(categories);
+
+      // ======================================================
+      // ACCOUNT ID -> UUID Mapping
+      // ======================================================
+
+      final Map<dynamic, String> accountMap = {};
+
+      final accounts = backup.accounts.map((e) {
+
+        final account = AccountModel()
+          ..uuid = uuid.v4()
+          ..name = e['name']
+          ..type = e['type']
+          ..currentBalance = e['currentBalance'] ?? 0
+          ..isDefault = e['isDefault'] ?? false
+          ..updatedAt = DateTime.now().toUtc()
+          ..isDeleted = false
+          ..isSynced = false;
+
+        accountMap[e['id']] = account.uuid;
+
+        return account;
+
+      }).toList();
+
+      await isar.accountModels.putAll(accounts);
+
+      // ======================================================
       // TRANSACTIONS
-      // ==========================
+      // ======================================================
 
-      final transactions =
-          backup.transactions
-              .map((e) {
-
-        if (e['id'] == null) {
-
-          throw Exception(
-            'Transaction UUID missing in backup.',
-          );
-        }
+      final transactions = backup.transactions.map((e) {
 
         return TransactionModel()
-
-          ..uuid =
-              e['id']
-
-          ..amount =
-              e['amount']
-
-          ..type =
-              e['type']
-
-          ..categoryId =
-              e['categoryId']
-
-          ..accountId =
-              e['accountId']
-
-          ..notes =
-              e['notes']
-
-          ..transactionDate =
-              DateTime.parse(
-                e['transactionDate'],
-              )
-
-          ..updatedAt =
-              e['updatedAt'] != null
-                  ? DateTime.parse(
-                      e['updatedAt'],
-                    )
-                  : DateTime.now().toUtc()
-
-          ..isDeleted =
-              e['isDeleted'] ?? false
-
+          ..uuid = uuid.v4()
+          ..amount = e['amount']
+          ..type = e['type']
+          ..categoryId = categoryMap[e['categoryId']] ?? ''
+          ..accountId = accountMap[e['accountId']] ?? ''
+          ..notes = e['notes']
+          ..transactionDate = DateTime.parse(e['transactionDate'])
+          ..updatedAt = e['updatedAt'] != null
+              ? DateTime.parse(e['updatedAt'])
+              : DateTime.now().toUtc()
+          ..isDeleted = e['isDeleted'] ?? false
           ..isSynced = false;
+
       }).toList();
 
-      // ==========================
-      // CATEGORIES
-      // ==========================
+      await isar.transactionModels.putAll(transactions);
 
-      final categories =
-          backup.categories
-              .map((e) {
-
-        if (e['id'] == null) {
-
-          throw Exception(
-            'Category UUID missing in backup.',
-          );
-        }
-
-        return CategoryModel()
-
-          ..uuid =
-              e['id']
-
-          ..name =
-              e['name']
-
-          ..type =
-              e['type']
-
-          ..isDefault =
-              e['isDefault'] ?? false
-
-          ..monthlyBudget =
-              e['monthlyBudget']
-
-          ..updatedAt =
-              e['updatedAt'] != null
-                  ? DateTime.parse(
-                      e['updatedAt'],
-                    )
-                  : DateTime.now().toUtc()
-
-          ..isDeleted =
-              e['isDeleted'] ?? false
-
-          ..isSynced = false;
-      }).toList();
-
-      // ==========================
-      // ACCOUNTS
-      // ==========================
-
-      final accounts =
-          backup.accounts
-              .map((e) {
-
-        if (e['id'] == null) {
-
-          throw Exception(
-            'Account UUID missing in backup.',
-          );
-        }
-
-        return AccountModel()
-
-          ..uuid =
-              e['id']
-
-          ..name =
-              e['name']
-
-          ..type =
-              e['type']
-
-          ..currentBalance =
-              e['currentBalance']
-
-          ..isDefault =
-              e['isDefault'] ?? false
-
-          ..updatedAt =
-              e['updatedAt'] != null
-                  ? DateTime.parse(
-                      e['updatedAt'],
-                    )
-                  : DateTime.now().toUtc()
-
-          ..isDeleted =
-              e['isDeleted'] ?? false
-
-          ..isSynced = false;
-      }).toList();
-
-      await isar.transactionModels
-          .putAll(
-        transactions,
-      );
-
-      await isar.categoryModels
-          .putAll(
-        categories,
-      );
-
-      await isar.accountModels
-          .putAll(
-        accounts,
-      );
-    });
+    });      
+    
   }
+  catch (e, stack) {
+
+    print(e);
+
+    print(stack);
+
+    rethrow;
+  }
+}
+  // Future<void> importBackup() async {
+
+  //   final result =
+  //       await FilePicker.platform.pickFiles(
+  //     type: FileType.custom,
+  //     allowedExtensions: ['json'],
+  //   );
+
+  //   if (result == null) {
+  //     return;
+  //   }
+
+  //   final path =
+  //       result.files.single.path;
+
+  //   if (path == null) {
+  //     return;
+  //   }
+
+  //   final file = File(path);
+
+  //   final content =
+  //       await file.readAsString();
+
+  //   final json =
+  //       jsonDecode(content);
+
+  //   final backup =
+  //       BackupDataModel.fromJson(
+  //     json,
+  //   );
+
+  //   await isar.writeTxn(() async {
+
+  //     await isar.transactionModels
+  //         .clear();
+
+  //     await isar.categoryModels
+  //         .clear();
+
+  //     await isar.accountModels
+  //         .clear();
+
+  //     // ==========================
+  //     // TRANSACTIONS
+  //     // ==========================
+
+  //     final transactions =
+  //         backup.transactions
+  //             .map((e) {
+
+  //       if (e['id'] == null) {
+
+  //         throw Exception(
+  //           'Transaction UUID missing in backup.',
+  //         );
+  //       }
+
+  //       return TransactionModel()
+
+  //         ..uuid =
+  //             e['id']
+
+  //         ..amount =
+  //             e['amount']
+
+  //         ..type =
+  //             e['type']
+
+  //         ..categoryId =
+  //             e['categoryId']
+
+  //         ..accountId =
+  //             e['accountId']
+
+  //         ..notes =
+  //             e['notes']
+
+  //         ..transactionDate =
+  //             DateTime.parse(
+  //               e['transactionDate'],
+  //             )
+
+  //         ..updatedAt =
+  //             e['updatedAt'] != null
+  //                 ? DateTime.parse(
+  //                     e['updatedAt'],
+  //                   )
+  //                 : DateTime.now().toUtc()
+
+  //         ..isDeleted =
+  //             e['isDeleted'] ?? false
+
+  //         ..isSynced = false;
+  //     }).toList();
+
+  //     // ==========================
+  //     // CATEGORIES
+  //     // ==========================
+
+  //     final categories =
+  //         backup.categories
+  //             .map((e) {
+
+  //       if (e['id'] == null) {
+
+  //         throw Exception(
+  //           'Category UUID missing in backup.',
+  //         );
+  //       }
+
+  //       return CategoryModel()
+
+  //         ..uuid =
+  //             e['id']
+
+  //         ..name =
+  //             e['name']
+
+  //         ..type =
+  //             e['type']
+
+  //         ..isDefault =
+  //             e['isDefault'] ?? false
+
+  //         ..monthlyBudget =
+  //             e['monthlyBudget']
+
+  //         ..updatedAt =
+  //             e['updatedAt'] != null
+  //                 ? DateTime.parse(
+  //                     e['updatedAt'],
+  //                   )
+  //                 : DateTime.now().toUtc()
+
+  //         ..isDeleted =
+  //             e['isDeleted'] ?? false
+
+  //         ..isSynced = false;
+  //     }).toList();
+
+  //     // ==========================
+  //     // ACCOUNTS
+  //     // ==========================
+
+  //     final accounts =
+  //         backup.accounts
+  //             .map((e) {
+
+  //       if (e['id'] == null) {
+
+  //         throw Exception(
+  //           'Account UUID missing in backup.',
+  //         );
+  //       }
+
+  //       return AccountModel()
+
+  //         ..uuid =
+  //             e['id']
+
+  //         ..name =
+  //             e['name']
+
+  //         ..type =
+  //             e['type']
+
+  //         ..currentBalance =
+  //             e['currentBalance']
+
+  //         ..isDefault =
+  //             e['isDefault'] ?? false
+
+  //         ..updatedAt =
+  //             e['updatedAt'] != null
+  //                 ? DateTime.parse(
+  //                     e['updatedAt'],
+  //                   )
+  //                 : DateTime.now().toUtc()
+
+  //         ..isDeleted =
+  //             e['isDeleted'] ?? false
+
+  //         ..isSynced = false;
+  //     }).toList();
+
+  //     await isar.transactionModels
+  //         .putAll(
+  //       transactions,
+  //     );
+
+  //     await isar.categoryModels
+  //         .putAll(
+  //       categories,
+  //     );
+
+  //     await isar.accountModels
+  //         .putAll(
+  //       accounts,
+  //     );
+
+      
+  //   });
+  // }
 }

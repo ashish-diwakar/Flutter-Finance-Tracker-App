@@ -1,10 +1,13 @@
 import 'package:finance_tracker/features/investments/presentation/providers/investments_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/accounts/presentation/providers/accounts_provider.dart';
+import '../../features/categories/presentation/providers/categories_provider.dart';
 import '../../features/dashboard/presentation/providers/balance_provider.dart';
 import '../../features/dashboard/presentation/providers/dashboard_insights_provider.dart';
 import '../../features/dashboard/presentation/providers/expense_provider.dart';
 import '../../features/dashboard/presentation/providers/income_provider.dart';
+import '../../features/dashboard/presentation/providers/transaction_filter_provider.dart';
 import '../../features/dashboard/presentation/providers/transactions_provider.dart';
 import '../../features/goals/presentation/providers/goal_analytics_provider.dart';
 import '../../features/recurring/presentation/providers/recurring_analytics_provider.dart';
@@ -34,6 +37,8 @@ class ProviderRefreshHelper {
     ref.invalidate(
       transactionsStreamProvider,
     );
+
+    ref.invalidate(filteredTransactionsProvider);
 
     ref.invalidate(
       totalIncomeProvider,
@@ -69,6 +74,7 @@ class ProviderRefreshHelper {
     WidgetRef ref,
   ) async {
 
+    ref.invalidate(filteredTransactionsProvider);
     ref.invalidate(
       recurringTransactionsProvider,
     );
@@ -213,6 +219,7 @@ class ProviderRefreshHelper {
       goalAnalyticsProvider,
     );
 
+    ref.invalidate(filteredTransactionsProvider);
 
     await Future.wait([
 
@@ -239,6 +246,42 @@ class ProviderRefreshHelper {
 
   }
 
+  
+  // ==========================================
+  // CATEGORIES
+  // ==========================================
+
+  static Future<void>
+      refreshCategoriesData(
+    WidgetRef ref,
+  ) async {
+
+    ref.invalidate(
+      categoriesProvider,
+    );
+
+    ref.invalidate(allCategoriesProvider);
+
+    ref.invalidate(categoriesProvider('income'));
+    ref.invalidate(categoriesProvider('expense'));
+
+  }
+  
+  // ==========================================
+  // ACCOUNTS
+  // ==========================================
+
+  static Future<void>
+      refreshAccountsData(
+    WidgetRef ref,
+  ) async {
+
+    ref.invalidate(
+      accountsProvider,
+    );
+
+  }
+
   // ==========================================
   // EVERYTHING FINANCIAL
   // ==========================================
@@ -250,9 +293,11 @@ class ProviderRefreshHelper {
 
     await Future.wait([
 
-      refreshTransactionData(
-        ref,
-      ),
+      refreshCategoriesData(ref),
+      
+      refreshAccountsData(ref),
+
+      refreshTransactionData(ref),
 
       refreshBudgetData(
         ref,

@@ -59,7 +59,7 @@ class _ReportsScreenState
         ReportsScreen> {
 
   DateTime selectedMonth =
-      DateTime.now().toUtc();
+      DateTime.now(); //.toUtc();
 
   ReportChartType selectedChart =
       ReportChartType.donut;
