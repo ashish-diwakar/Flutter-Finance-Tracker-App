@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:local_auth/local_auth.dart';
 
 class BiometricService {
@@ -42,7 +43,9 @@ class BiometricService {
 
     } catch (e) {
 
-      print(e);
+      LoggerService.error(
+        'BiometricService Error: $e',
+      );
 
       return false;
     }

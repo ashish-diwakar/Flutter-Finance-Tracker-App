@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:isar_community/isar.dart';
 import 'package:finance_tracker/shared/providers/database_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -108,7 +109,7 @@ final budgetProgressProvider =
       if (matchingCategories
           .isEmpty) {
 
-        print(
+        LoggerService.error(
           'No category found for transaction with categoryId: ${transaction.categoryId}',
         );
 

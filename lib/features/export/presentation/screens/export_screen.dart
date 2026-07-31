@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -101,16 +102,11 @@ class _ExportScreenState
 
     } catch (e, s) {
 
-      debugPrint(
-        'CSV EXPORT ERROR:',
+      LoggerService.error(
+        'CSV EXPORT ERROR: $e.toString()',
       );
-
-      debugPrint(
-        e.toString(),
-      );
-
-      debugPrint(
-        s.toString(),
+      LoggerService.error(
+        'CSV EXPORT STACK: $s.toString()',
       );
 
       if (!mounted) {
@@ -266,17 +262,12 @@ class _ExportScreenState
       );
 
     } catch (e, s) {
-
-      debugPrint(
-        'PDF EXPORT ERROR:',
+      
+      LoggerService.error(
+        'PDF EXPORT ERROR: $e.toString()',
       );
-
-      debugPrint(
-        e.toString(),
-      );
-
-      debugPrint(
-        s.toString(),
+      LoggerService.error(
+        'PDF EXPORT STACK: $s.toString()',
       );
 
       if (!mounted) {

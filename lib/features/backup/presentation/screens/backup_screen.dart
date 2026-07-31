@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -119,8 +120,12 @@ class BackupScreen
                       );
                     }
                   } catch (e, stack) {
-                    debugPrint(e.toString());
-                    debugPrint(stack.toString());
+                    LoggerService.error(
+                      'Import Backup Error: $e',
+                    );
+                    LoggerService.error(
+                      'Import Backup Error: $stack',
+                    );
 
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(

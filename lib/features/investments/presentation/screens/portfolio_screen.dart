@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -35,84 +36,21 @@ class _PortfolioScreenState
 
   bool isSyncing = false;
 
-  // Future<void>
-  //     syncAllInvestments()
-  // async {
-
-  //   if (isSyncing) return;
-
-  //   setState(() {
-  //     isSyncing = true;
-  //   });
-
-  //   try {
-  //     final syncedCount = await ref.read(investmentSyncProvider).syncAllInvestments();
-
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(
-  //         context,
-  //       ).showSnackBar(
-  //         SnackBar(
-  //           content: Text(
-  //             '$syncedCount investments synced successfully',
-  //           ),
-  //         ),
-  //       );
-  //     }
-      
-  //     await ProviderRefreshHelper
-  //         .refreshInvestmentData(
-  //       ref,
-  //     );
-  //   } catch (e, stackTrace) {
-  //     debugPrint('Sync failed: $e');
-  //     debugPrint('StackTrace: $stackTrace');
-
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(
-  //         context,
-  //       ).showSnackBar(
-  //         SnackBar(
-  //           content: Text(
-  //             'Sync failed: $e',
-  //           ),
-  //         ),
-  //       );
-  //     }
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() {
-  //         isSyncing = false;
-  //       });
-  //     }
-  //   }
-  // }
-
   @override
   Widget build(
     BuildContext context,
   ) {
-
-    debugPrint(
-      'analyticsAsync started building',
-    );
 
     final analyticsAsync =
         ref.watch(
       investmentAnalyticsProvider,
     );
 
-    debugPrint(
-      'investmentsAsync started building',
-    );
     final investmentsAsync =
         ref.watch(
       investmentsProvider,
     );
 
-    debugPrint(
-      'currency started building',
-    );
     final currency =
         ref.watch(
       currencyProvider,
@@ -316,9 +254,10 @@ class _PortfolioScreenState
               data: (investments) {
 
                 
-                debugPrint(
+                LoggerService.info(
                   'investments count: ${investments.length}',
                 );
+                
 
                 if (investments
                     .isEmpty) {

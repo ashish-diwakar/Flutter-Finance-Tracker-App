@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -95,7 +96,9 @@ Future<void> importBackup() async {
 
     if (result == null) {
 
-      print("User cancelled file picker");
+      LoggerService.info(
+        'BackupRepository Error: User cancelled file picker',
+      );
 
       return;
     }
@@ -103,7 +106,6 @@ Future<void> importBackup() async {
     final path =
         result.files.single.path;
 
-    print(path);
 
     if (path == null) {
 
@@ -114,8 +116,6 @@ Future<void> importBackup() async {
 
     final content =
         await file.readAsString();
-
-    print(content);
 
 
     final json = jsonDecode(content);
@@ -210,10 +210,12 @@ Future<void> importBackup() async {
     
   }
   catch (e, stack) {
-
-    print(e);
-
-    print(stack);
+    LoggerService.error(
+      'Backup Error: $e',
+    );
+    LoggerService.error(
+      'Backup Error: $stack',
+    );
 
     rethrow;
   }

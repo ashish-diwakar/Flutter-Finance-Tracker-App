@@ -23,10 +23,6 @@ final investmentsProvider =
         .isDeletedEqualTo(false)
         .findAll();
 
-    debugPrint(
-      'INVESTMENTS COUNT: ${items.length}',
-    );
-
     return items;
   },
 );

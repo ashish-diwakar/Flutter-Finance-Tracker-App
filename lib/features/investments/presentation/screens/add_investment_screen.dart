@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:finance_tracker/features/investments/domain/utils/investment_helper.dart';
@@ -382,12 +383,11 @@ class _AddInvestmentScreenState
 
     } catch (e, stackTrace) {
 
-      debugPrint(
+      LoggerService.error(
         'SAVE INVESTMENT ERROR: $e',
       );
-
-      debugPrint(
-        stackTrace.toString(),
+      LoggerService.error(
+        'SAVE INVESTMENT STACK: $stackTrace.toString()',
       );
 
       if (!mounted) {
