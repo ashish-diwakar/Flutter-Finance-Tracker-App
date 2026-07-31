@@ -17,20 +17,24 @@ class ReportsRepository {
   ) async {
 
     final start =
-        DateTime(month.year, month.month, 1);
+    DateTime(month.year, month.month, 1);
 
     final end =
-        DateTime(month.year, month.month + 1, 0);
+    DateTime(month.year, month.month + 1, 1);
 
     final transactions =
-        await isar.transactionModels
-            .filter()
-            .isDeletedEqualTo(false)
-            .transactionDateBetween(
-              start,
-              end,
-            )
-            .findAll();
+    await isar.transactionModels
+        .filter()
+        .isDeletedEqualTo(false)
+        .transactionDateGreaterThan(
+          start,
+          include: true,
+        )
+        .transactionDateLessThan(
+          end,
+          include: false,
+        )
+        .findAll();
 
     int income = 0;
     int expense = 0;
