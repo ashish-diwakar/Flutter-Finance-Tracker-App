@@ -1,5 +1,3 @@
-//import 'package:finance_tracker/main.dart';
-import 'package:finance_tracker/shared/utils/logout_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,17 +6,12 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/summary_card.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart';
-//import '../../../reports/presentation/providers/budget_alerts_provider.dart';
 import '../../../goals/presentation/widgets/goals_summary_card.dart';
 import '../../../transactions/presentation/screens/add_transaction_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_screen.dart';
-//import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
-import '../../../sync/presentation/providers/sync_provider.dart';
 import '../providers/balance_provider.dart';
 import '../providers/expense_provider.dart';
 import '../providers/income_provider.dart';
-//import '../providers/transactions_provider.dart';
 import '../providers/dashboard_insights_provider.dart';
 import '../widgets/dashboard_insights_section.dart';
 import '../../../../shared/providers/currency_provider.dart';
@@ -54,31 +47,11 @@ class _DashboardScreenState
 
     try {
 
-      final syncService =
-          await ref.read(
-        syncServiceProvider.future,
-      );
-
-      await syncService
-          .syncAll();
-
       await refreshDashboard();
 
       if (!mounted) {
         return;
       }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
-
-        const SnackBar(
-
-          content: Text(
-            'Sync completed successfully',
-          ),
-        ),
-      );
 
     } catch (e, stackTrace) {
 
@@ -171,66 +144,6 @@ class _DashboardScreenState
           appName,
         ),
 
-        actions: [
-
-          IconButton(
-
-            onPressed:
-                syncing
-                    ? null
-                    : syncData,
-
-            icon: syncing
-
-                ? const SizedBox(
-
-                    height: 20,
-                    width: 20,
-
-                    child:
-                        CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  )
-
-                : const Icon(
-                    Icons.sync,
-                  ),
-
-          ),
-
-          IconButton(
-
-            onPressed: () async {
-
-              await LogoutAppHelper
-                  .processLogout(
-                ref,
-              );
-
-              if (!context.mounted) {
-                return;
-              }
-
-              Navigator.pushAndRemoveUntil(
-
-                context,
-
-                MaterialPageRoute(
-
-                  builder: (_) =>
-                      const LoginScreen(),
-                ),
-
-                (route) => false,
-              );
-            },
-
-            icon: const Icon(
-              Icons.logout,
-            ),
-          ),
-        ],
       ),
 
       body: RefreshIndicator(

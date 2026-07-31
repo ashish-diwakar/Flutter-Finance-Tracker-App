@@ -1,18 +1,14 @@
-import 'package:finance_tracker/features/auth/presentation/screens/auth_gate.dart';
-//import 'package:finance_tracker/shared/utils/logger_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../../../../core/services/logger_service.dart';
-import 'core/config/supabase_config.dart';
 import 'core/database/isar_service.dart';
-import 'core/services/deep_link_service.dart';
 import 'core/services/notification_service.dart';
 import 'features/recurring/data/services/recurring_scheduler_service.dart';
 import 'features/reports/data/services/budget_alert_checker.dart';
 import 'features/reports/data/services/budget_notification_service.dart';
+import 'features/security/presentation/screens/app_lock_screen.dart';
 
 
 final navigatorKey =
@@ -33,20 +29,6 @@ Future<void> main() async {
       fileName: '.env',
     );
 
-    // =====================================================
-    // SUPABASE
-    // =====================================================
-
-    await Supabase.initialize(
-
-      url:
-          SupabaseConfig
-              .supabaseUrl,
-
-      anonKey:
-          SupabaseConfig
-              .supabaseAnonKey,
-    );
 
     // =====================================================
     // NOTIFICATIONS
@@ -72,15 +54,14 @@ Future<void> main() async {
       isar,
     );
 
-    final generatedCount = await recurringScheduler
+    final generatedCount =
+    await recurringScheduler
         .processRecurringTransactions();
 
-    // =====================================================
-    // Trigger Sync Only When Needed
     if (generatedCount > 0) {
 
       LoggerService.info(
-        '$generatedCount recurring transactions generated',
+        '$generatedCount recurring transactions generated.',
       );
     }
     // =====================================================
@@ -103,14 +84,6 @@ Future<void> main() async {
       alerts,
     );
 
-    // =====================================================
-    // DEEP LINKS
-    // =====================================================
-
-    DeepLinkService.initialize(
-      navigatorKey:
-          navigatorKey,
-    );
 
     LoggerService.info(
       'Application initialized successfully',
@@ -132,20 +105,6 @@ Future<void> main() async {
     await Future.delayed(
       const Duration(seconds: 1),
     );
-
-    // =====================================================
-    // TESTING NOTIFICATIONS
-    // =====================================================
-    // await NotificationService
-    //     .showNotification(
-
-    //   id: 1,
-
-    //   title: 'Finance Tracker',
-
-    //   body:
-    //       'Notifications are working successfully.',
-    // );
 
   } catch (e, stack) {
 
@@ -311,7 +270,8 @@ class FinanceTrackerApp
         ),
       ),
 
-      home: const AuthGate(),
+      // home: const AuthGate(),
+      home: const AppLockScreen(),
     );
   }
 }

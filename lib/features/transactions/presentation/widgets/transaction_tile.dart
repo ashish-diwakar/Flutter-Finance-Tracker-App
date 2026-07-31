@@ -329,11 +329,12 @@ class TransactionTile extends ConsumerWidget {
 
           children: [
 
-            TransactionSyncIcon(
+            // Commented Sync
+            // TransactionSyncIcon(
 
-              isSynced:
-                  transaction.isSynced,
-            ),
+            //   isSynced:
+            //       transaction.isSynced,
+            // ),
 
             const SizedBox(
               width: 4,

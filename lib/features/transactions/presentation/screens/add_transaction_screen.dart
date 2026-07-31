@@ -6,18 +6,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/services/logger_service.dart';
-import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../../accounts/presentation/providers/accounts_provider.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
-import '../../../sync/presentation/providers/sync_provider.dart';
 import '../providers/transaction_repository_provider.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
@@ -568,30 +565,31 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                               await ProviderRefreshHelper
                                 .refreshAllFinancialData(ref);
 
-                              final syncService = await ref.read(
-                                syncServiceProvider.future,
-                              );
+                              // Commented Sync
+                              // final syncService = await ref.read(
+                              //   syncServiceProvider.future,
+                              // );
 
-                              final connectivity = ref.read(
-                                connectivityProvider,
-                              );
+                              // final connectivity = ref.read(
+                              //   connectivityProvider,
+                              // );
 
-                              connectivity.whenData(
-                                (
-                                  result,
-                                ) async {
-                                  final connected = result.any(
-                                    (
-                                      e,
-                                    ) =>
-                                        e != ConnectivityResult.none,
-                                  );
+                              // connectivity.whenData(
+                              //   (
+                              //     result,
+                              //   ) async {
+                              //     final connected = result.any(
+                              //       (
+                              //         e,
+                              //       ) =>
+                              //           e != ConnectivityResult.none,
+                              //     );
 
-                                  if (connected) {
-                                    await syncService.syncAll();
-                                  }
-                                },
-                              );
+                              //     if (connected) {
+                              //       await syncService.syncAll();
+                              //     }
+                              //   },
+                              // );
 
                               if (mounted) {
                                 Navigator.pop(

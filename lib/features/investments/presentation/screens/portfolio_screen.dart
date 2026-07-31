@@ -11,7 +11,6 @@ import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../domain/utils/investment_helper.dart';
 import '../providers/investments_provider.dart';
 import '../providers/investment_analytics_provider.dart';
-import '../providers/investment_sync_provider.dart';
 
 import '../widgets/portfolio_summary_card.dart';
 import 'add_investment_screen.dart';
@@ -36,58 +35,58 @@ class _PortfolioScreenState
 
   bool isSyncing = false;
 
-  Future<void>
-      syncAllInvestments()
-  async {
+  // Future<void>
+  //     syncAllInvestments()
+  // async {
 
-    if (isSyncing) return;
+  //   if (isSyncing) return;
 
-    setState(() {
-      isSyncing = true;
-    });
+  //   setState(() {
+  //     isSyncing = true;
+  //   });
 
-    try {
-      final syncedCount = await ref.read(investmentSyncProvider).syncAllInvestments();
+  //   try {
+  //     final syncedCount = await ref.read(investmentSyncProvider).syncAllInvestments();
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
-          SnackBar(
-            content: Text(
-              '$syncedCount investments synced successfully',
-            ),
-          ),
-        );
-      }
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(
+  //         context,
+  //       ).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             '$syncedCount investments synced successfully',
+  //           ),
+  //         ),
+  //       );
+  //     }
       
-      await ProviderRefreshHelper
-          .refreshInvestmentData(
-        ref,
-      );
-    } catch (e, stackTrace) {
-      debugPrint('Sync failed: $e');
-      debugPrint('StackTrace: $stackTrace');
+  //     await ProviderRefreshHelper
+  //         .refreshInvestmentData(
+  //       ref,
+  //     );
+  //   } catch (e, stackTrace) {
+  //     debugPrint('Sync failed: $e');
+  //     debugPrint('StackTrace: $stackTrace');
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Sync failed: $e',
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          isSyncing = false;
-        });
-      }
-    }
-  }
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(
+  //         context,
+  //       ).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             'Sync failed: $e',
+  //           ),
+  //         ),
+  //       );
+  //     }
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() {
+  //         isSyncing = false;
+  //       });
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(
@@ -127,41 +126,42 @@ class _PortfolioScreenState
           'Investments',
         ),
 
-        actions: [
+        // Commented Sync
+        // actions: [
 
-          IconButton(
+        //   IconButton(
 
-            tooltip:
-                'Sync All',
+        //     tooltip:
+        //         'Sync All',
 
-            onPressed:
+        //     onPressed:
 
-                isSyncing
+        //         isSyncing
 
-                    ? null
+        //             ? null
 
-                    : syncAllInvestments,
+        //             : syncAllInvestments,
 
-            icon:
+        //     icon:
 
-                isSyncing
+        //         isSyncing
 
-                    ? const SizedBox(
+        //             ? const SizedBox(
 
-                        width: 20,
-                        height: 20,
+        //                 width: 20,
+        //                 height: 20,
 
-                        child:
-                            CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
+        //                 child:
+        //                     CircularProgressIndicator(
+        //                   strokeWidth: 2,
+        //                 ),
+        //               )
 
-                    : const Icon(
-                        Icons.sync,
-                      ),
-          ),
-        ],
+        //             : const Icon(
+        //                 Icons.sync,
+        //               ),
+        //   ),
+        // ],
       ),
 
       floatingActionButton:

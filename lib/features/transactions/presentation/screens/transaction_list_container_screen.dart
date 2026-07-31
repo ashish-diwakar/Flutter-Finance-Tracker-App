@@ -1,4 +1,3 @@
-import 'package:finance_tracker/shared/utils/logout_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,11 +5,8 @@ import '../../../../core/services/logger_service.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../../transactions/presentation/screens/add_transaction_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_screen.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
-import '../../../sync/presentation/providers/sync_provider.dart';
 import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
 import '../widgets/transaction_filter_button.dart';
-import '../widgets/transaction_search_bar.dart';
 
 class TransactionListContainerScreen extends ConsumerStatefulWidget {
   const TransactionListContainerScreen({super.key});
@@ -30,11 +26,12 @@ class _TransactionListContainerScreenState
     });
 
     try {
-      final syncService = await ref.read(
-        syncServiceProvider.future,
-      );
+      // Commented Sync
+      // final syncService = await ref.read(
+      //   syncServiceProvider.future,
+      // );
 
-      await syncService.syncAll();
+      // await syncService.syncAll();
 
       await ProviderRefreshHelper.refreshTransactionData(ref);
 
@@ -76,60 +73,9 @@ class _TransactionListContainerScreenState
       appBar: AppBar(
         centerTitle: false,
         title: const Text('Transactions'),
-        actions: [
-          IconButton(
-            tooltip: 'Sync',
-            onPressed: syncing ? null : syncData,
-            icon: syncing
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.sync),
-          ),
-          IconButton(
-            tooltip: 'Logout',
-            onPressed: () async {
-              await LogoutAppHelper.processLogout(ref);
-              if (context.mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
-            },
-            icon: const Icon(Icons.logout),
-          ),
-        ],
+        
       ),
       body: Column(
-        // children: [
-        //   SizedBox(height: 16),
-        //   Padding(
-        //     padding: const EdgeInsets.symmetric(horizontal: 16),
-        //     child: Row(
-        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //       children: [
-        //         Text(
-        //           'Recent Transactions',
-        //           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        //         ),
-        //         _LimitDropdown(), // FIXED: Added const anchor if applicable
-        //       ],
-        //     ),
-        //   ),
-        //   SizedBox(height: 8),
-        //   Padding(
-        //     padding: EdgeInsets.symmetric(horizontal: 12),
-        //     child: _TypeFilterChips(),
-        //   ),
-        //   SizedBox(height: 8),
-        //   Expanded(
-        //     child: TransactionListScreen(),
-        //   ),
-        // ],
 
         children: [
           const SizedBox(
