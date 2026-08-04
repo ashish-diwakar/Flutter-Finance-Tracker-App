@@ -375,52 +375,52 @@ class SettingsScreen
           // =====================================================
           // INVESTMENTS
           // =====================================================
+          /* Will work on it later*/
+          // Card(
 
-          Card(
+          //   margin:
+          //       const EdgeInsets.symmetric(
+          //     horizontal: 12,
+          //     vertical: 4,
+          //   ),
 
-            margin:
-                const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 4,
-            ),
+          //   child: ListTile(
 
-            child: ListTile(
+          //     leading:
+          //         const Icon(
+          //       Icons.trending_up,
+          //     ),
 
-              leading:
-                  const Icon(
-                Icons.trending_up,
-              ),
+          //     title:
+          //         const Text(
+          //       'Investments',
+          //     ),
 
-              title:
-                  const Text(
-                'Investments',
-              ),
+          //     subtitle:
+          //         const Text(
+          //       'Track portfolio performance and returns',
+          //     ),
 
-              subtitle:
-                  const Text(
-                'Track portfolio performance and returns',
-              ),
+          //     trailing:
+          //         const Icon(
+          //       Icons.chevron_right,
+          //     ),
 
-              trailing:
-                  const Icon(
-                Icons.chevron_right,
-              ),
+          //     onTap: () {
 
-              onTap: () {
+          //       Navigator.push(
 
-                Navigator.push(
+          //         context,
 
-                  context,
+          //         MaterialPageRoute(
 
-                  MaterialPageRoute(
-
-                    builder: (_) =>
-                        const PortfolioScreen(),
-                  ),
-                );
-              },
-            ),
-          ),
+          //           builder: (_) =>
+          //               const PortfolioScreen(),
+          //         ),
+          //       );
+          //     },
+          //   ),
+          // ),
 
           // =====================================================
           // ALERTS & REPORTS SECTION
