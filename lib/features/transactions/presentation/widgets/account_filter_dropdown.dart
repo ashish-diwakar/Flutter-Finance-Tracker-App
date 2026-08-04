@@ -1,10 +1,10 @@
 
+import 'package:finance_tracker/features/transactions/presentation/providers/transaction_filter_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/models/account_model.dart';
 import '../../../accounts/presentation/providers/accounts_provider.dart';
-import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
 
 class AccountFilterDropdown extends ConsumerWidget {
 

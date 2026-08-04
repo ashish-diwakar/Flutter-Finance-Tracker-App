@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/models/transaction_model.dart';
 import '../../../../shared/utils/transaction_date_helper.dart';
-import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
+import '../providers/transaction_filter_provider.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../widgets/transaction_section_header.dart';
 import '../widgets/transaction_tile.dart';
@@ -33,10 +33,10 @@ class TransactionListScreen
       filteredTransactionsProvider,
     );
 
-    final currency =
-        ref.watch(
-      currencyProvider,
-    );
+    // final currency =
+    //     ref.watch(
+    //   currencyProvider,
+    // );
 
     final accountsAsync = ref.watch(
       accountsProvider,

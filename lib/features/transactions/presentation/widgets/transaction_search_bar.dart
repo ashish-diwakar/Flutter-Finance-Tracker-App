@@ -1,7 +1,8 @@
-import 'package:finance_tracker/features/dashboard/presentation/providers/transaction_filter_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
+
+import '../providers/transaction_filter_provider.dart';
 
 class TransactionSearchBar extends ConsumerStatefulWidget {
 

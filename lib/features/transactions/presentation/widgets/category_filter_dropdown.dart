@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/models/category_model.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
-import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
+import '../providers/transaction_filter_provider.dart';
 
 class CategoryFilterDropdown extends ConsumerWidget {
 

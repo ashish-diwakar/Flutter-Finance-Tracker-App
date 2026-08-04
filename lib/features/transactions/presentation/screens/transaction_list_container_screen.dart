@@ -5,8 +5,9 @@ import '../../../../core/services/logger_service.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../../transactions/presentation/screens/add_transaction_screen.dart';
 import '../../../transactions/presentation/screens/transaction_list_screen.dart';
-import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
+import '../providers/transaction_filter_provider.dart';
 import '../widgets/transaction_filter_button.dart';
+import '../widgets/transaction_summary_card.dart';
 
 class TransactionListContainerScreen extends ConsumerStatefulWidget {
   const TransactionListContainerScreen({super.key});
@@ -97,7 +98,7 @@ class _TransactionListContainerScreenState
               ),
               child: const Padding(
                 padding:
-                    const EdgeInsets.all(
+                    EdgeInsets.all(
                   16,
                 ),
                 child: Column(
@@ -116,28 +117,33 @@ class _TransactionListContainerScreenState
                         //     ),
                         //   ),
                         // ),
-                        const Text(
+                        Text(
                           'Show',
                         ),
-                        const SizedBox(
+                        SizedBox(
                           width: 8,
                         ),
-                        const _LimitDropdown(),
+                        _LimitDropdown(),
                       ],
                     ),
-                    const SizedBox(
+                    SizedBox(
                       height: 16,
                     ),
-                    const _TypeFilterChips(),
-                    const SizedBox(
+                    _TypeFilterChips(),
+                    SizedBox(
                       height: 16,
                     ),
-                    const TransactionFilterButton(),
+                    TransactionFilterButton(),
                   ],
                 ),
               ),
             ),
           ),
+
+          const SizedBox(height: 8),
+
+          const TransactionSummaryCard(),
+
           const SizedBox(
             height: 8,
           ),

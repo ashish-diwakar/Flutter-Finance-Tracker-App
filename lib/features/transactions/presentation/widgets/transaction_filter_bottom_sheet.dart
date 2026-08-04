@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
+import '../providers/transaction_filter_provider.dart';
 import 'account_filter_dropdown.dart';
 import 'category_filter_dropdown.dart';
 import 'date_range_filter.dart';
