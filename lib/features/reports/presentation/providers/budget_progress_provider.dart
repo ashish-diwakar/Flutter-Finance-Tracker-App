@@ -4,6 +4,7 @@ import 'package:finance_tracker/shared/providers/database_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:finance_tracker/shared/models/transaction_model.dart';
 
+import '../../../../shared/models/category_model.dart';
 import '../../domain/models/budget_progress_data.dart';
 import '../../../categories/presentation/providers/category_repository_provider.dart';
 
@@ -83,7 +84,12 @@ final budgetProgressProvider =
 
     final categories =
         await repository
-            .getAllCategories();
+            .getAllCategoriesIncludingDeleted();
+
+    final categoryMap = <String, CategoryModel>{
+      for (final category in categories)
+        category.uuid: category,
+    };
 
     final Map<String, double>
         totals = {};
@@ -96,36 +102,28 @@ final budgetProgressProvider =
           transaction.amount,
     );
 
-    for (final transaction
-        in expenseTransactions) {
 
-      final matchingCategories =
-          categories.where(
-        (c) =>
-            c.id ==
-            transaction.categoryId,
-      );
-
-      if (matchingCategories
-          .isEmpty) {
-
-        LoggerService.error(
-          'No category found for transaction with categoryId: ${transaction.categoryId}',
-        );
-
-        continue;
-      }
-
+    for (final transaction in expenseTransactions) {
+      var categoryName = 'Unknown Category';
       final category =
-          matchingCategories.first;
+          categoryMap[transaction.categoryId];
+
+      if (category == null) {
+        LoggerService.error(
+          'No category found for transaction with categoryId: '
+          '${transaction.categoryId}',
+        );
+        //continue;;
+      } else {
+        categoryName = category.name;
+      }
 
       final amount =
           transaction.amount / 100;
 
       totals.update(
-        category.name,
-        (value) =>
-            value + amount,
+        categoryName,
+        (value) => value + amount,
         ifAbsent: () => amount,
       );
     }

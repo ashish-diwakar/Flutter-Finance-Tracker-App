@@ -69,10 +69,11 @@ class _ExportScreenState
               .isDeletedEqualTo(
                 false,
               )
+              .sortByTransactionDateDesc()
               .findAll();
 
       final service =
-          CsvExportService();
+          CsvExportService(isar);
 
       final file =
           await service
@@ -185,6 +186,7 @@ class _ExportScreenState
               .isDeletedEqualTo(
                 false,
               )
+              .sortByTransactionDateDesc()
               .findAll();
 
       double income = 0;
@@ -216,7 +218,7 @@ class _ExportScreenState
       );
 
       final service =
-          PdfExportService();
+          PdfExportService(isar);
 
       final file =
           await service
@@ -785,7 +787,7 @@ class _ExportScreenState
           ),
 
           const SizedBox(
-            height: 32,
+            height: 64,
           ),
         ],
       ),

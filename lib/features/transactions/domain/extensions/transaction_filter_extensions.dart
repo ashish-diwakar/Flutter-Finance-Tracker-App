@@ -1,4 +1,4 @@
-import '../../../dashboard/presentation/providers/transaction_filter_provider.dart';
+import '../../presentation/providers/transaction_filter_provider.dart';
 
 extension TransactionFilterExtension
     on TransactionFilter {

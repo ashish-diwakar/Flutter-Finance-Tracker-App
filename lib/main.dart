@@ -1,26 +1,19 @@
+import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/services/logger_service.dart';
 import 'core/database/isar_service.dart';
-import 'core/services/notification_service.dart';
-import 'features/recurring/data/services/recurring_scheduler_service.dart';
-import 'features/reports/data/services/budget_alert_checker.dart';
-import 'features/reports/data/services/budget_notification_service.dart';
+import 'core/services/logger_service.dart';
 import 'features/security/presentation/screens/app_lock_screen.dart';
-
 
 final navigatorKey =
     GlobalKey<NavigatorState>();
 
 Future<void> main() async {
-
-  WidgetsFlutterBinding
-      .ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
 
   try {
-
     // =====================================================
     // ENVIRONMENT
     // =====================================================
@@ -29,123 +22,42 @@ Future<void> main() async {
       fileName: '.env',
     );
 
-
-    // =====================================================
-    // NOTIFICATIONS
-    // =====================================================
-
-    await NotificationService
-    .initialize();
-
     // =====================================================
     // ISAR
     // =====================================================
 
-    final isar =
-    await IsarService
-        .openIsar();
-
-    // =====================================================
-    // RECURRING TRANSACTIONS
-    // =====================================================
-
-    final recurringScheduler =
-        RecurringSchedulerService(
-      isar,
-    );
-
-    final generatedCount =
-    await recurringScheduler
-        .processRecurringTransactions();
-
-    if (generatedCount > 0) {
-
-      LoggerService.info(
-        '$generatedCount recurring transactions generated.',
-      );
-    }
-    // =====================================================
-
-    
-    // =====================================================
-    // BUDGET ALERTS
-    // =====================================================
-    final budgetChecker =
-        BudgetAlertChecker(
-      isar,
-    );
-
-    final alerts =
-        await budgetChecker
-            .checkAlerts(includeSafe: false);
-
-    await BudgetNotificationService
-        .processBudgetAlerts(
-      alerts,
-    );
-
-
-    LoggerService.info(
-      'Application initialized successfully',
-    );
+    await IsarService.openIsar();
 
     // =====================================================
     // START APP
     // =====================================================
 
     runApp(
-
       const ProviderScope(
-
-        child:
-            FinanceTrackerApp(),
+        child: FinanceTrackerApp(),
       ),
     );
-
-    await Future.delayed(
-      const Duration(seconds: 1),
-    );
-
   } catch (e, stack) {
-
     LoggerService.exception(
-      "Application Startup Failed",
+      'Application Startup Failed',
       e,
       stack,
     );
 
     runApp(
-
       MaterialApp(
-
-        debugShowCheckedModeBanner:
-            false,
-
+        debugShowCheckedModeBanner: false,
         home: Scaffold(
-
           body: Center(
-
             child: Padding(
-
-              padding:
-                  const EdgeInsets.all(
-                24,
-              ),
-
+              padding: const EdgeInsets.all(24),
               child: Column(
-
                 mainAxisAlignment:
-                    MainAxisAlignment
-                        .center,
-
+                    MainAxisAlignment.center,
                 children: [
-
                   const Icon(
-
                     Icons.error_outline,
-
                     size: 72,
-
                     color: Colors.red,
                   ),
 
@@ -154,15 +66,10 @@ Future<void> main() async {
                   ),
 
                   const Text(
-
                     'Application failed to start',
-
                     style: TextStyle(
-
                       fontSize: 20,
-
-                      fontWeight:
-                          FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
 
@@ -171,11 +78,8 @@ Future<void> main() async {
                   ),
 
                   const Text(
-
                     'Please restart the application.',
-
-                    textAlign:
-                        TextAlign.center,
+                    textAlign: TextAlign.center,
                   ),
 
                   const SizedBox(
@@ -184,8 +88,7 @@ Future<void> main() async {
 
                   SelectableText(
                     e.toString(),
-                    textAlign:
-                        TextAlign.center,
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -199,7 +102,6 @@ Future<void> main() async {
 
 class FinanceTrackerApp
     extends StatelessWidget {
-
   const FinanceTrackerApp({
     super.key,
   });
@@ -208,20 +110,16 @@ class FinanceTrackerApp
   Widget build(
     BuildContext context,
   ) {
-
     return MaterialApp(
-
-      debugShowCheckedModeBanner:
-          false,
+      debugShowCheckedModeBanner: false,
 
       title:
-          'Finance Tracker',
+          AppConstants.appName,
 
       navigatorKey:
           navigatorKey,
 
       theme: ThemeData(
-
         useMaterial3: true,
 
         colorSchemeSeed:
@@ -235,43 +133,33 @@ class FinanceTrackerApp
 
         appBarTheme:
             const AppBarTheme(
-
           centerTitle: true,
-
           elevation: 0,
         ),
 
         cardTheme:
             CardThemeData(
-
           elevation: 1,
 
           shape:
               RoundedRectangleBorder(
-
             borderRadius:
-                BorderRadius.circular(
-              16,
-            ),
+                BorderRadius.circular(16),
           ),
         ),
 
         inputDecorationTheme:
             InputDecorationTheme(
-
           border:
               OutlineInputBorder(
-
             borderRadius:
-                BorderRadius.circular(
-              12,
-            ),
+                BorderRadius.circular(12),
           ),
         ),
       ),
 
-      // home: const AuthGate(),
-      home: const AppLockScreen(),
+      home:
+          const AppLockScreen(),
     );
   }
 }

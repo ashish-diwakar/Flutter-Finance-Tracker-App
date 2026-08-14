@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,7 +11,6 @@ import '../../../recurring/presentation/screens/recurring_transactions_screen.da
 import '../../../reports/presentation/screens/budget_alerts_screen.dart';
 import 'currency_settings_screen.dart';
 import '../../../../shared/providers/currency_provider.dart';
-import '../../../investments/presentation/screens/portfolio_screen.dart';
 import '../../../goals/presentation/screens/manage_goals_screen.dart';
 
 class SettingsScreen
@@ -26,6 +26,9 @@ class SettingsScreen
     WidgetRef ref,
   ) {
 
+    final appName = AppConstants.appName;
+    final appVersion = AppConstants.appVersion;
+            
     return Scaffold(
 
       appBar: AppBar(
@@ -625,6 +628,84 @@ class SettingsScreen
               },
             ),
           ),
+
+          const SizedBox(
+            height: 24,
+          ),
+
+          // =====================================================
+          // Licenses SECTION
+          // =====================================================
+
+          const Padding(
+
+            padding: EdgeInsets.fromLTRB(
+              16,
+              24,
+              16,
+              8,
+            ),
+
+            child: Text(
+
+              'Open Source Licenses',
+
+              style: TextStyle(
+
+                fontSize: 16,
+
+                fontWeight:
+                    FontWeight.bold,
+              ),
+            ),
+          ),
+
+
+          // =====================================================
+          // OPEN SOURCE LICENSES
+          // =====================================================
+
+          Card(
+
+            margin:
+                const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+
+            child: ListTile(
+
+              leading:
+                  const Icon(
+                Icons.description_outlined,
+              ),
+
+              title:
+                  const Text(
+                'Open Source Licenses',
+              ),
+
+              subtitle:
+                  const Text(
+                'Third-party software licenses',
+              ),
+
+              trailing:
+                  const Icon(
+                Icons.chevron_right,
+              ),
+
+              onTap: () {
+
+                showLicensePage(
+                  context: context,
+                  applicationName: appName,
+                  applicationVersion: appVersion,
+                );
+              },
+            ),
+          ),
+
 
           const SizedBox(
             height: 24,

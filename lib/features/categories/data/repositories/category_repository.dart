@@ -28,6 +28,13 @@ class CategoryRepository {
         .findAll();
   }
 
+  Future<List<CategoryModel>>
+      getAllCategoriesIncludingDeleted() async {
+
+    return await isar.categoryModels
+        .where()
+        .findAll();
+  }
 
   Future<void> addCategory(
     CategoryModel category,

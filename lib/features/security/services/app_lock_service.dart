@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -57,7 +58,7 @@ class AppLockService {
       return await _auth.authenticate(
 
         localizedReason:
-            'Authenticate to access Finance Tracker',
+            'Authenticate to access ${AppConstants.appName}',
 
         options:
             const AuthenticationOptions(

@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -32,7 +33,7 @@ class BiometricService {
 
       return await auth.authenticate(
         localizedReason:
-            'Unlock Finance Tracker',
+            'Unlock ${AppConstants.appName} using your biometrics',
 
         options:
             const AuthenticationOptions(

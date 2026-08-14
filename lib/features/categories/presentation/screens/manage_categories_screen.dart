@@ -420,7 +420,7 @@ class _ManageCategoriesScreenState
                       DropdownButtonFormField<
                           String>(
 
-                        value: type,
+                        initialValue: type,
 
                         decoration:
                             const InputDecoration(

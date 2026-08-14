@@ -1,5 +1,5 @@
 name: finance_tracker
-description: "A new Flutter project."
+description: "Finance Tracker is a personal finance management application that helps users track their expenses, manage budgets, and gain insights into their financial habits. It provides features such as expense categorization, budget tracking, and financial reporting to help users make informed decisions about their finances."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
