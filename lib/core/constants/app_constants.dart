@@ -25,4 +25,8 @@ class AppConstants {
   static final String appVersion =
       dotenv.env['APP_VERSION'] ??
       '1.0.0';
+
+  static final String appSupportEmail =
+    dotenv.env['APP_SUPPORT_EMAIL'] ??
+    'support4financetracker@diwakarsoftwaresolutions.com';
 }

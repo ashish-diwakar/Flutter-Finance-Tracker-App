@@ -1,5 +1,6 @@
 import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,6 +13,10 @@ final navigatorKey =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    //DeviceOrientation.portraitDown,
+  ]);
 
   try {
     // =====================================================

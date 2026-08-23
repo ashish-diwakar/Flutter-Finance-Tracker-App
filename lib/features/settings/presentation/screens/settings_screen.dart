@@ -12,6 +12,9 @@ import '../../../reports/presentation/screens/budget_alerts_screen.dart';
 import 'currency_settings_screen.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../goals/presentation/screens/manage_goals_screen.dart';
+import '../../../about/presentation/screens/about_screen.dart';
+import '../../../support/presentation/screens/contact_support_screen.dart';
+import '../../../privacy/presentation/screens/privacy_policy_screen.dart';
 
 class SettingsScreen
     extends ConsumerWidget {
@@ -634,29 +637,139 @@ class SettingsScreen
           ),
 
           // =====================================================
-          // Licenses SECTION
+          // INFORMATION & SUPPORT SECTION
           // =====================================================
 
           const Padding(
-
             padding: EdgeInsets.fromLTRB(
               16,
               24,
               16,
               8,
             ),
-
             child: Text(
-
-              'Open Source Licenses',
-
+              'Information & Support',
               style: TextStyle(
-
                 fontSize: 16,
-
-                fontWeight:
-                    FontWeight.bold,
+                fontWeight: FontWeight.bold,
               ),
+            ),
+          ),
+
+          // =====================================================
+          // ABOUT
+          // =====================================================
+
+          Card(
+            margin: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+
+            child: ListTile(
+              leading: const Icon(
+                Icons.info_outline,
+              ),
+
+              title: const Text(
+                'About Finance Tracker',
+              ),
+
+              subtitle: const Text(
+                'App information and company details',
+              ),
+
+              trailing: const Icon(
+                Icons.chevron_right,
+              ),
+
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const AboutScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // =====================================================
+          // CONTACT & SUPPORT
+          // =====================================================
+
+          Card(
+            margin: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+
+            child: ListTile(
+              leading: const Icon(
+                Icons.support_agent_outlined,
+              ),
+
+              title: const Text(
+                'Contact & Support',
+              ),
+
+              subtitle: const Text(
+                'Get help or report a problem',
+              ),
+
+              trailing: const Icon(
+                Icons.chevron_right,
+              ),
+
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const ContactSupportScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // =====================================================
+          // PRIVACY POLICY
+          // =====================================================
+
+          Card(
+            margin: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+
+            child: ListTile(
+              leading: const Icon(
+                Icons.privacy_tip_outlined,
+              ),
+
+              title: const Text(
+                'Privacy Policy',
+              ),
+
+              subtitle: const Text(
+                'How your information is handled',
+              ),
+
+              trailing: const Icon(
+                Icons.chevron_right,
+              ),
+
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const PrivacyPolicyScreen(),
+                  ),
+                );
+              },
             ),
           ),
 
@@ -666,37 +779,29 @@ class SettingsScreen
           // =====================================================
 
           Card(
-
-            margin:
-                const EdgeInsets.symmetric(
+            margin: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 4,
             ),
 
             child: ListTile(
-
-              leading:
-                  const Icon(
+              leading: const Icon(
                 Icons.description_outlined,
               ),
 
-              title:
-                  const Text(
+              title: const Text(
                 'Open Source Licenses',
               ),
 
-              subtitle:
-                  const Text(
+              subtitle: const Text(
                 'Third-party software licenses',
               ),
 
-              trailing:
-                  const Icon(
+              trailing: const Icon(
                 Icons.chevron_right,
               ),
 
               onTap: () {
-
                 showLicensePage(
                   context: context,
                   applicationName: appName,
@@ -704,6 +809,10 @@ class SettingsScreen
                 );
               },
             ),
+          ),
+
+          const SizedBox(
+            height: 24,
           ),
 
 
