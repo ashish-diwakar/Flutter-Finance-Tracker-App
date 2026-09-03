@@ -1,3 +1,4 @@
+import 'package:finance_tracker/features/categories/presentation/providers/categories_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -229,7 +230,9 @@ class _ManageCategoriesScreenState
                     newCategory,
                   );
 
-                  //await syncService.syncAll();
+                  ref.invalidate(categoriesProvider('income'));
+                  ref.invalidate(categoriesProvider('expense'));
+                  ref.invalidate(allCategoriesProvider);
 
                 } else {
 
@@ -263,6 +266,9 @@ class _ManageCategoriesScreenState
                     updatedCategory,
                   );
 
+                  ref.invalidate(categoriesProvider('income'));
+                  ref.invalidate(categoriesProvider('expense'));
+                  ref.invalidate(allCategoriesProvider);
                   //await syncService.syncAll();
                 }
 

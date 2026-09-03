@@ -58,77 +58,14 @@ class _ReportsScreenState
     extends ConsumerState<
         ReportsScreen> {
 
-  DateTime selectedMonth =
-      DateTime.now(); //.toUtc();
+  DateTime selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+      //DateTime.now(); //.toUtc();
 
   ReportChartType selectedChart =
       ReportChartType.donut;
 
   Future<void> refreshReports()
   async {
-
-    // ref.invalidate(
-    //   monthlySummaryProvider(
-    //     selectedMonth,
-    //   ),
-    // );
-
-    // ref.invalidate(
-    //   categoryAnalyticsProvider(
-    //     selectedMonth,
-    //   ),
-    // );
-
-    // ref.invalidate(
-    //   monthlyChartProvider,
-    // );
-
-    // ref.invalidate(
-    //   budgetProgressProvider,
-    // );
-
-    // ref.invalidate(
-    //   monthlyTrendsProvider,
-    // );
-
-    // ref.invalidate(
-    //   expenseForecastProvider,
-    // );
-
-    // ref.invalidate(
-    //   financialInsightsProvider,
-    // );
-
-    // ref.invalidate(
-    //   financialHealthProvider,
-    // );
-
-    // ref.invalidate(
-    //   recurringAnalyticsProvider,
-    // );
-
-    // await Future.wait([
-    //   ref.read(
-    //     monthlySummaryProvider(
-    //       selectedMonth,
-    //     ).future,
-    //   ),
-
-    //   ref.read(
-    //     categoryAnalyticsProvider(
-    //       selectedMonth,
-    //     ).future,
-    //   ),
-
-    //   ref.read(
-    //     monthlyChartProvider.future,
-    //   ),
-
-    //   ref.read(
-    //     budgetProgressProvider(selectedMonth).future,
-    //   ),
-    // ]);
-    
     await ProviderRefreshHelper
       .refreshReportsData(ref, selectedMonth);
 
@@ -177,11 +114,6 @@ class _ReportsScreenState
       ),
     );
 
-    final monthlyChartAsync =
-        ref.watch(
-      monthlyChartProvider,
-    );
-
     final budgetAsync =
         ref.watch(
       budgetProgressProvider(
@@ -189,26 +121,55 @@ class _ReportsScreenState
       ),
     );
 
+    // Multi-month comparison/trend
+    final monthlyChartAsync =
+        ref.watch(
+      monthlyChartProvider,
+    );
+
     final trendsAsync =
         ref.watch(
       monthlyTrendsProvider,
     );
 
+    // Forecast based on selected month
+    // final forecastAsync =
+    //     ref.watch(
+    //   expenseForecastProvider,
+    // );
+    final forcastMonth = DateTime(selectedMonth.year, selectedMonth.month + 1);
     final forecastAsync =
         ref.watch(
-      expenseForecastProvider,
+      expenseForecastProvider(
+       forcastMonth,
+      ),
     );
 
+    // Selected-month analysis
     final insightsAsync =
         ref.watch(
-      financialInsightsProvider,
+      financialInsightsProvider(
+        selectedMonth,
+      ),
     );
+    // final insightsAsync =
+    //     ref.watch(
+    //   financialInsightsProvider,
+    // );
 
+    // Selected-month analysis
     final healthAsync =
         ref.watch(
-      financialHealthProvider,
+      financialHealthProvider(
+        selectedMonth,
+      ),
     );
+    // final healthAsync =
+    //     ref.watch(
+    //   financialHealthProvider,
+    // );
 
+    // Current recurring commitments
     final recurringAsync =
         ref.watch(
       recurringAnalyticsProvider,
@@ -298,19 +259,123 @@ class _ReportsScreenState
 
                 onTap: () async {
 
-                  final picked =
-                      await showDatePicker(
+                  // final picked =
+                  //     await showDatePicker(
 
+                  //   context: context,
+
+                  //   initialDate:
+                  //       selectedMonth,
+
+                  //   firstDate:
+                  //       DateTime(2020),
+
+                  //   lastDate:
+                  //       DateTime(2100),
+                  // );
+
+                  final picked = await showDialog<DateTime>(
                     context: context,
+                    builder: (context) {
+                      int selectedYear = selectedMonth.year;
+                      int selectedMonthNumber = selectedMonth.month;
 
-                    initialDate:
-                        selectedMonth,
+                      return StatefulBuilder(
+                        builder: (context, setState) {
+                          return AlertDialog(
+                            title: const Text('Select Month'),
 
-                    firstDate:
-                        DateTime(2020),
+                            content: Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<int>(
+                                    initialValue: selectedMonthNumber,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Month',
+                                    ),
+                                    items: List.generate(
+                                      12,
+                                      (index) {
+                                        final month = index + 1;
 
-                    lastDate:
-                        DateTime(2100),
+                                        return DropdownMenuItem(
+                                          value: month,
+                                          child: Text(
+                                            DateFormat.MMMM().format(
+                                              DateTime(2000, month),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(() {
+                                          selectedMonthNumber = value;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+
+                                const SizedBox(width: 16),
+
+                                Expanded(
+                                  child: DropdownButtonFormField<int>(
+                                    initialValue: selectedYear,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Year',
+                                    ),
+                                    items: List.generate(
+                                      81,
+                                      (index) {
+                                        final year = 2020 + index;
+
+                                        return DropdownMenuItem(
+                                          value: year,
+                                          child: Text(
+                                            year.toString(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(() {
+                                          selectedYear = value;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Cancel'),
+                              ),
+
+                              FilledButton(
+                                onPressed: () {
+                                  Navigator.pop(
+                                    context,
+                                    DateTime(
+                                      selectedYear,
+                                      selectedMonthNumber,
+                                    ),
+                                  );
+                                },
+                                child: const Text('Select'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                   );
 
                   if (picked != null &&
@@ -322,6 +387,7 @@ class _ReportsScreenState
                           DateTime(
                         picked.year,
                         picked.month,
+                        1
                       );
                     });
                   }

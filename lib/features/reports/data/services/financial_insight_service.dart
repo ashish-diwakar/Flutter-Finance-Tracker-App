@@ -15,11 +15,10 @@ class FinancialInsightService {
 
   Future<List<
       FinancialInsightModel>>
-      generateInsights()
+      generateInsights(DateTime? month)
   async {
 
-    final now =
-        DateTime.now().toUtc();
+    final now = (month ?? DateTime.now()).toUtc();
 
     final currentMonthStart =
         DateTime(

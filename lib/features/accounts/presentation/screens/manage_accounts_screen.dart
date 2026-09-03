@@ -1,3 +1,5 @@
+import 'package:finance_tracker/features/accounts/presentation/providers/accounts_provider.dart';
+import 'package:finance_tracker/shared/utils/provider_refresh_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -249,6 +251,8 @@ class _ManageAccountsScreenState
                         newAccount,
                       );
 
+                      ProviderRefreshHelper.refreshAccountsData(ref);
+                      
                     } else {
 
                       account.name =
@@ -263,6 +267,8 @@ class _ManageAccountsScreenState
                           .updateAccount(
                         account,
                       );
+
+                      ProviderRefreshHelper.refreshAccountsData(ref);
                     }
 
                     if (mounted) {

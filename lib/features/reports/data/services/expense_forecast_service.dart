@@ -13,11 +13,12 @@ class ExpenseForecastService {
   );
 
   Future<ExpenseForecastModel>
-      generateForecast()
+      generateForecast(
+        DateTime? month,
+    )
   async {
 
-    final now =
-        DateTime.now().toUtc();
+    final now = (month ?? DateTime.now()).toUtc();
 
     final monthStart =
         DateTime(

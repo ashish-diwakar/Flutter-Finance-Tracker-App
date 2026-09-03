@@ -62,10 +62,18 @@ class ReportsRepository {
   ) async {
 
     final start =
-        DateTime(month.year, month.month, 1);
+        DateTime(
+      month.year,
+      month.month,
+      1,
+    );
 
     final end =
-        DateTime(month.year, month.month + 1, 0);
+        DateTime(
+      month.year,
+      month.month + 1,
+      1,
+    );
 
     final transactions =
         await isar.transactionModels
@@ -75,12 +83,15 @@ class ReportsRepository {
             .transactionDateBetween(
               start,
               end,
+              includeLower: true,
+              includeUpper: false,
             )
             .findAll();
 
     final categories =
         await isar.categoryModels
-            .where()
+            .filter()
+            .isDeletedEqualTo(false)
             .findAll();
 
     final Map<String, int> totals = {};
@@ -100,11 +111,15 @@ class ReportsRepository {
     final List<CategoryExpenseModel>
         result = [];
 
-    for (final entry in totals.entries) {
+    for (final entry
+        in totals.entries) {
 
-      final category = categories
-          .firstWhere(
-        (e) => e.id == entry.key,
+      final category =
+          categories.firstWhere(
+        (category) =>
+            category.uuid ==
+            entry.key,
+
         orElse: () =>
             CategoryModel()
               ..name = 'Unknown',
@@ -112,8 +127,11 @@ class ReportsRepository {
 
       result.add(
         CategoryExpenseModel(
-          category: category.name,
-          amount: entry.value,
+          category:
+              category.name,
+
+          amount:
+              entry.value,
         ),
       );
     }

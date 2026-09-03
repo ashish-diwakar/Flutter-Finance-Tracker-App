@@ -15,9 +15,9 @@ class FinancialHealthService {
 
   Future<
       FinancialHealthModel>
-      calculateHealth()
+      calculateHealth(DateTime? month)
   async {
-    final now = DateTime.now().toUtc();
+    final now = (month ?? DateTime.now()).toUtc();
 
     final startOfMonth =
         DateTime(

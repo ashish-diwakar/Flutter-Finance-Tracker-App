@@ -1,3 +1,4 @@
+import 'package:finance_tracker/shared/utils/provider_refresh_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -42,9 +43,9 @@ class _MainNavigationScreenState
       SettingsScreen(),
     ];
 
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) async {
-    });
+    // WidgetsBinding.instance
+    //     .addPostFrameCallback((_) async {
+    // });
   }
 
   @override
@@ -76,10 +77,47 @@ class _MainNavigationScreenState
             currentIndex,
 
         onDestinationSelected:
-            (index) {
+          (index) {
+
+          // =====================================================
+          // REFRESH REPORTS WHEN REPORTS TAB IS OPENED
+          // =====================================================
+          if (index == 2) {
+            
+            DateTime selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+            ProviderRefreshHelper.refreshReportsData(ref, selectedMonth);
+           
+            /*
+              // TEST POPUP
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text(
+                        'Reports Opened',
+                      ),
+                      content: const Text(
+                        'Test popup: Reports screen has been opened.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              });
+              */
+          }
 
           setState(() {
-
             currentIndex = index;
           });
         },

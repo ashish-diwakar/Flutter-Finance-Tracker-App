@@ -175,6 +175,7 @@ class ProviderRefreshHelper {
     DateTime month,
   ) async {
 
+      
     ref.invalidate(
       monthlySummaryProvider(
         month,
@@ -192,11 +193,11 @@ class ProviderRefreshHelper {
     );
 
     ref.invalidate(
-      monthlyTrendsProvider,
+      budgetProgressProvider(month),
     );
 
     ref.invalidate(
-      budgetProgressProvider,
+      monthlyTrendsProvider,
     );
 
     ref.invalidate(
@@ -214,6 +215,12 @@ class ProviderRefreshHelper {
     ref.invalidate(
       recurringAnalyticsProvider,
     );
+    //-----------------------------
+
+    ref.invalidate(
+      budgetProgressProvider,
+    );
+
     
     ref.invalidate(
       goalAnalyticsProvider,
