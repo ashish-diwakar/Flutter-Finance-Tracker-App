@@ -97,7 +97,7 @@ class TransactionSummaryCard extends ConsumerWidget {
 
                 Expanded(
                   child: _SummaryItem(
-                    title: 'Balance',
+                    title: 'Net Change',
                     value: CurrencyFormatter.format(
                       amount: summary.balance,
                       currency: currency,

@@ -7,208 +7,138 @@ import '../../../../shared/models/transaction_model.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../screens/transaction_details_screen.dart';
 import 'transaction_popup_menu.dart';
-import 'transaction_sync_icon.dart';
 
 class TransactionTile extends ConsumerWidget {
-
   const TransactionTile({
-
     super.key,
-
     required this.transaction,
-
     required this.accountName,
-
-    required this.categoryName,
+    this.toAccountName,
+    this.categoryName,
   });
 
   final TransactionModel transaction;
-
   final String accountName;
-
-  final String categoryName;
+  final String? toAccountName;
+  final String? categoryName;
 
   @override
   Widget build(
     BuildContext context,
     WidgetRef ref,
   ) {
-
     final currency =
         ref.watch(
       currencyProvider,
     );
 
-    final isIncome =
-        transaction.type ==
-            'income';
+    final presentation =
+        _presentationFor(
+      transaction,
+      categoryName,
+    );
 
     return Card(
-
       margin:
           const EdgeInsets.symmetric(
-
         horizontal: 12,
-
         vertical: 4,
       ),
-
       child: ListTile(
-
         contentPadding:
             const EdgeInsets.symmetric(
-
           horizontal: 8,
-
           vertical: 4,
         ),
-
         onTap: () {
-
-          // Navigate to TransactionDetailsScreen
           Navigator.push(
-
             context,
-
             MaterialPageRoute(
-
               builder: (_) =>
                   TransactionDetailsScreen(
-
-                transaction: transaction,
+                transaction:
+                    transaction,
               ),
             ),
           );
         },
-
         leading: CircleAvatar(
-
           backgroundColor:
-
-              isIncome
-
-                  ? Colors.green.shade100
-
-                  : Colors.red.shade100,
-
+              presentation.color
+                  .withValues(
+            alpha: 0.12,
+          ),
           child: Icon(
-
-            isIncome
-
-                ? Icons.trending_up
-
-                : Icons.shopping_bag,
-
+            presentation.icon,
             color:
-
-                isIncome
-
-                    ? Colors.green
-
-                    : Colors.red,
+                presentation.color,
           ),
         ),
-
         title: Row(
-
           children: [
-
             Expanded(
-
               child: Text(
-
-                categoryName,
-
+                presentation.title,
                 maxLines: 1,
-
                 overflow:
                     TextOverflow.ellipsis,
-
                 style:
-                    const TextStyle(
-
+                    TextStyle(
                   fontSize: 16,
-
                   fontWeight:
                       FontWeight.w600,
+                  color:
+                      presentation.color,
                 ),
               ),
             ),
-
             Text(
-
-              CurrencyFormatter.format(
-
+              '${presentation.prefix}'
+              '${CurrencyFormatter.format(
                 amount:
                     transaction.amount,
-
                 currency:
                     currency,
-
                 decimalDigits: 0,
-              ),
-
+              )}',
               style: TextStyle(
-
                 fontSize: 16,
-
                 fontWeight:
                     FontWeight.bold,
-
-                color: categoryName ==
-                        'Loan'
-
-                    ? Colors.purple
-
-                    : (isIncome
-
-                        ? Colors.green
-
-                        : Colors.red),
+                color:
+                    presentation.color,
               ),
             ),
           ],
         ),
-
         subtitle: Column(
-
           crossAxisAlignment:
               CrossAxisAlignment.start,
-
           children: [
-
             const SizedBox(
               height: 6,
             ),
-
             Row(
-
               children: [
-
                 const Icon(
-
-                  Icons.account_balance_wallet_outlined,
-
+                  Icons
+                      .account_balance_wallet_outlined,
                   size: 15,
-
                   color: Colors.grey,
                 ),
-
                 const SizedBox(
                   width: 4,
                 ),
-
                 Expanded(
-
                   child: Text(
-
-                    accountName,
-
+                    _accountText(),
+                    maxLines: 1,
+                    overflow:
+                        TextOverflow
+                            .ellipsis,
                     style:
                         const TextStyle(
-
                       fontSize: 13,
-
                       color:
                           Colors.black87,
                     ),
@@ -216,103 +146,84 @@ class TransactionTile extends ConsumerWidget {
                 ),
               ],
             ),
-
-            const SizedBox(
-              height: 4,
-            ),
-
-            Text(
-
-              categoryName ==
-                      'Loan'
-
-                  ? 'Loan'
-
-                  : (isIncome
-
-                      ? 'Income'
-
-                      : 'Expense'),
-
-              style: TextStyle(
-
-                fontSize: 13,
-
-                fontWeight:
-                    FontWeight.w500,
-
-                color: categoryName ==
-                        'Loan'
-
-                    ? Colors.purple
-
-                    : (isIncome
-
-                        ? Colors.green
-
-                        : Colors.red),
-              ),
-            ),
-
-            if ((transaction.notes ?? '')
+            if ((transaction
+                        .counterpartyName ??
+                    '')
                 .trim()
                 .isNotEmpty) ...[
-
               const SizedBox(
                 height: 4,
               ),
-
+              Row(
+                children: [
+                  const Icon(
+                    Icons
+                        .person_outline,
+                    size: 14,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(
+                    width: 4,
+                  ),
+                  Expanded(
+                    child: Text(
+                      _counterpartyText(),
+                      maxLines: 1,
+                      overflow:
+                          TextOverflow
+                              .ellipsis,
+                      style:
+                          const TextStyle(
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if ((transaction.notes ??
+                    '')
+                .trim()
+                .isNotEmpty) ...[
+              const SizedBox(
+                height: 4,
+              ),
               Text(
-
                 transaction.notes!,
-
                 maxLines: 2,
-
                 overflow:
                     TextOverflow.ellipsis,
-
                 style:
                     const TextStyle(
                   fontSize: 13,
                 ),
               ),
             ],
-
             const SizedBox(
               height: 4,
             ),
-
             Row(
-
               children: [
-
                 const Icon(
-
-                  Icons.calendar_today_outlined,
-
+                  Icons
+                      .calendar_today_outlined,
                   size: 13,
-
                   color: Colors.grey,
                 ),
-
                 const SizedBox(
                   width: 4,
                 ),
-
                 Text(
-
                   DateFormat(
                     'dd MMM yyyy',
                   ).format(
                     transaction
-                        .transactionDate,
+                        .transactionDate
+                        .toLocal(),
                   ),
-
                   style:
                       const TextStyle(
-
                     fontSize: 12,
-
                     color:
                         Colors.grey,
                   ),
@@ -321,27 +232,14 @@ class TransactionTile extends ConsumerWidget {
             ),
           ],
         ),
-
         trailing: Row(
-
           mainAxisSize:
               MainAxisSize.min,
-
           children: [
-
-            // Commented Sync
-            // TransactionSyncIcon(
-
-            //   isSynced:
-            //       transaction.isSynced,
-            // ),
-
             const SizedBox(
               width: 4,
             ),
-
             TransactionPopupMenu(
-
               transaction:
                   transaction,
             ),
@@ -350,4 +248,138 @@ class TransactionTile extends ConsumerWidget {
       ),
     );
   }
+
+  String _accountText() {
+    if (transaction.type ==
+        'transfer') {
+      final destination =
+          toAccountName ??
+              'Unknown Account';
+
+      return '$accountName → '
+          '$destination';
+    }
+
+    return accountName;
+  }
+
+  String _counterpartyText() {
+    final name =
+        transaction.counterpartyName!
+            .trim();
+
+    switch (transaction.type) {
+      case 'borrowed':
+        return 'Borrowed from $name';
+
+      case 'lent':
+        return 'Lent to $name';
+
+      case 'repaymentPaid':
+        return 'Paid to $name';
+
+      case 'repaymentReceived':
+        return 'Received from $name';
+
+      default:
+        return name;
+    }
+  }
+
+  static _TransactionTilePresentation
+      _presentationFor(
+    TransactionModel transaction,
+    String? categoryName,
+  ) {
+    switch (transaction.type) {
+      case 'income':
+        return _TransactionTilePresentation(
+          title:
+              categoryName ?? 'Income',
+          prefix: '+',
+          color: Colors.green,
+          icon: Icons.trending_up,
+        );
+
+      case 'expense':
+        return _TransactionTilePresentation(
+          title:
+              categoryName ?? 'Expense',
+          prefix: '-',
+          color: Colors.red,
+          icon: Icons.shopping_bag,
+        );
+
+      case 'transfer':
+        return const _TransactionTilePresentation(
+          title: 'Transfer',
+          prefix: '',
+          color: Colors.blue,
+          icon:
+              Icons.swap_horiz_rounded,
+        );
+
+      case 'borrowed':
+        return const _TransactionTilePresentation(
+          title: 'Borrowed',
+          prefix: '+',
+          color: Colors.green,
+          icon:
+              Icons.call_received_rounded,
+        );
+
+      case 'lent':
+        return const _TransactionTilePresentation(
+          title: 'Lent',
+          prefix: '-',
+          color: Colors.orange,
+          icon:
+              Icons.call_made_rounded,
+        );
+
+      case 'repaymentPaid':
+        return const _TransactionTilePresentation(
+          title: 'Repayment Paid',
+          prefix: '-',
+          color: Colors.red,
+          icon:
+              Icons.outbound_outlined,
+        );
+
+      case 'repaymentReceived':
+        return const _TransactionTilePresentation(
+          title: 'Repayment Received',
+          prefix: '+',
+          color: Colors.green,
+          icon: Icons
+              .move_to_inbox_outlined,
+        );
+
+      default:
+        return _TransactionTilePresentation(
+          title:
+              categoryName ??
+                  'Transaction',
+          prefix: '',
+          color:
+              Colors.blueGrey,
+          icon: Icons
+              .receipt_long_outlined,
+        );
+    }
+  }
+}
+
+class _TransactionTilePresentation {
+  final String title;
+  final String prefix;
+  final Color color;
+  final IconData icon;
+
+  const _TransactionTilePresentation({
+    required this.title,
+    required this.prefix,
+    required this.color,
+    required this.icon,
+  });
 }

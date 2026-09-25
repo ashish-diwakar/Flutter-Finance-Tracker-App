@@ -23,6 +23,8 @@ class TransactionModel {
 
   late String accountId;
 
+  String? toAccountId;
+
   // Used for borrowed/lent transactions.
   String? counterpartyName;
 
@@ -47,6 +49,7 @@ class TransactionModel {
       'type': type,
       'categoryId': categoryId,
       'accountId': accountId,
+      'toAccountId': toAccountId,
       'counterpartyName': counterpartyName,
       'relatedTransactionId': relatedTransactionId,
       'dueDate': dueDate?.toIso8601String(),

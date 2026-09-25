@@ -195,8 +195,7 @@ class DashboardInsightsService {
       final matchingCategories =
           categories.where(
         (c) =>
-            c.id ==
-            highest.key,
+            c.uuid == highest.key,
       );
 
       if (matchingCategories.isNotEmpty) {

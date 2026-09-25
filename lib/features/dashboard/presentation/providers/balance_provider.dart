@@ -1,15 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'expense_provider.dart';
-import 'income_provider.dart';
+import '../../../accounts/presentation/providers/account_balances_provider.dart';
 
 final totalBalanceProvider = Provider<int>((ref) {
+  final balancesAsync =
+      ref.watch(accountBalancesProvider);
 
-  final income =
-      ref.watch(totalIncomeProvider).value ?? 0;
+  final balances =
+      balancesAsync.value ?? <String, int>{};
 
-  final expense =
-      ref.watch(totalExpenseProvider).value ?? 0;
-
-  return income - expense;
+  return balances.values.fold<int>(
+    0,
+    (sum, balance) => sum + balance,
+  );
 });

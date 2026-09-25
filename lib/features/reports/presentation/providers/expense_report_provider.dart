@@ -31,24 +31,28 @@ final expenseReportProvider =
     final Map<String, double>
         categoryTotals = {};
 
-    for (final transaction
-        in transactions) {
+    for (final transaction in transactions) {
+      final categoryId = transaction.categoryId;
 
-      final category =
-          categories.firstWhere(
-        (c) =>
-            c.id ==
-            transaction.categoryId,
+      if (categoryId == null || categoryId.isEmpty) {
+        continue;
+      }
+
+      final matchingCategories = categories.where(
+        (c) => c.uuid == categoryId,
       );
 
-      final amount =
-          transaction.amount / 100;
+      if (matchingCategories.isEmpty) {
+        continue;
+      }
+
+      final category = matchingCategories.first;
+
+      final amount = transaction.amount / 100;
 
       categoryTotals.update(
         category.name,
-        (value) =>
-            value + amount,
-
+        (value) => value + amount,
         ifAbsent: () => amount,
       );
     }

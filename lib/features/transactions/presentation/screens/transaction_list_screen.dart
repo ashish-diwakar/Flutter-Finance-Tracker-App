@@ -6,26 +6,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../../shared/utils/transaction_date_helper.dart';
 import '../providers/transaction_filter_provider.dart';
-import '../../../../shared/providers/currency_provider.dart';
 import '../widgets/transaction_section_header.dart';
 import '../widgets/transaction_tile.dart';
 
-class TransactionListScreen
-    extends ConsumerWidget {
-
+class TransactionListScreen extends ConsumerWidget {
   final int? defaultLimit;
+
   const TransactionListScreen({
     super.key,
     this.defaultLimit,
   });
-
 
   @override
   Widget build(
     BuildContext context,
     WidgetRef ref,
   ) {
-
     final int? limit = defaultLimit;
 
     final transactionsAsync =
@@ -33,49 +29,36 @@ class TransactionListScreen
       filteredTransactionsProvider,
     );
 
-    // final currency =
-    //     ref.watch(
-    //   currencyProvider,
-    // );
-
-    final accountsAsync = ref.watch(
+    final accountsAsync =
+        ref.watch(
       accountsProvider,
     );
-    final categoriesAsync = ref.watch(
+
+    final categoriesAsync =
+        ref.watch(
       allCategoriesProvider,
     );
 
     return transactionsAsync.when(
-
       data: (transactions) {
-
         return accountsAsync.when(
-
           data: (accounts) {
-
             return categoriesAsync.when(
-
               data: (categories) {
-
                 if (transactions.isEmpty) {
-
                   return const Center(
-
                     child: Column(
-
                       mainAxisAlignment:
                           MainAxisAlignment.center,
-
                       children: [
-
                         Icon(
                           Icons.receipt_long,
                           size: 64,
                           color: Colors.grey,
                         ),
-
-                        SizedBox(height: 12),
-
+                        SizedBox(
+                          height: 12,
+                        ),
                         Text(
                           'No Transactions',
                           style: TextStyle(
@@ -88,108 +71,128 @@ class TransactionListScreen
                 }
 
                 final accountMap = {
-
                   for (final account in accounts)
-
-                    account.uuid: account.name,
+                    account.uuid:
+                        account.name,
                 };
 
                 final categoryMap = {
                   for (final category in categories)
-                    category.uuid: category.name,
+                    category.uuid:
+                        category.name,
                 };
 
-                // =====================================================
-                // GROUP TRANSACTIONS
-                // =====================================================
-
                 final visibleTransactions =
-                    (limit != null && limit < transactions.length)
-                        ? transactions.take(limit).toList()
+                    (limit != null &&
+                            limit <
+                                transactions
+                                    .length)
+                        ? transactions
+                            .take(limit)
+                            .toList()
                         : transactions;
 
                 final groupedTransactions =
-                    <String, List<TransactionModel>>{};
+                    <String,
+                        List<TransactionModel>>{};
 
-                for (final transaction in visibleTransactions) {
-
-                  final group = TransactionDateHelper.getGroupTitle(
-                    transaction.transactionDate,
+                for (final transaction
+                    in visibleTransactions) {
+                  final group =
+                      TransactionDateHelper
+                          .getGroupTitle(
+                    transaction
+                        .transactionDate,
                   );
 
-                  groupedTransactions.putIfAbsent(
+                  groupedTransactions
+                      .putIfAbsent(
                     group,
                     () => [],
                   );
 
-                  groupedTransactions[group]!.add(
+                  groupedTransactions[group]!
+                      .add(
                     transaction,
                   );
                 }
 
                 final sectionTitles =
-                    groupedTransactions.keys.toList();
+                    groupedTransactions.keys
+                        .toList();
 
                 return ListView.builder(
-
-                  padding: const EdgeInsets.only(
+                  padding:
+                      const EdgeInsets.only(
                     bottom: 74,
                   ),
-
-                  itemCount: sectionTitles.length,
-
-                  itemBuilder: (context, sectionIndex) {
-
+                  itemCount:
+                      sectionTitles.length,
+                  itemBuilder:
+                      (context, sectionIndex) {
                     final sectionTitle =
-                        sectionTitles[sectionIndex];
+                        sectionTitles[
+                            sectionIndex];
 
                     final sectionTransactions =
-                        groupedTransactions[sectionTitle]!;
+                        groupedTransactions[
+                            sectionTitle]!;
 
                     return Column(
-
                       crossAxisAlignment:
-                          CrossAxisAlignment.start,
-
+                          CrossAxisAlignment
+                              .start,
                       children: [
-
-                        // ======================================
-                        // SECTION HEADER
-                        // ======================================
-
                         TransactionSectionHeader(
-                          title: sectionTitle,
+                          title:
+                              sectionTitle,
                         ),
-
-                        // ======================================
-                        // TRANSACTIONS
-                        // ======================================
-
-                        ...sectionTransactions.map(
-
+                        ...sectionTransactions
+                            .map(
                           (transaction) {
-
-                            // final isIncome =
-                            //     transaction.type ==
-                            //         'income';
-
                             final accountName =
                                 accountMap[
-                                        transaction.accountId] ??
+                                        transaction
+                                            .accountId] ??
                                     'Unknown Account';
 
+                            final toAccountId =
+                                transaction
+                                    .toAccountId;
+
+                            final toAccountName =
+                                toAccountId ==
+                                            null ||
+                                        toAccountId
+                                            .isEmpty
+                                    ? null
+                                    : accountMap[
+                                            toAccountId] ??
+                                        'Unknown Account';
+
+                            final categoryId =
+                                transaction
+                                    .categoryId;
+
                             final categoryName =
-                                categoryMap[
-                                        transaction.categoryId] ??
-                                    'Unknown Category';
+                                categoryId ==
+                                            null ||
+                                        categoryId
+                                            .isEmpty
+                                    ? null
+                                    : categoryMap[
+                                            categoryId] ??
+                                        'Unknown Category';
 
                             return TransactionTile(
-
-                              transaction: transaction,
-
-                              accountName: accountName,
-
-                              categoryName: categoryName,
+                              transaction:
+                                  transaction,
+                              accountName:
+                                  accountName,
+                              toAccountName:
+                                  toAccountName,
+                              categoryName:
+                                  categoryName,
                             );
                           },
                         ),
@@ -198,54 +201,43 @@ class TransactionListScreen
                   },
                 );
               },
-            loading: () =>
-
-                const Center(
-                  child:
-                      CircularProgressIndicator(),
-                ),
-
-                error: (_, __) =>
-
-                    const Center(
-                      child: Text(
-                        'Unable to load categories',
-                      ),
-                    ),
-              );
-            },
-
-          loading: () =>
-
-              const Center(
+              loading: () =>
+                  const Center(
                 child:
                     CircularProgressIndicator(),
               ),
-
-          error: (_, __) =>
-
-              const Center(
+              error: (_, _) =>
+                  const Center(
                 child: Text(
-                  'Unable to load accounts',
+                  'Unable to load categories',
                 ),
               ),
-        );
-      },
-
-      loading: () =>
-
-          const Center(
+            );
+          },
+          loading: () =>
+              const Center(
             child:
                 CircularProgressIndicator(),
           ),
-
-      error: (_, __) =>
-
-          const Center(
+          error: (_, _) =>
+              const Center(
             child: Text(
-              'Unable to load transactions',
+              'Unable to load accounts',
             ),
           ),
+        );
+      },
+      loading: () =>
+          const Center(
+        child:
+            CircularProgressIndicator(),
+      ),
+      error: (_, _) =>
+          const Center(
+        child: Text(
+          'Unable to load transactions',
+        ),
+      ),
     );
   }
 }
