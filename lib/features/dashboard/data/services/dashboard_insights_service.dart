@@ -95,19 +95,12 @@ class DashboardInsightsService {
 
     double expense = 0;
 
-    for (final transaction
-        in transactions) {
+    for (final transaction in transactions) {
+      final amount = transaction.amount / 100;
 
-      final amount =
-          transaction.amount / 100;
-
-      if (transaction.type ==
-          'income') {
-
+      if (transaction.type == 'income') {
         income += amount;
-
-      } else {
-
+      } else if (transaction.type == 'expense') {
         expense += amount;
       }
     }
@@ -155,30 +148,23 @@ class DashboardInsightsService {
     // HIGHEST EXPENSE CATEGORY
     // =====================================
 
-    final Map<String, double>
-        categorySpending = {};
+    final Map<String, double> categorySpending = {};
 
-    for (final transaction
-        in transactions) {
+    for (final transaction in transactions) {
+      if (transaction.type != 'expense') {
+        continue;
+      }
 
-      if (transaction.type !=
-          'expense') {
+      final categoryId = transaction.categoryId;
 
+      if (categoryId == null || categoryId.isEmpty) {
         continue;
       }
 
       categorySpending.update(
-
-        transaction.categoryId,
-
-        (value) =>
-            value +
-            (transaction.amount /
-                100),
-
-        ifAbsent: () =>
-            transaction.amount /
-            100,
+        categoryId,
+        (value) => value + (transaction.amount / 100),
+        ifAbsent: () => transaction.amount / 100,
       );
     }
 

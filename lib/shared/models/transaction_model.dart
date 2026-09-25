@@ -4,8 +4,7 @@ part 'transaction_model.g.dart';
 
 @collection
 class TransactionModel {
-  
-  Id id  = Isar.autoIncrement;
+  Id id = Isar.autoIncrement;
 
   @Index(unique: true)
   late String uuid;
@@ -18,9 +17,20 @@ class TransactionModel {
 
   String? notes;
 
-  late String categoryId;
+  // Required for income/expense,
+  // optional for borrowed/lent/repayment transactions.
+  String? categoryId;
 
   late String accountId;
+
+  // Used for borrowed/lent transactions.
+  String? counterpartyName;
+
+  // Links a repayment to the original borrowed/lent transaction UUID.
+  String? relatedTransactionId;
+
+  // Optional repayment/due date for borrowed/lent transactions.
+  DateTime? dueDate;
 
   DateTime createdAt = DateTime.now().toUtc();
 
@@ -37,9 +47,12 @@ class TransactionModel {
       'type': type,
       'categoryId': categoryId,
       'accountId': accountId,
+      'counterpartyName': counterpartyName,
+      'relatedTransactionId': relatedTransactionId,
+      'dueDate': dueDate?.toIso8601String(),
       'notes': notes,
-      'transactionDate':
-          transactionDate.toIso8601String(),
+      'transactionDate': transactionDate.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'isSynced': isSynced,
       'isDeleted': isDeleted,

@@ -6,46 +6,40 @@ import '../../domain/models/category_expense_model.dart';
 import '../../domain/models/monthly_summary_model.dart';
 
 class ReportsRepository {
-
   final Isar isar;
 
   ReportsRepository(this.isar);
 
-  Future<MonthlySummaryModel>
-      getMonthlySummary(
+  Future<MonthlySummaryModel> getMonthlySummary(
     DateTime month,
   ) async {
-
     final start =
-    DateTime(month.year, month.month, 1);
+        DateTime(month.year, month.month, 1);
 
     final end =
-    DateTime(month.year, month.month + 1, 1);
+        DateTime(month.year, month.month + 1, 1);
 
     final transactions =
-    await isar.transactionModels
-        .filter()
-        .isDeletedEqualTo(false)
-        .transactionDateGreaterThan(
-          start,
-          include: true,
-        )
-        .transactionDateLessThan(
-          end,
-          include: false,
-        )
-        .findAll();
+        await isar.transactionModels
+            .filter()
+            .isDeletedEqualTo(false)
+            .transactionDateGreaterThan(
+              start,
+              include: true,
+            )
+            .transactionDateLessThan(
+              end,
+              include: false,
+            )
+            .findAll();
 
     int income = 0;
     int expense = 0;
 
-    for (final transaction
-        in transactions) {
-
-      if (transaction.type ==
-          'income') {
+    for (final transaction in transactions) {
+      if (transaction.type == 'income') {
         income += transaction.amount;
-      } else {
+      } else if (transaction.type == 'expense') {
         expense += transaction.amount;
       }
     }
@@ -60,7 +54,6 @@ class ReportsRepository {
       getCategoryExpenses(
     DateTime month,
   ) async {
-
     final start =
         DateTime(
       month.year,
@@ -96,30 +89,27 @@ class ReportsRepository {
 
     final Map<String, int> totals = {};
 
-    for (final transaction
-        in transactions) {
+    for (final transaction in transactions) {
+      final categoryId = transaction.categoryId;
+
+      if (categoryId == null || categoryId.isEmpty) {
+        continue;
+      }
 
       totals.update(
-        transaction.categoryId,
-        (value) =>
-            value + transaction.amount,
-        ifAbsent: () =>
-            transaction.amount,
+        categoryId,
+        (value) => value + transaction.amount,
+        ifAbsent: () => transaction.amount,
       );
     }
 
-    final List<CategoryExpenseModel>
-        result = [];
+    final List<CategoryExpenseModel> result = [];
 
-    for (final entry
-        in totals.entries) {
-
+    for (final entry in totals.entries) {
       final category =
           categories.firstWhere(
         (category) =>
-            category.uuid ==
-            entry.key,
-
+            category.uuid == entry.key,
         orElse: () =>
             CategoryModel()
               ..name = 'Unknown',
@@ -127,11 +117,8 @@ class ReportsRepository {
 
       result.add(
         CategoryExpenseModel(
-          category:
-              category.name,
-
-          amount:
-              entry.value,
+          category: category.name,
+          amount: entry.value,
         ),
       );
     }

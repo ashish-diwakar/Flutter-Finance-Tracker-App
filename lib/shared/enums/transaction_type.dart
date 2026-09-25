@@ -1,5 +1,9 @@
 enum TransactionType {
   income,
   expense,
-  transfer
+  transfer,
+  borrowed,
+  lent,
+  repaymentPaid,
+  repaymentReceived,
 }

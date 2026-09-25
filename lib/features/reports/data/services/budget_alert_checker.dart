@@ -75,21 +75,20 @@ class BudgetAlertChecker {
     final Map<String, double>
         spending = {};
 
-    for (final transaction
-        in transactions) {
+    for (final transaction in transactions) {
+      final categoryId = transaction.categoryId;
+
+      if (categoryId == null || categoryId.isEmpty) {
+        continue;
+      }
 
       spending.update(
-
-        transaction.categoryId,
-
+        categoryId,
         (value) =>
             value +
-            (transaction.amount /
-                100),
-
+            (transaction.amount / 100),
         ifAbsent: () =>
-            transaction.amount /
-            100,
+            transaction.amount / 100,
       );
     }
 

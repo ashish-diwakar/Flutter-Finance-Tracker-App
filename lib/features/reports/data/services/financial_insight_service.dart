@@ -173,21 +173,20 @@ class FinancialInsightService {
     final Map<String, double>
         categoryTotals = {};
 
-    for (final t
-        in currentTransactions) {
-
-      if (t.type !=
-          'expense') {
-
+    for (final t in currentTransactions) {
+      if (t.type != 'expense') {
         continue;
       }
 
-      categoryTotals[
-              t.categoryId] =
-          (categoryTotals[
-                      t.categoryId] ??
-                  0) +
-              (t.amount / 100);
+      final categoryId = t.categoryId;
+
+      if (categoryId == null || categoryId.isEmpty) {
+        continue;
+      }
+
+      categoryTotals[categoryId] =
+          (categoryTotals[categoryId] ?? 0) +
+          (t.amount / 100);
     }
 
     if (categoryTotals
