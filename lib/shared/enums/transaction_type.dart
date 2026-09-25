@@ -1,5 +1,5 @@
 enum TransactionType {
   income,
   expense,
-  transfer,
+  transfer
 }
