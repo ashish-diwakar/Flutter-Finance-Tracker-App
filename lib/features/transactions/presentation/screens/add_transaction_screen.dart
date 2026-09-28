@@ -14,6 +14,7 @@ import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../../accounts/presentation/providers/accounts_provider.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
 import '../providers/transaction_repository_provider.dart';
+import '../providers/transactions_provider.dart';
 class AddTransactionScreen extends ConsumerStatefulWidget {
   final TransactionModel?
       transaction;
@@ -43,6 +44,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   String? counterpartyError;
   String? dateError;
   String? dueDateError;
+  int linkedRepaymentTotal = 0;
+  bool loadingLinkedRepayments = false;
   @override
   void initState() {
     super.initState();
@@ -62,6 +65,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       selectedDueDate =
           transaction.dueDate;
       loadSelectedValues();
+      loadLinkedRepaymentInfo();
     }
   }
   @override
@@ -116,6 +120,57 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       );
     });
   }
+  Future<void> loadLinkedRepaymentInfo() async {
+    final transaction =
+        widget.transaction;
+
+    if (transaction == null ||
+        (transaction.type != 'borrowed' &&
+            transaction.type != 'lent')) {
+      return;
+    }
+
+    loadingLinkedRepayments = true;
+
+    final transactions =
+        await ref.read(
+      transactionsStreamProvider.future,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    final repaymentType =
+        transaction.type == 'borrowed'
+            ? 'repaymentPaid'
+            : 'repaymentReceived';
+
+    var total = 0;
+
+    for (final item in transactions) {
+      if (item.isDeleted) {
+        continue;
+      }
+
+      if (item.relatedTransactionId !=
+          transaction.uuid) {
+        continue;
+      }
+
+      if (item.type != repaymentType) {
+        continue;
+      }
+
+      total += item.amount;
+    }
+
+    setState(() {
+      linkedRepaymentTotal = total;
+      loadingLinkedRepayments = false;
+    });
+  }
+
   void showMessage(String message) {
     if (!mounted) {
       return;
@@ -138,6 +193,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final isBorrowOrLend =
         transactionType == 'borrowed' ||
         transactionType == 'lent';
+    final hasLinkedRepayments =
+        linkedRepaymentTotal > 0;
     final accountsAsync = ref.watch(
       accountsProvider,
     );
@@ -158,9 +215,12 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
               children: [
                 DropdownButtonFormField<String>(
                   value: transactionType,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Transaction Type',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
+                    helperText: hasLinkedRepayments
+                        ? 'Type cannot be changed because repayments exist.'
+                        : null,
                   ),
                   items: const [
                     DropdownMenuItem(
@@ -194,7 +254,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       ),
                     ),
                   ],
-                  onChanged: saving
+                  onChanged: saving ||
+                          loadingLinkedRepayments ||
+                          hasLinkedRepayments
                       ? null
                       : (value) {
                           if (value == null || transactionType == value) {
@@ -246,6 +308,16 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                     if (amount > 999999999) {
                       return 'Amount is too large';
                     }
+
+                    final amountInMinorUnits =
+                        (amount * 100).toInt();
+
+                    if (hasLinkedRepayments &&
+                        amountInMinorUnits <
+                            linkedRepaymentTotal) {
+                      return 'Amount cannot be less than total repayments';
+                    }
+
                     return null;
                   },
                   decoration: const InputDecoration(
@@ -637,7 +709,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: saving
+                    onPressed: saving ||
+                            loadingLinkedRepayments
                         ? null
                         : () async {
                             FocusScope.of(context).unfocus();
@@ -719,10 +792,17 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                                 transactionRepositoryProvider.future,
                               );
                               final amount = (parsedAmount * 100).toInt();
+                              final originalUuid =
+                                  widget.transaction?.uuid;
+
                               final transaction =
                                   widget.transaction ??
-                                  TransactionModel()
-                                    ..uuid = const Uuid().v4();
+                                  TransactionModel();
+
+                              if (originalUuid == null) {
+                                transaction.uuid =
+                                    const Uuid().v4();
+                              }
                               transaction
                                 ..amount = amount
                                 ..type = transactionType
@@ -751,7 +831,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                                   transaction,
                                 );
                               } else {
-                                transaction.uuid = widget.transaction!.uuid;
+                                transaction.uuid = originalUuid!;
                                 await repository.updateTransaction(
                                   transaction,
                                 );
