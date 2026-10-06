@@ -36,6 +36,10 @@ class PdfExportService {
 
     required String
 
+        reportPeriod,
+
+    required String
+
         currencySymbol,
 
     required List<
@@ -288,6 +292,8 @@ class PdfExportService {
 
               reportTitle: reportTitle,
 
+              reportPeriod: reportPeriod,
+
               currencySymbol: currencySymbol,
 
               transactions: transactions,
@@ -309,6 +315,8 @@ class PdfExportService {
           return _buildModernReport(
 
             reportTitle: reportTitle,
+
+            reportPeriod: reportPeriod,
 
             currencySymbol: currencySymbol,
 
@@ -376,6 +384,10 @@ class PdfExportService {
 
     required String
 
+        reportPeriod,
+
+    required String
+
         currencySymbol,
 
     required List<
@@ -418,7 +430,29 @@ class PdfExportService {
 
       pw.SizedBox(
 
-        height: 8,
+        height: 6,
+
+      ),
+
+      pw.Text(
+
+        'Period: $reportPeriod',
+
+        style:
+
+            const pw.TextStyle(
+
+          fontSize: 12,
+
+          color: PdfColors.grey700,
+
+        ),
+
+      ),
+
+      pw.SizedBox(
+
+        height: 4,
 
       ),
 
@@ -582,6 +616,10 @@ class PdfExportService {
 
     required String
 
+        reportPeriod,
+
+    required String
+
         currencySymbol,
 
     required List<
@@ -657,6 +695,30 @@ class PdfExportService {
             pw.SizedBox(
 
               height: 6,
+
+            ),
+
+            pw.Text(
+
+              'Period: $reportPeriod',
+
+              style:
+
+                  const pw.TextStyle(
+
+                fontSize: 12,
+
+                color:
+
+                    PdfColors.grey700,
+
+              ),
+
+            ),
+
+            pw.SizedBox(
+
+              height: 4,
 
             ),
 
