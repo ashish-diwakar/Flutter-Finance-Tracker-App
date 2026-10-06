@@ -4,26 +4,11 @@ import '../../../../shared/models/transaction_model.dart';
 import 'transactions_provider.dart';
 
 enum TransactionLimit {
-  last10(
-    label: 'Latest 10',
-    count: 10,
-  ),
-  last20(
-    label: 'Latest 20',
-    count: 20,
-  ),
-  last50(
-    label: 'Latest 50',
-    count: 50,
-  ),
-  last100(
-    label: 'Latest 100',
-    count: 100,
-  ),
-  all(
-    label: 'All',
-    count: null,
-  );
+  last10(label: 'Latest 10', count: 10),
+  last20(label: 'Latest 20', count: 20),
+  last50(label: 'Latest 50', count: 50),
+  last100(label: 'Latest 100', count: 100),
+  all(label: 'All', count: null);
 
   const TransactionLimit({
     required this.label,
@@ -35,30 +20,12 @@ enum TransactionLimit {
 }
 
 enum TransactionTypeFilter {
-  all(
-    label: 'All',
-    value: null,
-  ),
-  income(
-    label: 'Income',
-    value: 'income',
-  ),
-  expense(
-    label: 'Expense',
-    value: 'expense',
-  ),
-  transfer(
-    label: 'Transfer',
-    value: 'transfer',
-  ),
-  borrowed(
-    label: 'Borrowed',
-    value: 'borrowed',
-  ),
-  lent(
-    label: 'Lent',
-    value: 'lent',
-  ),
+  all(label: 'All', value: null),
+  income(label: 'Income', value: 'income'),
+  expense(label: 'Expense', value: 'expense'),
+  transfer(label: 'Transfer', value: 'transfer'),
+  borrowed(label: 'Borrowed', value: 'borrowed'),
+  lent(label: 'Lent', value: 'lent'),
   repaymentPaid(
     label: 'Repayment Paid',
     value: 'repaymentPaid',
@@ -76,6 +43,8 @@ enum TransactionTypeFilter {
   final String label;
   final String? value;
 }
+
+const Object _filterUnchanged = Object();
 
 class TransactionFilter {
   final TransactionLimit limit;
@@ -100,19 +69,31 @@ class TransactionFilter {
     TransactionLimit? limit,
     TransactionTypeFilter? type,
     String? searchText,
-    String? categoryId,
-    String? accountId,
-    DateTime? fromDate,
-    DateTime? toDate,
+    Object? categoryId = _filterUnchanged,
+    Object? accountId = _filterUnchanged,
+    Object? fromDate = _filterUnchanged,
+    Object? toDate = _filterUnchanged,
   }) {
     return TransactionFilter(
       limit: limit ?? this.limit,
       type: type ?? this.type,
       searchText: searchText ?? this.searchText,
-      categoryId: categoryId ?? this.categoryId,
-      accountId: accountId ?? this.accountId,
-      fromDate: fromDate ?? this.fromDate,
-      toDate: toDate ?? this.toDate,
+      categoryId:
+          identical(categoryId, _filterUnchanged)
+              ? this.categoryId
+              : categoryId as String?,
+      accountId:
+          identical(accountId, _filterUnchanged)
+              ? this.accountId
+              : accountId as String?,
+      fromDate:
+          identical(fromDate, _filterUnchanged)
+              ? this.fromDate
+              : fromDate as DateTime?,
+      toDate:
+          identical(toDate, _filterUnchanged)
+              ? this.toDate
+              : toDate as DateTime?,
     );
   }
 }
@@ -187,6 +168,9 @@ final filteredTransactionsProvider =
 
       result = result.where((t) {
         return (t.notes ?? '')
+                .toLowerCase()
+                .contains(search) ||
+            (t.counterpartyName ?? '')
                 .toLowerCase()
                 .contains(search) ||
             t.type

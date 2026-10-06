@@ -202,7 +202,7 @@ class _ExportScreenState
           income +=
               t.amount / 100;
 
-        } else {
+        } else if (t.type == 'expense') {
 
           expense +=
               t.amount / 100;

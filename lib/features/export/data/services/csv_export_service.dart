@@ -16,30 +16,15 @@ class CsvExportService {
   Future<File> exportTransactions(
     List<TransactionModel> transactions,
   ) async {
-
-    // ==========================================
-    // Load Categories
-    // ==========================================
-
     final categories =
         await isar.categoryModels
-            .filter()
-            .isDeletedEqualTo(false)
+            .where()
             .findAll();
-
-    // ==========================================
-    // Load Accounts
-    // ==========================================
 
     final accounts =
         await isar.accountModels
-            .filter()
-            .isDeletedEqualTo(false)
+            .where()
             .findAll();
-
-    // ==========================================
-    // Create Lookup Maps
-    // ==========================================
 
     final categoryMap = <String, String>{
       for (final category in categories)
@@ -51,10 +36,6 @@ class CsvExportService {
         account.uuid: account.name,
     };
 
-    // ==========================================
-    // CSV Rows
-    // ==========================================
-
     final List<List<dynamic>> rows = [];
 
     rows.add([
@@ -63,39 +44,58 @@ class CsvExportService {
       'Amount',
       'Category',
       'Account',
+      'To Account',
+      'Counterparty',
+      'Related Transaction ID',
+      'Due Date',
       'Notes',
     ]);
 
-    // ==========================================
-    // Transactions
-    // ==========================================
-
     for (final transaction in transactions) {
+      final categoryId =
+          transaction.categoryId;
 
       final categoryName =
-          categoryMap[transaction.categoryId] ??
-              'Unknown Category';
+          categoryId == null ||
+                  categoryId.isEmpty
+              ? ''
+              : categoryMap[categoryId] ??
+                  'Unknown Category';
 
       final accountName =
           accountMap[transaction.accountId] ??
               'Unknown Account';
 
+      final toAccountId =
+          transaction.toAccountId;
+
+      final toAccountName =
+          toAccountId == null ||
+                  toAccountId.isEmpty
+              ? ''
+              : accountMap[toAccountId] ??
+                  'Unknown Account';
+
       rows.add([
-        transaction.transactionDate.toIso8601String(),
-        transaction.type,
+        transaction.transactionDate
+            .toIso8601String(),
+        _typeLabel(transaction.type),
         transaction.amount / 100,
         categoryName,
         accountName,
+        toAccountName,
+        transaction.counterpartyName ?? '',
+        transaction.relatedTransactionId ?? '',
+        transaction.dueDate
+                ?.toIso8601String() ??
+            '',
         transaction.notes ?? '',
       ]);
     }
 
-    // ==========================================
-    // Generate CSV
-    // ==========================================
-
     final csv =
-        const ListToCsvConverter().convert(rows);
+        const ListToCsvConverter()
+            .convert(rows);
 
     final dir =
         await getTemporaryDirectory();
@@ -107,5 +107,26 @@ class CsvExportService {
     await file.writeAsString(csv);
 
     return file;
+  }
+
+  String _typeLabel(String type) {
+    switch (type) {
+      case 'income':
+        return 'Income';
+      case 'expense':
+        return 'Expense';
+      case 'transfer':
+        return 'Transfer';
+      case 'borrowed':
+        return 'Borrowed';
+      case 'lent':
+        return 'Lent';
+      case 'repaymentPaid':
+        return 'Repayment Paid';
+      case 'repaymentReceived':
+        return 'Repayment Received';
+      default:
+        return type;
+    }
   }
 }
