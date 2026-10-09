@@ -17,7 +17,7 @@ class FinancialHealthService {
       FinancialHealthModel>
       calculateHealth(DateTime? month)
   async {
-    final now = (month ?? DateTime.now()).toUtc();
+    final now = (month ?? DateTime.now());
 
     final startOfMonth =
         DateTime(
@@ -70,7 +70,7 @@ class FinancialHealthService {
 
         income += amount;
 
-      } else {
+      } else if (t.type == 'expense') {
 
         expense += amount;
       }
@@ -118,40 +118,73 @@ class FinancialHealthService {
     // =========================================
 
     final categories =
-    await isar
-        .categoryModels
-        .filter()
-        .isDeletedEqualTo(
-          false,
-        )
-        .findAll();
+        await isar
+            .categoryModels
+            .filter()
+            .isDeletedEqualTo(
+              false,
+            )
+            .findAll();
 
     double totalBudget = 0;
 
-    for (final c
+    final budgetedExpenseCategoryIds =
+        <String>{};
+
+    for (final category
         in categories) {
+      final monthlyBudget =
+          category.monthlyBudget;
 
-      if (c.monthlyBudget !=
-          null) {
-
-        totalBudget +=
-            c.monthlyBudget! / 100;
+      // Only expense categories with
+      // an actual positive budget count.
+      if (category.type != 'expense' ||
+          monthlyBudget == null ||
+          monthlyBudget <= 0) {
+        continue;
       }
+
+      totalBudget +=
+          monthlyBudget / 100;
+
+      budgetedExpenseCategoryIds.add(
+        category.uuid,
+      );
+    }
+
+    double budgetedExpense = 0;
+
+    for (final transaction
+        in transactions) {
+      if (transaction.type !=
+          'expense') {
+        continue;
+      }
+
+      final categoryId =
+          transaction.categoryId;
+
+      if (categoryId == null ||
+          !budgetedExpenseCategoryIds
+              .contains(categoryId)) {
+        continue;
+      }
+
+      budgetedExpense +=
+          transaction.amount / 100;
     }
 
     final budgetUsage =
-
         totalBudget <= 0
-
-            ? 0
-
-            : ((expense /
-                            totalBudget) *
-                        100)
-                    .clamp(
-                  0,
-                  100,
-                );
+            ? 0.0
+            : ((budgetedExpense /
+                        totalBudget) *
+                    100)
+                .clamp(
+                  0.0,
+                  100.0,
+                )
+                .toDouble();
 
     // =========================================
     // SCORING

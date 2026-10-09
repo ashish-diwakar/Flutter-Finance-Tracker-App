@@ -80,6 +80,12 @@ class BudgetProgressChart
               (progress * 100)
                   .toStringAsFixed(0);
 
+          final progressBarValue =
+              progress.clamp(
+                0.0,
+                1.0,
+              ).toDouble();
+
           Color progressColor;
 
           Color? progressBorderColor;
@@ -227,7 +233,7 @@ class BudgetProgressChart
                         LinearProgressIndicator(
 
                       value:
-                          progress,
+                          progressBarValue,
 
                       minHeight:
                           10,

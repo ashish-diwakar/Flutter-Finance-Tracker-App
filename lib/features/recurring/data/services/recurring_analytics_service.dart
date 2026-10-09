@@ -7,231 +7,217 @@ import '../../../../shared/models/transaction_model.dart';
 import '../../domain/models/recurring_analytics_model.dart';
 
 class RecurringAnalyticsService {
-
   final Isar isar;
 
   RecurringAnalyticsService(
     this.isar,
   );
 
-  Future<
-      RecurringAnalyticsModel>
-      calculateAnalytics()
-  async {
-
+  Future<RecurringAnalyticsModel>
+      calculateAnalytics() async {
     // =========================================
-    // LOAD RECURRING
+    // LOAD ACTIVE RECURRING TRANSACTIONS
     // =========================================
 
     final recurring =
-
         await isar
             .recurringTransactionModels
             .filter()
-            .isActiveEqualTo(
-              true,
-            )
+            .isActiveEqualTo(true)
             .and()
-            .isDeletedEqualTo(
-              false,
-            )
+            .isDeletedEqualTo(false)
             .findAll();
 
+    // Monthly Commitments represents
+    // recurring EXPENSES only.
+    final expenseRecurring =
+        recurring
+            .where(
+              (r) =>
+                  r.type == 'expense',
+            )
+            .toList();
+
     // =========================================
-    // LOAD TRANSACTIONS
+    // CURRENT MONTH INCOME
     // =========================================
 
-    final transactions =
+    final now = DateTime.now();
 
+    final startOfMonth = DateTime(
+      now.year,
+      now.month,
+      1,
+    );
+
+    final startOfNextMonth = DateTime(
+      now.year,
+      now.month + 1,
+      1,
+    );
+
+    final incomeTransactions =
         await isar
             .transactionModels
             .filter()
-            .isDeletedEqualTo(
-              false,
+            .typeEqualTo('income')
+            .isDeletedEqualTo(false)
+            .transactionDateBetween(
+              startOfMonth,
+              startOfNextMonth,
+              includeLower: true,
+              includeUpper: false,
             )
             .findAll();
+
+    final totalIncome =
+        incomeTransactions.fold<double>(
+      0.0,
+      (sum, transaction) =>
+          sum +
+          transaction.amount / 100,
+    );
 
     // =========================================
     // LOAD CATEGORIES
     // =========================================
 
-    // final categories =
-    //     await isar
-    //         .categoryModels
-    //         .where()
-    //         .findAll();
     final categories =
-          await isar
-              .categoryModels
-              .filter()
-              .isDeletedEqualTo(
-                false,
-              )
-              .findAll();
+        await isar
+            .categoryModels
+            .filter()
+            .isDeletedEqualTo(false)
+            .findAll();
 
-    final Map<
-            String,
-            String>
+    final Map<String, String>
         categoryMap = {
-
-      for (final c
+      for (final category
           in categories)
-
-        c.uuid: c.name,
+        category.uuid:
+            category.name,
     };
 
     // =========================================
-    // TOTAL INCOME
+    // MONTHLY RECURRING EXPENSE
     // =========================================
 
-    double totalIncome = 0;
+    double monthlyRecurring = 0;
 
-    for (final t
-        in transactions) {
-
-      if (t.type ==
-          'income') {
-
-        totalIncome +=
-            t.amount / 100;
-      }
-    }
-
-    // =========================================
-    // MONTHLY RECURRING
-    // =========================================
-
-    double monthlyRecurring =
-        0;
-
-    final Map<
-            String,
-            double>
+    final Map<String, double>
         categoryTotals = {};
 
-    for (final r
-        in recurring) {
-
+    for (final recurring
+        in expenseRecurring) {
       double amount =
-          r.amount / 100;
+          recurring.amount / 100;
 
       // =====================================
       // NORMALIZE TO MONTHLY
       // =====================================
 
-      switch (
-          r.frequency) {
-
+      switch (recurring.frequency) {
         case 'daily':
-
-          // amount *= 30;
-          amount *= (30 / r.interval);
+          amount *=
+              30 /
+              recurring.interval;
           break;
 
         case 'weekly':
-
-          // amount *= 4;
-          amount *= (4.345 / r.interval);
+          amount *=
+              4.345 /
+              recurring.interval;
           break;
 
         case 'monthly':
-          amount /= r.interval;
+          amount /=
+              recurring.interval;
           break;
 
         case 'yearly':
-
-          // amount /= 12;
-          amount /= (12 * r.interval);
+          amount /=
+              12 *
+              recurring.interval;
           break;
       }
 
-      monthlyRecurring +=
-          amount;
+      monthlyRecurring += amount;
 
       // =====================================
       // CATEGORY NAME LOOKUP
       // =====================================
 
       final categoryName =
-
           categoryMap[
-                  r.categoryId] ??
+                  recurring.categoryId] ??
               'Other';
 
-      categoryTotals[
-          categoryName] =
-
-          (categoryTotals[
-                      categoryName] ??
-                  0) +
-              amount;
+      categoryTotals.update(
+        categoryName,
+        (value) =>
+            value + amount,
+        ifAbsent: () => amount,
+      );
     }
 
     // =========================================
-    // YEARLY RECURRING
+    // YEARLY RECURRING EXPENSE
     // =========================================
 
     final yearlyRecurring =
         monthlyRecurring * 12;
 
     // =========================================
-    // RECURRING INCOME RATIO
+    // RECURRING EXPENSE / MONTHLY INCOME RATIO
     // =========================================
 
+    // final recurringIncomeRatio =
+    //     totalIncome <= 0
+    //         ? 0.0
+    //         : ((monthlyRecurring /
+    //                     totalIncome) *
+    //                 100)
+    //             .clamp(
+    //               0.0,
+    //               100.0,
+    //             )
+    //             .toDouble();
     final recurringIncomeRatio =
-
-        totalIncome <= 0
-
-            ? 0
-
-            : ((monthlyRecurring /
-                            totalIncome) *
-                        100)
-                    .clamp(
-                  0,
-                  100,
-                );
-
+    totalIncome <= 0
+        ? 0.0
+        : (monthlyRecurring /
+                totalIncome) *
+            100;
+            
     // =========================================
-    // TOP CATEGORY
+    // TOP RECURRING EXPENSE CATEGORY
     // =========================================
 
     String? topCategory;
 
-    if (categoryTotals
-        .isNotEmpty) {
-
+    if (categoryTotals.isNotEmpty) {
       topCategory =
           categoryTotals.entries
-
               .reduce(
-
-        (a, b) {
-
-          return a.value >
-                  b.value
-
-              ? a
-
-              : b;
-        },
+        (a, b) =>
+            a.value > b.value
+                ? a
+                : b,
       ).key;
     }
 
-    return RecurringAnalyticsModel(
+    // =========================================
+    // RESULT
+    // =========================================
 
+    return RecurringAnalyticsModel(
       monthlyRecurringExpense:
           monthlyRecurring,
-
       yearlyRecurringExpense:
           yearlyRecurring,
-
       recurringIncomeRatio:
-          recurringIncomeRatio.toDouble(),
-
+          recurringIncomeRatio,
       activeRecurringCount:
-          recurring.length,
-
+          expenseRecurring.length,
       topRecurringCategory:
           topCategory,
     );

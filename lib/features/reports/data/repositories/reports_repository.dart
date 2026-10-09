@@ -81,11 +81,15 @@ class ReportsRepository {
             )
             .findAll();
 
+    // final categories =
+    //     await isar.categoryModels
+    //         .filter()
+    //         .isDeletedEqualTo(false)
+    //         .findAll();
     final categories =
-        await isar.categoryModels
-            .filter()
-            .isDeletedEqualTo(false)
-            .findAll();
+          await isar.categoryModels
+              .where()
+              .findAll();
 
     final Map<String, int> totals = {};
 

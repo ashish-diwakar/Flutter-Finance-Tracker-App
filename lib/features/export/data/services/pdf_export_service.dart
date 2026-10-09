@@ -416,7 +416,7 @@ class PdfExportService {
 
         style:
 
-            pw.TextStyle(
+          const pw.TextStyle(
 
           fontSize: 28,
 
@@ -510,7 +510,7 @@ class PdfExportService {
 
               style:
 
-                  pw.TextStyle(
+                const pw.TextStyle(
 
                 fontWeight:
 
@@ -564,7 +564,7 @@ class PdfExportService {
 
         style:
 
-            pw.TextStyle(
+          const pw.TextStyle(
 
           fontSize: 20,
 
@@ -678,7 +678,7 @@ class PdfExportService {
 
               style:
 
-                  pw.TextStyle(
+                const pw.TextStyle(
 
                 fontSize: 28,
 
@@ -772,7 +772,7 @@ class PdfExportService {
 
         style:
 
-            pw.TextStyle(
+          const pw.TextStyle(
 
           fontSize: 22,
 
@@ -926,7 +926,7 @@ class PdfExportService {
 
               style:
 
-                  pw.TextStyle(
+                const pw.TextStyle(
 
                 fontSize: 17,
 
@@ -1010,7 +1010,7 @@ class PdfExportService {
 
         style:
 
-            pw.TextStyle(
+          const pw.TextStyle(
 
           fontSize: 22,
 
@@ -1068,7 +1068,7 @@ class PdfExportService {
 
           style:
 
-              pw.TextStyle(
+            const pw.TextStyle(
 
             fontWeight:
 
@@ -1788,7 +1788,7 @@ class PdfExportService {
 
             style:
 
-                pw.TextStyle(
+              const pw.TextStyle(
 
               color:
 

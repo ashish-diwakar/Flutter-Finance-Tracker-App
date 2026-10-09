@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../shared/utils/provider_refresh_helper.dart';
+import '../../data/services/budget_alert_checker.dart';
 import '../providers/budget_progress_provider.dart';
 import '../providers/category_analytics_provider.dart';
 import '../providers/expense_forecast_provider.dart';
@@ -137,11 +138,11 @@ class _ReportsScreenState
     //     ref.watch(
     //   expenseForecastProvider,
     // );
-    final forcastMonth = DateTime(selectedMonth.year, selectedMonth.month + 1);
+    //final forcastMonth = DateTime(selectedMonth.year, selectedMonth.month + 1);
     final forecastAsync =
         ref.watch(
       expenseForecastProvider(
-       forcastMonth,
+       selectedMonth,
       ),
     );
 
@@ -285,72 +286,162 @@ class _ReportsScreenState
                           return AlertDialog(
                             title: const Text('Select Month'),
 
-                            content: Row(
-                              children: [
-                                Expanded(
-                                  child: DropdownButtonFormField<int>(
-                                    initialValue: selectedMonthNumber,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Month',
-                                    ),
-                                    items: List.generate(
-                                      12,
-                                      (index) {
-                                        final month = index + 1;
+                            // content: Row(
+                            //   children: [
+                            //     Expanded(
+                            //       child: DropdownButtonFormField<int>(
+                            //         initialValue: selectedMonthNumber,
+                            //         decoration: const InputDecoration(
+                            //           labelText: 'Month',
+                            //         ),
+                            //         items: List.generate(
+                            //           12,
+                            //           (index) {
+                            //             final month = index + 1;
 
-                                        return DropdownMenuItem(
-                                          value: month,
-                                          child: Text(
-                                            DateFormat.MMMM().format(
-                                              DateTime(2000, month),
+                            //             return DropdownMenuItem(
+                            //               value: month,
+                            //               child: Text(
+                            //                 DateFormat.MMMM().format(
+                            //                   DateTime(2000, month),
+                            //                 ),
+                            //               ),
+                            //             );
+                            //           },
+                            //         ),
+                            //         onChanged: (value) {
+                            //           if (value != null) {
+                            //             setState(() {
+                            //               selectedMonthNumber = value;
+                            //             });
+                            //           }
+                            //         },
+                            //       ),
+                            //     ),
+
+                            //     const SizedBox(width: 16),
+
+                            //     Expanded(
+                            //       child: DropdownButtonFormField<int>(
+                            //         initialValue: selectedYear,
+                            //         decoration: const InputDecoration(
+                            //           labelText: 'Year',
+                            //         ),
+                            //         items: List.generate(
+                            //           81,
+                            //           (index) {
+                            //             final year = 2020 + index;
+
+                            //             return DropdownMenuItem(
+                            //               value: year,
+                            //               child: Text(
+                            //                 year.toString(),
+                            //               ),
+                            //             );
+                            //           },
+                            //         ),
+                            //         onChanged: (value) {
+                            //           if (value != null) {
+                            //             setState(() {
+                            //               selectedYear = value;
+                            //             });
+                            //           }
+                            //         },
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
+
+                            content: SizedBox(
+                              width: 320,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: DropdownButtonFormField<int>(
+                                      initialValue:
+                                          selectedMonthNumber,
+                                      isExpanded: true,
+                                      decoration:
+                                          const InputDecoration(
+                                        labelText: 'Month',
+                                        border:
+                                            OutlineInputBorder(),
+                                      ),
+                                      items: List.generate(
+                                        12,
+                                        (index) {
+                                          final month =
+                                              index + 1;
+
+                                          return DropdownMenuItem<int>(
+                                            value: month,
+                                            child: Text(
+                                              DateFormat.MMMM().format(
+                                                DateTime(
+                                                  2000,
+                                                  month,
+                                                ),
+                                              ),
+                                              overflow:
+                                                  TextOverflow.ellipsis,
                                             ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    onChanged: (value) {
-                                      if (value != null) {
+                                          );
+                                        },
+                                      ),
+                                      onChanged: (value) {
+                                        if (value == null) {
+                                          return;
+                                        }
+
                                         setState(() {
-                                          selectedMonthNumber = value;
+                                          selectedMonthNumber =
+                                              value;
                                         });
-                                      }
-                                    },
-                                  ),
-                                ),
-
-                                const SizedBox(width: 16),
-
-                                Expanded(
-                                  child: DropdownButtonFormField<int>(
-                                    initialValue: selectedYear,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Year',
-                                    ),
-                                    items: List.generate(
-                                      81,
-                                      (index) {
-                                        final year = 2020 + index;
-
-                                        return DropdownMenuItem(
-                                          value: year,
-                                          child: Text(
-                                            year.toString(),
-                                          ),
-                                        );
                                       },
                                     ),
-                                    onChanged: (value) {
-                                      if (value != null) {
+                                  ),
+
+                                  const SizedBox(
+                                    width: 12,
+                                  ),
+
+                                  Expanded(
+                                    flex: 2,
+                                    child: DropdownButtonFormField<int>(
+                                      initialValue: selectedYear,
+                                      isExpanded: true,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Year',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      items: List.generate(
+                                        81,
+                                        (index) {
+                                          final year = 2020 + index;
+
+                                          return DropdownMenuItem<int>(
+                                            value: year,
+                                            child: Text(
+                                              year.toString(),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      onChanged: (value) {
+                                        if (value == null) {
+                                          return;
+                                        }
+
                                         setState(() {
                                           selectedYear = value;
                                         });
-                                      }
-                                    },
+                                      },
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-
                             actions: [
                               TextButton(
                                 onPressed: () {
@@ -693,7 +784,9 @@ class _ReportsScreenState
                     MaterialPageRoute(
 
                       builder: (_) =>
-                          const BudgetAlertsScreen(),
+                          BudgetAlertsScreen(
+                            month: selectedMonth,
+                          ),
                     ),
                   );
                 },
@@ -704,6 +797,38 @@ class _ReportsScreenState
 
                 label: const Text(
                   'View Budget Alerts',
+                ),
+              ),
+            ),
+
+            const SizedBox(
+              height: 12,
+            ),
+
+            // =====================================================
+            // Income Targets BUTTON
+            // =====================================================
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                        BudgetAlertsScreen(
+                          targetType: FinancialTargetType.incomeTarget,
+                          month: selectedMonth,
+                        ),
+                    ),
+                  );
+                },
+                icon: const Icon(
+                  Icons.trending_up,
+                ),
+                label: const Text(
+                  'View Income Targets',
                 ),
               ),
             ),

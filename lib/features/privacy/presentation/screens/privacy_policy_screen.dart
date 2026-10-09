@@ -59,7 +59,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   'is handled when you use the application.',
             ),
 
-            _PolicySection(
+            const _PolicySection(
               title: '2. Financial Information',
               content:
                   'The application allows you to enter and manage '
@@ -93,7 +93,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   'by the operating system.',
             ),
 
-            _PolicySection(
+            const _PolicySection(
               title: '5. Notifications',
               content:
                   'The application may create local notifications '
@@ -118,7 +118,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   'selected third-party application or service.',
             ),
 
-            _PolicySection(
+            const _PolicySection(
               title: '7. Network Connectivity',
               content:
                   'The application may check the device\'s network '
@@ -139,7 +139,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   'synchronization of financial records.',
             ),
 
-            _PolicySection(
+            const _PolicySection(
               title: '9. Data Security',
               content:
                   'We aim to protect information stored by the '
@@ -150,7 +150,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   'exported backup files with untrusted parties.',
             ),
 
-            _PolicySection(
+            const _PolicySection(
               title: '10. Data Retention and Deletion',
               content:
                   'Because financial records are stored locally, '
@@ -172,7 +172,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   'a server-based account system.',
             ),
 
-            _PolicySection(
+            const _PolicySection(
               title: '12. Changes to This Privacy Policy',
               content:
                   'This Privacy Policy may be updated when the '

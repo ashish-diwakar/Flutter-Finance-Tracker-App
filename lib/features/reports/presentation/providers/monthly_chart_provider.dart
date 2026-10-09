@@ -1,4 +1,3 @@
-
 import 'package:isar_community/isar.dart';
 import 'package:finance_tracker/shared/providers/database_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,16 +6,13 @@ import 'package:finance_tracker/shared/models/transaction_model.dart';
 import '../../domain/models/monthly_chart_data.dart';
 
 final monthlyChartProvider =
-    FutureProvider<
-        List<MonthlyChartData>>(
+    FutureProvider<List<MonthlyChartData>>(
   (ref) async {
-
-    final isar =
-        await ref.read(
+    final isar = await ref.read(
       isarProvider.future,
     );
 
-    final now = DateTime.now().toUtc();
+    final now = DateTime.now();
 
     final startDate = DateTime(
       now.year,
@@ -24,33 +20,29 @@ final monthlyChartProvider =
       1,
     );
 
-    // final transactions =
-    //     await isar.transactionModels
-    //         .filter()
-    //         .isDeletedEqualTo(false)
-    //         .findAll();
+    final endDate = DateTime(
+      now.year,
+      now.month + 1,
+      1,
+    );
 
     final transactions =
-    await isar.transactionModels
-        .filter()
-        .isDeletedEqualTo(false)
-        .transactionDateGreaterThan(
-          startDate,
-          include: true,
-        )
-        .findAll();
+        await isar.transactionModels
+            .filter()
+            .isDeletedEqualTo(false)
+            .transactionDateBetween(
+              startDate,
+              endDate,
+              includeLower: true,
+              includeUpper: false,
+            )
+            .findAll();
 
-    final Map<String, double>
-        incomeMap = {};
+    final Map<String, double> incomeMap = {};
+    final Map<String, double> expenseMap = {};
 
-    final Map<String, double>
-        expenseMap = {};
-
-    for (final transaction
-        in transactions) {
-
-      final date =
-          transaction.transactionDate;
+    for (final transaction in transactions) {
+      final date = transaction.transactionDate;
 
       final key =
           '${date.month}/${date.year}';
@@ -58,80 +50,39 @@ final monthlyChartProvider =
       final amount =
           transaction.amount / 100;
 
-      if (transaction.type ==
-          'income') {
-
+      if (transaction.type == 'income') {
         incomeMap.update(
           key,
-          (value) =>
-              value + amount,
-
+          (value) => value + amount,
           ifAbsent: () => amount,
         );
-
-      } else {
-
+      } else if (transaction.type == 'expense') {
         expenseMap.update(
           key,
-          (value) =>
-              value + amount,
-
+          (value) => value + amount,
           ifAbsent: () => amount,
         );
       }
     }
 
-    final months = {
+    return List.generate(
+      6,
+      (index) {
+        final monthDate = DateTime(
+          startDate.year,
+          startDate.month + index,
+          1,
+        );
 
-      ...incomeMap.keys,
-      ...expenseMap.keys,
-    }.toList();
+        final key =
+            '${monthDate.month}/${monthDate.year}';
 
-    months.sort((a, b) {
-
-      final aParts =
-          a.split('/');
-
-      final bParts =
-          b.split('/');
-
-      final aDate =
-          DateTime(
-        int.parse(aParts[1]),
-        int.parse(aParts[0]),
-      );
-
-      final bDate =
-          DateTime(
-        int.parse(bParts[1]),
-        int.parse(bParts[0]),
-      );
-
-      return aDate.compareTo(
-        bDate,
-      );
-    });
-
-    if (months.length > 6) {
-
-      months.removeRange(
-        0,
-        months.length - 6,
-      );
-    }
-
-    return months.map((month) {
-
-      return MonthlyChartData(
-
-        month: month,
-
-        income:
-            incomeMap[month] ?? 0,
-
-        expense:
-            expenseMap[month] ?? 0,
-      );
-    }).toList();
+        return MonthlyChartData(
+          month: key,
+          income: incomeMap[key] ?? 0,
+          expense: expenseMap[key] ?? 0,
+        );
+      },
+    );
   },
 );

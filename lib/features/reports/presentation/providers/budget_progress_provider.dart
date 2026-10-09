@@ -64,23 +64,23 @@ final budgetProgressProvider =
             )
             .findAll();
 
-    final incomeTransactions =
-        await isar
-            .transactionModels
-            .filter()
-            .typeEqualTo(
-              'income',
-            )
-            .isDeletedEqualTo(
-              false,
-            )
-            .transactionDateBetween(
-              startOfMonth,
-              startOfNextMonth,
-              includeLower: true,
-              includeUpper: false,
-            )
-            .findAll();
+    // final incomeTransactions =
+    //     await isar
+    //         .transactionModels
+    //         .filter()
+    //         .typeEqualTo(
+    //           'income',
+    //         )
+    //         .isDeletedEqualTo(
+    //           false,
+    //         )
+    //         .transactionDateBetween(
+    //           startOfMonth,
+    //           startOfNextMonth,
+    //           includeLower: true,
+    //           includeUpper: false,
+    //         )
+    //         .findAll();
 
     final categories =
         await repository
@@ -91,70 +91,140 @@ final budgetProgressProvider =
         category.uuid: category,
     };
 
-    final Map<String, double>
-        totals = {};
+    final Map<String, double> totals = {};
 
-    final totalIncome =
-        incomeTransactions.fold<double>(
-      0.0,
-      (sum, transaction) =>
-          sum +
-          transaction.amount,
-    );
+    // final totalIncome =
+    //     incomeTransactions.fold<double>(
+    //   0.0,
+    //   (sum, transaction) =>
+    //       sum +
+    //       transaction.amount,
+    // );
 
 
-    for (final transaction in expenseTransactions) {
-      var categoryName = 'Unknown Category';
+
+
+    // for (final transaction in expenseTransactions) {
+    //   final categoryId = transaction.categoryId;
+
+    //   if (categoryId == null ||
+    //       categoryId.isEmpty) {
+    //     LoggerService.error(
+    //       'Expense transaction has no categoryId.',
+    //     );
+    //     continue;
+    //   }
+
+    //   final category =
+    //       categoryMap[categoryId];
+
+    //   if (category == null) {
+    //     LoggerService.error(
+    //       'No category found for transaction with categoryId: '
+    //       '$categoryId',
+    //     );
+    //     continue;
+    //   }
+
+    //   final amount =
+    //       transaction.amount / 100;
+
+    //   totals.update(
+    //     categoryId,
+    //     (value) => value + amount,
+    //     ifAbsent: () => amount,
+    //   );
+    // }
+
+    for (final transaction
+        in expenseTransactions) {
+      final categoryId =
+          transaction.categoryId;
+
+      if (categoryId == null ||
+          categoryId.isEmpty) {
+        LoggerService.error(
+          'Expense transaction has no categoryId.',
+        );
+        continue;
+      }
+
       final category =
-          categoryMap[transaction.categoryId];
+          categoryMap[categoryId];
 
       if (category == null) {
         LoggerService.error(
           'No category found for transaction with categoryId: '
-          '${transaction.categoryId}',
+          '$categoryId',
         );
-        //continue;;
-      } else {
-        categoryName = category.name;
+        continue;
       }
 
       final amount =
           transaction.amount / 100;
 
       totals.update(
-        categoryName,
+        categoryId,
         (value) => value + amount,
         ifAbsent: () => amount,
       );
     }
 
-    final result =
-        totals.entries.map((e) {
+    // final result =
+    //     totals.entries.map((entry) {
+    //   final category =
+    //       categoryMap[entry.key]!;
 
-      final category =
-          categories.firstWhere(
-        (c) =>
-            c.name == e.key,
+    //   final budget =
+    //       (category.monthlyBudget ??
+    //               totalIncome) /
+    //           100;
+
+    //   return BudgetProgressData(
+    //     category: category.name,
+    //     spent: entry.value,
+    //     budget: budget,
+    //   );
+    // }).toList();
+
+    // return result;
+    final List<BudgetProgressData> result = [];
+
+    for (final category in categories) {
+      // Budget Performance applies only
+      // to expense categories.
+      if (category.type != 'expense') {
+        continue;
+      }
+
+
+      final monthlyBudget =
+          category.monthlyBudget;
+
+      if (monthlyBudget == null ||
+          monthlyBudget <= 0) {
+        continue;
+      }
+
+      final spent =
+          totals[category.uuid] ?? 0.0;
+
+      // Preserve a deleted category in historical
+      // reporting only when it actually had spending
+      // during the selected month.
+      if (category.isDeleted &&
+          spent == 0) {
+        continue;
+      }
+
+      result.add(
+        BudgetProgressData(
+          category: category.name,
+          spent: spent,
+          budget: monthlyBudget / 100,
+        ),
       );
-
-      final budget =
-          (category.monthlyBudget ??
-                  totalIncome) /
-              100;
-
-      return BudgetProgressData(
-
-        category:
-            e.key,
-
-        spent:
-            e.value,
-
-        budget:
-            budget,
-      );
-
-    }).toList();
+    }
 
     return result;
   },

@@ -236,34 +236,45 @@ class _ManageCategoriesScreenState
 
                 } else {
 
-                  final updatedCategory =
-                    CategoryModel()
+                  // final updatedCategory =
+                  //   CategoryModel()
 
-                      ..uuid = category.uuid
+                  //     ..uuid = category.uuid
 
-                      ..name =
-                          nameController.text
-                              .trim()
+                  //     ..name =
+                  //         nameController.text
+                  //             .trim()
 
-                      ..type = type
+                  //     ..type = type
 
-                      ..monthlyBudget =
-                          budget
+                  //     ..monthlyBudget =
+                  //         budget
 
-                      ..isDefault =
-                          category.isDefault
+                  //     ..isDefault =
+                  //         category.isDefault
 
-                      ..isDeleted =
-                          category.isDeleted
+                  //     ..isDeleted =
+                  //         category.isDeleted
 
-                      ..isSynced = false
+                  //     ..isSynced = false
 
-                      ..updatedAt =
-                          DateTime.now().toUtc();
+                  //     ..updatedAt =
+                  //         DateTime.now().toUtc();
 
-                  await repository
-                      .updateCategory(
-                    updatedCategory,
+                  // await repository
+                  //     .updateCategory(
+                  //   updatedCategory,
+                  // );
+
+                  category
+                    ..name = nameController.text.trim()
+                    ..type = type
+                    ..monthlyBudget = budget
+                    ..isSynced = false
+                    ..updatedAt = DateTime.now().toUtc();
+
+                  await repository.updateCategory(
+                    category,
                   );
 
                   ref.invalidate(categoriesProvider('income'));
@@ -300,26 +311,49 @@ class _ManageCategoriesScreenState
                   ),
                 );
 
-              } catch (_) {
+              // } catch (_) {
+
+              //   if (!mounted) {
+              //     return;
+              //   }
+
+              //   try {
+
+              //     setDialogState(() {
+              //       saving = false;
+              //     });
+
+              //   } catch (_) {}
+                
+              //   ScaffoldMessenger.of(
+              //     this.context,
+              //   ).showSnackBar(
+
+              //     const SnackBar(
+
+              //       content: Text(
+              //         'Unable to save category',
+              //       ),
+              //     ),
+              //   );
+              // }
+              } catch (e, stackTrace) {
+                debugPrint(
+                  'SAVE CATEGORY ERROR: $e',
+                );
+
+                debugPrint(
+                  stackTrace.toString(),
+                );
 
                 if (!mounted) {
                   return;
                 }
 
-                try {
-
-                  setDialogState(() {
-                    saving = false;
-                  });
-
-                } catch (_) {}
-                
                 ScaffoldMessenger.of(
                   this.context,
                 ).showSnackBar(
-
                   const SnackBar(
-
                     content: Text(
                       'Unable to save category',
                     ),
@@ -523,41 +557,41 @@ class _ManageCategoriesScreenState
                             value.trim(),
                           );
 
-                          if (amount ==
-                              null) {
-
-                            return 'Enter valid budget';
+                          if (amount == null) {
+                            return type == 'expense'
+                                ? 'Enter valid budget'
+                                : 'Enter valid income target';
                           }
 
-                          if (amount <
-                              0) {
-
-                            return 'Budget cannot be negative';
+                          if (amount < 0) {
+                            return type == 'expense'
+                                ? 'Budget cannot be negative'
+                                : 'Income target cannot be negative';
                           }
 
-                          if (amount >
-                              999999999) {
-
-                            return 'Budget is too large';
+                          if (amount > 999999999) {
+                            return type == 'expense'
+                                ? 'Budget is too large'
+                                : 'Income target is too large';
                           }
 
                           return null;
                         },
 
                         decoration:
-                            const InputDecoration(
-
+                            InputDecoration(
                           labelText:
-                              'Monthly Budget',
-
+                              type == 'expense'
+                                  ? 'Monthly Budget'
+                                  : 'Monthly Income Target',
                           hintText:
-                              'Optional',
-
+                              type == 'expense'
+                                  ? 'Optional spending limit'
+                                  : 'Optional income target',
                           prefixText:
                               '₹ ',
-
                           border:
-                              OutlineInputBorder(),
+                              const OutlineInputBorder(),
                         ),
                       ),
                     ],
@@ -840,14 +874,14 @@ class _ManageCategoriesScreenState
                                 ),
 
                                 child: Text(
-
-                                  'Budget: ${
-                                      CurrencyFormatter.format(
+                                  '${category.type == 'income'
+                                      ? 'Income Target'
+                                      : 'Budget'}: ${
+                                    CurrencyFormatter.format(
                                       amount: category.monthlyBudget!,
                                       currency: currency,
-                                      )
-                                    }',
-
+                                    )
+                                  }',
                                   style:
                                       const TextStyle(
                                     fontWeight:

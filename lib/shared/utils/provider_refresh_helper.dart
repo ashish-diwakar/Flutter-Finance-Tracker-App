@@ -89,7 +89,15 @@ class ProviderRefreshHelper {
       refreshBudgetData(
     WidgetRef ref,
   ) async {
+    // Invalidate all parameterized target instances:
+    // - expenseBudget
+    // - incomeTarget
+    ref.invalidate(
+      financialTargetAlertsProvider,
+    );
 
+    // Keep the existing compatibility provider
+    // in sync as well.
     ref.invalidate(
       budgetAlertsProvider,
     );
@@ -169,13 +177,14 @@ class ProviderRefreshHelper {
   // Reports
   // ==========================================
 
-  static Future<void>
-      refreshReportsData(
+  static Future<void> refreshReportsData(
     WidgetRef ref,
     DateTime month,
   ) async {
+    // =========================================
+    // INVALIDATE REPORT PROVIDERS
+    // =========================================
 
-      
     ref.invalidate(
       monthlySummaryProvider(
         month,
@@ -193,7 +202,9 @@ class ProviderRefreshHelper {
     );
 
     ref.invalidate(
-      budgetProgressProvider(month),
+      budgetProgressProvider(
+        month,
+      ),
     );
 
     ref.invalidate(
@@ -201,35 +212,41 @@ class ProviderRefreshHelper {
     );
 
     ref.invalidate(
-      expenseForecastProvider,
+      expenseForecastProvider(
+        month,
+      ),
     );
 
     ref.invalidate(
-      financialInsightsProvider,
+      financialInsightsProvider(
+        month,
+      ),
     );
 
     ref.invalidate(
-      financialHealthProvider,
+      financialHealthProvider(
+        month,
+      ),
     );
 
     ref.invalidate(
       recurringAnalyticsProvider,
     );
-    //-----------------------------
 
-    ref.invalidate(
-      budgetProgressProvider,
-    );
-
-    
+    // Other report-related providers
     ref.invalidate(
       goalAnalyticsProvider,
     );
 
-    ref.invalidate(filteredTransactionsProvider);
+    ref.invalidate(
+      filteredTransactionsProvider,
+    );
+
+    // =========================================
+    // WAIT FOR REPORT DATA TO REFRESH
+    // =========================================
 
     await Future.wait([
-
       ref.read(
         monthlySummaryProvider(
           month,
@@ -247,10 +264,37 @@ class ProviderRefreshHelper {
       ),
 
       ref.read(
-        budgetProgressProvider(month).future,
+        budgetProgressProvider(
+          month,
+        ).future,
+      ),
+
+      ref.read(
+        monthlyTrendsProvider.future,
+      ),
+
+      ref.read(
+        expenseForecastProvider(
+          month,
+        ).future,
+      ),
+
+      ref.read(
+        financialInsightsProvider(
+          month,
+        ).future,
+      ),
+
+      ref.read(
+        financialHealthProvider(
+          month,
+        ).future,
+      ),
+
+      ref.read(
+        recurringAnalyticsProvider.future,
       ),
     ]);
-
   }
 
   

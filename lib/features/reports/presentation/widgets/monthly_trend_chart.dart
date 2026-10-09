@@ -343,6 +343,8 @@ class MonthlyTrendChart
                         ).toList(),
 
                         isCurved: true,
+                        
+                        preventCurveOverShooting: true,
 
                         color: Colors.green,
 
@@ -406,6 +408,8 @@ class MonthlyTrendChart
                         ).toList(),
 
                         isCurved: true,
+                        
+                        preventCurveOverShooting: true,
 
                         color: Colors.red,
 

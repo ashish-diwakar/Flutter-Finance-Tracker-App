@@ -5,8 +5,12 @@ import '../../../../shared/models/transaction_model.dart';
 
 import '../../domain/models/budget_alert_model.dart';
 
-class BudgetAlertChecker {
+enum FinancialTargetType {
+  expenseBudget,
+  incomeTarget,
+}
 
+class BudgetAlertChecker {
   final Isar isar;
 
   BudgetAlertChecker(
@@ -14,54 +18,68 @@ class BudgetAlertChecker {
   );
 
   Future<List<BudgetAlertModel>>
-    checkAlerts({
-      bool includeSafe = false,
-  })
-  async {
+      checkAlerts({
+    bool includeSafe = false,
+    FinancialTargetType targetType =
+        FinancialTargetType.expenseBudget,
+    DateTime? month,
+  }) async {
+    final selectedMonth =
+        month ?? DateTime.now();
 
-    final now = DateTime.now().toUtc();
-    final startOfMonth =
-        DateTime(
-          now.year,
-          now.month,
-          1,
-        );
-    final startOfNextMonth =
-        now.month == 12
+    final startOfMonth = DateTime(
+      selectedMonth.year,
+      selectedMonth.month,
+      1,
+    );
 
-            ? DateTime(
-                now.year + 1,
-                1,
-                1,
-              )
+    final startOfNextMonth = DateTime(
+      selectedMonth.year,
+      selectedMonth.month + 1,
+      1,
+    );
 
-            : DateTime(
-                now.year,
-                now.month + 1,
-                1,
-              );
+    // =========================================
+    // TARGET SEMANTICS
+    // =========================================
+
+    final categoryType =
+        targetType ==
+                FinancialTargetType.expenseBudget
+            ? 'expense'
+            : 'income';
+
+    final transactionType =
+        targetType ==
+                FinancialTargetType.expenseBudget
+            ? 'expense'
+            : 'income';
+
+    // =========================================
+    // LOAD CURRENT-MONTH TRANSACTIONS
+    // =========================================
 
     final transactions =
         await isar
             .transactionModels
             .filter()
             .typeEqualTo(
-              'expense',
+              transactionType,
             )
             .isDeletedEqualTo(
               false,
             )
             .transactionDateBetween(
-
               startOfMonth,
-
               startOfNextMonth,
-
               includeLower: true,
-
               includeUpper: false,
             )
             .findAll();
+
+    // =========================================
+    // LOAD CATEGORIES
+    // =========================================
 
     final categories =
         await isar
@@ -72,17 +90,24 @@ class BudgetAlertChecker {
             )
             .findAll();
 
+    // =========================================
+    // ACTUAL AMOUNTS BY CATEGORY
+    // =========================================
+
     final Map<String, double>
-        spending = {};
+        actualAmounts = {};
 
-    for (final transaction in transactions) {
-      final categoryId = transaction.categoryId;
+    for (final transaction
+        in transactions) {
+      final categoryId =
+          transaction.categoryId;
 
-      if (categoryId == null || categoryId.isEmpty) {
+      if (categoryId == null ||
+          categoryId.isEmpty) {
         continue;
       }
 
-      spending.update(
+      actualAmounts.update(
         categoryId,
         (value) =>
             value +
@@ -92,70 +117,107 @@ class BudgetAlertChecker {
       );
     }
 
-    final List<
-        BudgetAlertModel> alerts = [];
+    // =========================================
+    // BUILD TARGET RESULTS
+    // =========================================
+
+    final List<BudgetAlertModel>
+        alerts = [];
 
     for (final category
         in categories) {
-
-      if (category
-              .monthlyBudget ==
-          null) {
-
+      // Only categories relevant
+      // to the selected target type.
+      if (category.type !=
+          categoryType) {
         continue;
       }
 
-      final budget =
-          category.monthlyBudget! /
-              100;
+      final monthlyTarget =
+          category.monthlyBudget;
 
-      if (budget <= 0) {
+      if (monthlyTarget == null ||
+          monthlyTarget <= 0) {
         continue;
       }
 
-      final spent =
-          spending[
+      final target =
+          monthlyTarget / 100;
+
+      final actual =
+          actualAmounts[
                   category.uuid] ??
-              0;
+              0.0;
 
       final percentage =
-          spent / budget;
+          actual / target;
 
       BudgetAlertType type;
 
-      if (percentage >= 1) {
+      if (targetType ==
+          FinancialTargetType
+              .expenseBudget) {
+        // =====================================
+        // EXPENSE BUDGET
+        // Higher usage = worse
+        // =====================================
 
-        type =
-            BudgetAlertType
-                .exceeded;
-
-      } else if (percentage >=
-          0.8) {
-
-        type =
-            BudgetAlertType
-                .warning;
-
-      } else {
-        if(includeSafe) {
+        if (percentage >= 1) {
           type =
-              BudgetAlertType
-                  .safe;
+              BudgetAlertType.exceeded;
+        } else if (percentage >=
+            0.8) {
+          type =
+              BudgetAlertType.warning;
         } else {
-          continue;
+          if (!includeSafe) {
+            continue;
+          }
+
+          type =
+              BudgetAlertType.safe;
+        }
+      } else {
+        // =====================================
+        // INCOME TARGET
+        // Higher progress = better
+        // =====================================
+
+        if (percentage >= 1) {
+          type =
+              BudgetAlertType.safe;
+        } else if (percentage >=
+            0.8) {
+          type =
+              BudgetAlertType.warning;
+        } else {
+          // Reuse the existing severe state.
+          // UI will later display this as
+          // "Behind target", not
+          // "Budget exceeded".
+          type =
+              BudgetAlertType.exceeded;
         }
       }
 
       alerts.add(
-
         BudgetAlertModel(
-
           category:
               category.name,
 
-          spent: spent,
+          // For expense mode:
+          //   spent = amount spent
+          //
+          // For income mode:
+          //   spent = amount received
+          spent: actual,
 
-          budget: budget,
+          // For expense mode:
+          //   budget = monthly budget
+          //
+          // For income mode:
+          //   budget = monthly income target
+          budget: target,
 
           percentage:
               percentage,
@@ -165,13 +227,29 @@ class BudgetAlertChecker {
       );
     }
 
-    alerts.sort(
-      (a, b) =>
-          b.percentage
-              .compareTo(
-        a.percentage,
-      ),
-    );
+    // =========================================
+    // SORT
+    // =========================================
+
+    if (targetType ==
+        FinancialTargetType
+            .expenseBudget) {
+      // Most-used budgets first.
+      alerts.sort(
+        (a, b) =>
+            b.percentage.compareTo(
+          a.percentage,
+        ),
+      );
+    } else {
+      // Income targets furthest behind first.
+      alerts.sort(
+        (a, b) =>
+            a.percentage.compareTo(
+          b.percentage,
+        ),
+      );
+    }
 
     return alerts;
   }

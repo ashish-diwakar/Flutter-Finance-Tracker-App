@@ -18,7 +18,7 @@ class ExpenseForecastService {
     )
   async {
 
-    final now = (month ?? DateTime.now()).toUtc();
+    final now = (month ?? DateTime.now());
 
     final monthStart =
         DateTime(
@@ -76,25 +76,74 @@ class ExpenseForecastService {
           t.amount / 100;
     }
 
-    final daysPassed =
-        now.day;
+    // final daysPassed =
+    //     now.day;
 
-    final totalDays =
-        DateTime(
-          now.year,
-          now.month + 1,
-          0,
-        ).day;
+    // final totalDays =
+    //     DateTime(
+    //       now.year,
+    //       now.month + 1,
+    //       0,
+    //     ).day;
+
+    // final dailyAverage =
+    //     expense / daysPassed;
+
+    // final projected =
+    //     dailyAverage *
+    //         totalDays;
+
+    final today = DateTime.now();
+
+    final totalDays = DateTime(
+      now.year,
+      now.month + 1,
+      0,
+    ).day;
+
+    final selectedMonthStart = DateTime(
+      now.year,
+      now.month,
+      1,
+    );
+
+    final currentMonthStart = DateTime(
+      today.year,
+      today.month,
+      1,
+    );
+
+    final bool isCurrentMonth =
+        selectedMonthStart == currentMonthStart;
+
+    final bool isPastMonth =
+        selectedMonthStart.isBefore(
+          currentMonthStart,
+        );
+
+    final int daysPassed;
+
+    if (isCurrentMonth) {
+      daysPassed = today.day;
+    } else if (isPastMonth) {
+      daysPassed = totalDays;
+    } else {
+      daysPassed = 0;
+    }
 
     final dailyAverage =
-        expense / daysPassed;
+        daysPassed == 0
+            ? 0.0
+            : expense / daysPassed;
 
     final projected =
-        dailyAverage *
-            totalDays;
+        daysPassed == 0
+            ? expense
+            : dailyAverage * totalDays;
 
-    if (daysPassed < 3) {
-
+    // if (daysPassed < 3) {
+    if (isCurrentMonth && daysPassed < 3) {
+      
       return ExpenseForecastModel(
 
         currentExpense:
@@ -104,7 +153,7 @@ class ExpenseForecastService {
             expense,
 
         dailyAverage:
-            expense,
+            dailyAverage,
 
         daysPassed:
             daysPassed,

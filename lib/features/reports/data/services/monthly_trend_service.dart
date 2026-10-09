@@ -16,7 +16,7 @@ class MonthlyTrendService {
       MonthlyTrendModel>>
       getMonthlyTrends()
   async {
-    final now = DateTime.now().toUtc();
+    final now = DateTime.now();
 
     final startDate = DateTime(
       now.year,
@@ -79,7 +79,7 @@ class MonthlyTrendService {
 
         income += amount;
 
-      } else {
+      } else if (t.type == 'expense') {
 
         expense += amount;
       }

@@ -18,7 +18,7 @@ class FinancialInsightService {
       generateInsights(DateTime? month)
   async {
 
-    final now = (month ?? DateTime.now()).toUtc();
+    final now = (month ?? DateTime.now());
 
     final currentMonthStart =
         DateTime(
@@ -60,6 +60,42 @@ class FinancialInsightService {
       1,
     );
 
+    final today = DateTime.now();
+    final isCurrentMonth =
+        now.year == today.year &&
+        now.month == today.month;
+
+    final DateTime currentPeriodEnd;
+    final DateTime previousPeriodEnd;
+
+    if (isCurrentMonth) {
+      currentPeriodEnd = DateTime(
+        today.year,
+        today.month,
+        today.day + 1,
+      );
+
+      final previousMonthDays = DateTime(
+        currentMonthStart.year,
+        currentMonthStart.month,
+        0,
+      ).day;
+
+      final comparableDay =
+          today.day > previousMonthDays
+              ? previousMonthDays
+              : today.day;
+
+      previousPeriodEnd = DateTime(
+        previousMonthStart.year,
+        previousMonthStart.month,
+        comparableDay + 1,
+      );
+    } else {
+      currentPeriodEnd = currentMonthEnd;
+      previousPeriodEnd = currentMonthStart;
+    }
+
     final currentTransactions =
         await isar
             .transactionModels
@@ -69,7 +105,7 @@ class FinancialInsightService {
             )
             .transactionDateBetween(
               currentMonthStart,
-              currentMonthEnd,
+              currentPeriodEnd,
               includeLower: true,
               includeUpper: false,
             )
@@ -82,9 +118,11 @@ class FinancialInsightService {
             .transactionDateBetween(
               previousMonthStart,
               //previousMonthEnd,
-              currentMonthStart,
+              //currentMonthStart,
+              previousPeriodEnd,
               includeLower: true,
-              includeUpper: true,
+              //includeUpper: true,
+              includeUpper: false,
             )
             .isDeletedEqualTo(
               false,
@@ -141,7 +179,9 @@ class FinancialInsightService {
                 'Spending Increased',
 
             description:
-                'Your expenses increased by ${change.toStringAsFixed(0)}% compared to last month.',
+                isCurrentMonth
+                    ? 'Your expenses increased by ${change.toStringAsFixed(0)}% compared with the same period last month.'
+                    : 'Your expenses increased by ${change.toStringAsFixed(0)}% compared to the previous month.',
 
             type: 'warning',
           ),
@@ -158,7 +198,9 @@ class FinancialInsightService {
                 'Improved Savings',
 
             description:
-                'Great work! Your spending reduced by ${change.abs().toStringAsFixed(0)}% this month.',
+                isCurrentMonth
+                    ? 'Great work! Your spending reduced by ${change.abs().toStringAsFixed(0)}% compared with the same period last month.'
+                    : 'Great work! Your spending reduced by ${change.abs().toStringAsFixed(0)}% compared to the previous month.',
 
             type: 'success',
           ),
@@ -210,8 +252,9 @@ class FinancialInsightService {
           )
           .findFirst();
 
-      if (category != null &&
-          !category.isDeleted) {
+      // if (category != null &&
+      //     !category.isDeleted) {
+      if (category != null) {
 
         insights.add(
 
