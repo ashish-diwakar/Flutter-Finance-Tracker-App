@@ -256,6 +256,34 @@ class _ManageGoalsScreenState
                             100)
                         .round();
 
+                
+
+                if (targetAmount <= 0) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Target amount must be greater than 0',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+
+                if (currentAmount < 0) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Current amount cannot be negative',
+                      ),
+                    ),
+                  );
+                  return;
+                }   
+
                 if (goal == null) {
 
                   final newGoal =
@@ -385,15 +413,18 @@ class _ManageGoalsScreenState
                 )
 
               : ListView.builder(
-
-                  itemCount:
-                      goals.length,
-
-                  itemBuilder:
-                      (
-                        context,
-                        index,
-                      ) {
+                  padding: EdgeInsets.only(
+                    bottom:
+                        MediaQuery.paddingOf(
+                          context,
+                        ).bottom +
+                        100,
+                  ),
+                  itemCount: goals.length,
+                  itemBuilder: (
+                    context,
+                    index,
+                ) {
 
                     final goal =
                         goals[index];
@@ -539,26 +570,64 @@ class _ManageGoalsScreenState
                                 ),
 
                                 IconButton(
+                                  onPressed: () async {
+                                    final confirmed =
+                                        await showDialog<bool>(
+                                      context: context,
+                                      builder: (dialogContext) {
+                                        return AlertDialog(
+                                          title: const Text(
+                                            'Delete Goal?',
+                                          ),
+                                          content: Text(
+                                            'Are you sure you want to delete "${goal.name}"?',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(
+                                                  dialogContext,
+                                                ).pop(false);
+                                              },
+                                              child: const Text(
+                                                'Cancel',
+                                              ),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                Navigator.of(
+                                                  dialogContext,
+                                                ).pop(true);
+                                              },
+                                              child: const Text(
+                                                'Delete',
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
 
-                                  onPressed:
-                                      () async {
+                                    if (confirmed != true) {
+                                      return;
+                                    }
 
                                     final repository =
                                         await ref.read(
-                                      goalRepositoryProvider
-                                          .future,
+                                      goalRepositoryProvider.future,
                                     );
 
-                                    await repository
-                                        .deleteGoal(
+                                    await repository.deleteGoal(
                                       goal,
                                     );
 
                                     await loadGoals();
-                                  },
 
-                                  icon:
-                                      const Icon(
+                                    ref.invalidate(
+                                      goalAnalyticsProvider,
+                                    );
+                                  },
+                                  icon: const Icon(
                                     Icons.delete,
                                   ),
                                 ),
@@ -568,8 +637,9 @@ class _ManageGoalsScreenState
                         ),
                       ),
                     );
-                  },
+                  }, 
                 ),
+
     );
   }
 }

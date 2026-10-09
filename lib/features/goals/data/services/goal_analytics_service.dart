@@ -49,6 +49,8 @@ class GoalAnalyticsService {
     int totalSavedAmount = 0;
 
     double progressTotal = 0;
+    
+    int remainingAmount = 0;
 
     for (final goal in goals) {
 
@@ -64,15 +66,20 @@ class GoalAnalyticsService {
       }
 
       if (goal.targetAmount > 0) {
+        progressTotal += (goal.currentAmount / goal.targetAmount)
+          .clamp(
+            0,
+            1,
+          );
+      }
 
-        progressTotal +=
+      final goalRemaining =
+          goal.targetAmount -
+              goal.currentAmount;
 
-            (goal.currentAmount /
-                    goal.targetAmount)
-                .clamp(
-                  0,
-                  1,
-                );
+      if (goalRemaining > 0) {
+        remainingAmount +=
+            goalRemaining;
       }
     }
 
@@ -81,11 +88,6 @@ class GoalAnalyticsService {
         (progressTotal /
                 goals.length) *
             100;
-
-    final remainingAmount =
-
-        totalTargetAmount -
-            totalSavedAmount;
 
     return GoalAnalyticsModel(
 
@@ -105,9 +107,7 @@ class GoalAnalyticsService {
           totalSavedAmount,
 
       remainingAmount:
-          remainingAmount < 0
-              ? 0
-              : remainingAmount,
+          remainingAmount,
     );
   }
 }
