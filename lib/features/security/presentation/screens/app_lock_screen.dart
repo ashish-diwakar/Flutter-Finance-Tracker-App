@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/isar_service.dart';
 import '../../../../core/services/logger_service.dart';
-import '../../../../core/services/notification_service.dart';
 import '../../../../features/recurring/data/services/recurring_scheduler_service.dart';
 import '../../../../features/reports/data/services/budget_alert_checker.dart';
 import '../../../../features/reports/data/services/budget_notification_service.dart';
 import '../../../../features/navigation/presentation/screens/main_navigation_screen.dart';
 import '../providers/app_lock_provider.dart';
+import '../../../../features/borrow_lend/data/services/borrow_lend_notification_service.dart';
+import '../../../../features/transactions/presentation/providers/transactions_provider.dart';
+import '../../../../shared/providers/currency_provider.dart';
 
 class AppLockScreen
     extends ConsumerStatefulWidget {
@@ -49,8 +51,8 @@ class _AppLockScreenState
     // ==========================================
     // NOTIFICATIONS
     // ==========================================
-
-    await NotificationService.initialize();
+    // Moved to main.dart to ensure notifications are initialized before the app lock screen is shown
+    //await NotificationService.initialize();
 
     // ==========================================
     // RECURRING TRANSACTIONS
@@ -68,6 +70,40 @@ class _AppLockScreenState
     if (generatedCount > 0) {
       LoggerService.info(
         '$generatedCount recurring transactions generated.',
+      );
+    }
+
+    // ==========================================
+    // BORROW / LEND REMINDER RECONCILIATION
+    // ==========================================
+
+    try {
+      final transactions =
+          await ref.read(
+        transactionsStreamProvider.future,
+      );
+
+      final currency =
+          ref.read(
+        currencyProvider,
+      );
+
+      await BorrowLendNotificationService
+          .syncAllReminders(
+        transactions:
+            transactions,
+        currency:
+            currency,
+      );
+
+      LoggerService.info(
+        'Borrow/Lend reminders reconciled.',
+      );
+    } catch (e, stackTrace) {
+      LoggerService.exception(
+        'Unable to reconcile Borrow/Lend reminders',
+        e,
+        stackTrace,
       );
     }
 

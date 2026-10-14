@@ -1,7 +1,3 @@
-// import 'package:finance_tracker/features/dashboard/presentation/providers/balance_provider.dart';
-// import 'package:finance_tracker/features/dashboard/presentation/providers/expense_provider.dart';
-// import 'package:finance_tracker/features/dashboard/presentation/providers/income_provider.dart';
-//import 'package:finance_tracker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +11,10 @@ import '../../../accounts/presentation/providers/accounts_provider.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
 import '../providers/transaction_repository_provider.dart';
 import '../providers/transactions_provider.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../../../shared/providers/currency_provider.dart';
+import '../../../borrow_lend/data/services/borrow_lend_notification_service.dart';
+
 class AddTransactionScreen extends ConsumerStatefulWidget {
   final TransactionModel?
       transaction;
@@ -214,7 +214,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
             child: ListView(
               children: [
                 DropdownButtonFormField<String>(
-                  value: transactionType,
+                  initialValue: transactionType,
                   decoration: InputDecoration(
                     labelText: 'Transaction Type',
                     border: const OutlineInputBorder(),
@@ -836,8 +836,54 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                                   transaction,
                                 );
                               }
+                              // =====================================================
+                              // BORROW / LEND REMINDERS
+                              // =====================================================
+
+                              try {
+                                final isBorrowOrLend =
+                                    transaction.type == 'borrowed' ||
+                                    transaction.type == 'lent';
+
+                                final outstandingAmount =
+                                    isBorrowOrLend
+                                        ? transaction.amount -
+                                            linkedRepaymentTotal
+                                        : 0;
+
+                                final safeOutstandingAmount =
+                                    outstandingAmount > 0
+                                        ? outstandingAmount
+                                        : 0;
+
+                                final currency =
+                                    ref.read(
+                                  currencyProvider,
+                                );
+
+                                await BorrowLendNotificationService
+                                    .syncReminders(
+                                  transaction: transaction,
+                                  outstandingAmount:
+                                      safeOutstandingAmount,
+                                  outstandingAmountText:
+                                      CurrencyFormatter.format(
+                                    amount:
+                                        safeOutstandingAmount,
+                                    currency: currency,
+                                  ),
+                                );
+                              } catch (e, stackTrace) {
+                                LoggerService.exception(
+                                  'Unable to sync Borrow/Lend reminders',
+                                  e,
+                                  stackTrace,
+                                );
+                              }
+
                               await ProviderRefreshHelper
                                 .refreshAllFinancialData(ref);
+
                               // Commented Sync
                               // final syncService = await ref.read(
                               //   syncServiceProvider.future,
@@ -860,7 +906,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                               //     }
                               //   },
                               // );
-                              if (mounted) {
+                              if (context.mounted) {
                                 Navigator.pop(
                                   context,
                                 );

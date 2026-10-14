@@ -72,7 +72,7 @@ class _TransactionListContainerScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        centerTitle: false,
+        centerTitle: true,
         title: const Text('Transactions'),
         
       ),
@@ -274,9 +274,7 @@ class _LimitDropdown extends ConsumerWidget {
 
 class _TypeFilterChips extends ConsumerWidget {
 
-  const _TypeFilterChips({
-    super.key,
-  });
+  const _TypeFilterChips();
 
   @override
   Widget build(

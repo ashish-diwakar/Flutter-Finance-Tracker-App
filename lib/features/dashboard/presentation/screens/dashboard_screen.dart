@@ -136,7 +136,7 @@ class _DashboardScreenState
 
       appBar: AppBar(
 
-        centerTitle: false,
+        centerTitle: true,
 
         title: Text(
           appName,

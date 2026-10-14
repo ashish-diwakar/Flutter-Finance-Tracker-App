@@ -13,6 +13,8 @@ import '../../../categories/presentation/providers/categories_provider.dart';
 import '../../domain/services/repayment_service.dart';
 import '../providers/transaction_repository_provider.dart';
 import '../providers/transactions_provider.dart';
+import '../../../../core/services/logger_service.dart';
+import '../../../borrow_lend/data/services/borrow_lend_notification_service.dart';
 
 class TransactionDetailsScreen extends ConsumerWidget {
   final TransactionModel transaction;
@@ -1055,6 +1057,40 @@ class TransactionDetailsScreen extends ConsumerWidget {
                                   .addTransaction(
                                 repayment,
                               );
+
+                              // =====================================================
+                              // BORROW / LEND REMINDER UPDATE
+                              // =====================================================
+
+                              try {
+                                final remainingAmount =
+                                    outstandingAmount - amount;
+
+                                final safeRemainingAmount =
+                                    remainingAmount > 0
+                                        ? remainingAmount
+                                        : 0;
+
+                                await BorrowLendNotificationService
+                                    .syncReminders(
+                                  transaction:
+                                      originalTransaction,
+                                  outstandingAmount:
+                                      safeRemainingAmount,
+                                  outstandingAmountText:
+                                      CurrencyFormatter.format(
+                                    amount:
+                                        safeRemainingAmount,
+                                    currency: currency,
+                                  ),
+                                );
+                              } catch (e, stackTrace) {
+                                LoggerService.exception(
+                                  'Unable to update Borrow/Lend reminders after repayment',
+                                  e,
+                                  stackTrace,
+                                );
+                              }
 
                               await ProviderRefreshHelper
                                   .refreshAllFinancialData(

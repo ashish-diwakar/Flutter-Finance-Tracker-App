@@ -549,20 +549,12 @@ class _ManageAccountsScreenState
 
 
 
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+
                     if (mounted) {
-
-
-
-                      Navigator.pop(
-
-                        context,
-
-                      );
-
-
-
                       await loadAccounts();
-
                     }
 
                   },

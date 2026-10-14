@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/database/isar_service.dart';
 import 'core/services/logger_service.dart';
 import 'features/security/presentation/screens/app_lock_screen.dart';
+import 'core/services/notification_service.dart';
 
 final navigatorKey =
     GlobalKey<NavigatorState>();
@@ -26,6 +27,12 @@ Future<void> main() async {
     await dotenv.load(
       fileName: '.env',
     );
+
+    // =====================================================
+    // NOTIFICATIONS
+    // =====================================================
+
+    await NotificationService.initialize();
 
     // =====================================================
     // ISAR
