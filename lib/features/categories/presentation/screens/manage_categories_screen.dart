@@ -293,9 +293,11 @@ class _ManageCategoriesScreenState
                   return;
                 }
 
-                Navigator.of(
-                  dialogContext,
-                ).pop();
+                if (dialogContext.mounted) {
+                  Navigator.of(
+                    dialogContext,
+                  ).pop();
+                }
 
                 ScaffoldMessenger.of(
                   this.context,

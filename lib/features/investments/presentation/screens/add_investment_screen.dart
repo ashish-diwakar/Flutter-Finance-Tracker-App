@@ -538,7 +538,7 @@ class _AddInvestmentScreenState
             DropdownButtonFormField<
                 String>(
 
-              value:
+              initialValue:
                   selectedType,
 
               decoration:

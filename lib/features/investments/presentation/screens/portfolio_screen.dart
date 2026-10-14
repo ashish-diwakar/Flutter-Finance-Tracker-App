@@ -187,7 +187,7 @@ class _PortfolioScreenState
                 ),
               ),
 
-              error: (_, __) =>
+              error: (_, _) =>
 
                   const Card(
 
@@ -408,7 +408,7 @@ class _PortfolioScreenState
                 ),
               ),
 
-              error: (_, __) =>
+              error: (_, _) =>
 
                   const Card(
 

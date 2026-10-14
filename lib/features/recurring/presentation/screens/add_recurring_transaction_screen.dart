@@ -252,27 +252,19 @@ class _AddRecurringTransactionScreenState
       await ProviderRefreshHelper
         .refreshRecurringTransactionData(ref);
 
-      // ref.invalidate(
-      //   recurringTransactionsProvider,
-      // );
+      if (!mounted) {
+        return;
+      }
 
-      Navigator.pop(
-        context,
-      );
+      final messenger = ScaffoldMessenger.of(context);
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      Navigator.pop(context);
 
+      messenger.showSnackBar(
         SnackBar(
-
           content: Text(
-
-            widget.recurring ==
-                    null
-
+            widget.recurring == null
                 ? 'Recurring transaction added'
-
                 : 'Recurring transaction updated',
           ),
         ),
@@ -440,7 +432,7 @@ class _AddRecurringTransactionScreenState
                       DropdownButtonFormField<
                           String>(
 
-                        value: type,
+                        initialValue: type,
 
                         decoration:
                             const InputDecoration(
@@ -501,7 +493,7 @@ class _AddRecurringTransactionScreenState
                       DropdownButtonFormField<
                           String>(
 
-                        value:
+                        initialValue:
                             selectedCategoryId,
 
                         decoration:
@@ -551,7 +543,7 @@ class _AddRecurringTransactionScreenState
                       DropdownButtonFormField<
                           String>(
 
-                        value:
+                        initialValue:
                             selectedAccountId,
 
                         decoration:
@@ -623,7 +615,7 @@ class _AddRecurringTransactionScreenState
                       DropdownButtonFormField<
                           String>(
 
-                        value:
+                        initialValue:
                             frequency,
 
                         decoration:
@@ -702,7 +694,7 @@ class _AddRecurringTransactionScreenState
                       DropdownButtonFormField<
                           int>(
 
-                        value: interval,
+                        initialValue: interval,
 
                         decoration:
                             const InputDecoration(
@@ -898,7 +890,7 @@ class _AddRecurringTransactionScreenState
               );
             },
 
-            error: (_, __) =>
+            error: (_, _) =>
 
                 const Center(
                   child: Text(
@@ -915,7 +907,7 @@ class _AddRecurringTransactionScreenState
           );
         },
 
-        error: (_, __) =>
+        error: (_, _) =>
 
             const Center(
               child: Text(

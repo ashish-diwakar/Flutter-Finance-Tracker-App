@@ -508,7 +508,7 @@ class _ReportsScreenState
                 );
               },
 
-              error: (_, __) =>
+              error: (_, _) =>
 
                   const Card(
 
@@ -583,7 +583,7 @@ class _ReportsScreenState
                 );
               },
 
-              error: (_, __) =>
+              error: (_, _) =>
 
                   const Card(
 
@@ -658,7 +658,7 @@ class _ReportsScreenState
                 );
               },
 
-              error: (_, __) =>
+              error: (_, _) =>
                   const SizedBox(),
 
               loading: () =>
@@ -719,7 +719,7 @@ class _ReportsScreenState
                         CircularProgressIndicator(),
                   ),
 
-              error: (_, __) =>
+              error: (_, _) =>
                   const SizedBox(),
             ),
 
@@ -740,7 +740,7 @@ class _ReportsScreenState
                 );
               },
 
-              error: (_, __) =>
+              error: (_, _) =>
 
                   const SizedBox(),
 
@@ -1144,7 +1144,7 @@ class _ReportsScreenState
                       },
 
                       error:
-                          (_, __) =>
+                          (_, _) =>
 
                               const Card(
 
@@ -1221,7 +1221,7 @@ class _ReportsScreenState
                       },
 
                       error:
-                          (_, __) =>
+                          (_, _) =>
 
                               const Card(
 
@@ -1296,7 +1296,7 @@ class _ReportsScreenState
                       },
 
                       error:
-                          (_, __) =>
+                          (_, _) =>
 
                               const Card(
 
@@ -1401,7 +1401,7 @@ class _ReportsScreenState
                     },
 
                     error:
-                        (_, __) =>
+                        (_, _) =>
 
                             const Card(
 

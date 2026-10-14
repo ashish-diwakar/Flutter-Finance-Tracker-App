@@ -100,7 +100,7 @@ class TransactionFilterBottomSheet
                     crossAxisAlignment:
                         CrossAxisAlignment.start,
 
-                    children: const [TransactionSearchBar()],
+                    children: [TransactionSearchBar()],
                   ),
                 ),
               ),

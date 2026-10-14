@@ -95,7 +95,7 @@ class BudgetAlertsScreen
             ),
           );
         },
-        error: (_, __) =>
+        error: (_, _) =>
             Center(
           child: Text(
             isExpenseBudget

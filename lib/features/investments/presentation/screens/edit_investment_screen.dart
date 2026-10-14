@@ -644,7 +644,7 @@ class _EditInvestmentScreenState
 
             DropdownButtonFormField<String>(
 
-              value:
+              initialValue:
               investmentTypes.contains(
                   selectedType,
                 )

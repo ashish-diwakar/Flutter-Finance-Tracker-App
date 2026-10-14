@@ -249,6 +249,10 @@ class RecurringTransactionsScreen
 
                         if (value == 'edit') {
 
+                          if (!context.mounted) {
+                            return;
+                          }
+
                           await Navigator.push(
 
                             context,
@@ -271,13 +275,16 @@ class RecurringTransactionsScreen
                         // =====================================
 
                         if (value == 'delete') {
+                          if (!context.mounted) {
+                            return;
+                          }
 
                           final confirm =
                               await showDialog<bool>(
 
                             context: context,
 
-                            builder: (_) {
+                            builder: (dialogContext) {
 
                               return AlertDialog(
 
@@ -294,11 +301,7 @@ class RecurringTransactionsScreen
                                   TextButton(
 
                                     onPressed: () {
-
-                                      Navigator.pop(
-                                        context,
-                                        false,
-                                      );
+                                      Navigator.of(dialogContext).pop(false);
                                     },
 
                                     child: const Text(
@@ -309,11 +312,7 @@ class RecurringTransactionsScreen
                                   ElevatedButton(
 
                                     onPressed: () {
-
-                                      Navigator.pop(
-                                        context,
-                                        true,
-                                      );
+                                      Navigator.of(dialogContext).pop(true);
                                     },
 
                                     child: const Text(
@@ -436,7 +435,7 @@ class RecurringTransactionsScreen
           );
         },
 
-        error: (_, __) =>
+        error: (_, _) =>
 
             const Center(
 

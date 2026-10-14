@@ -42,7 +42,7 @@ class CurrencySettingsScreen
             supportedCurrencies.length,
 
         separatorBuilder:
-            (_, __) =>
+            (_, _) =>
                 const SizedBox(
           height: 12,
         ),

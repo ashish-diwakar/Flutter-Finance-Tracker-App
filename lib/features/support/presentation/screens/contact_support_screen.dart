@@ -73,7 +73,7 @@ class ContactSupportScreen extends StatelessWidget {
               child: Text(
                 'If you experience a problem, '
                 'find a bug, or have a question '
-                'about ${AppConstants.appName ?? 'Finance Tracker'}, '
+                'about ${AppConstants.appName}, '
                 'please contact us.',
                 textAlign:
                     TextAlign.center,

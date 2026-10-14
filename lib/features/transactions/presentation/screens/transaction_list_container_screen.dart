@@ -205,9 +205,7 @@ class _TransactionListContainerScreenState
 
 class _LimitDropdown extends ConsumerWidget {
 
-  const _LimitDropdown({
-    super.key,
-  });
+  const _LimitDropdown();
 
   @override
   Widget build(

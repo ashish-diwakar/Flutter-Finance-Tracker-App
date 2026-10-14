@@ -337,9 +337,8 @@ class _DashboardScreenState
                     );
                   },
 
-                  error: (_, __) =>
-
-                      const SizedBox(),
+                  error: (_, _) =>
+                    const SizedBox(),
 
                   loading: () =>
 

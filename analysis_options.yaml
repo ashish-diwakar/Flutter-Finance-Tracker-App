@@ -16,6 +16,7 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+    - lib/shared/models/*.g.dart
 include: package:flutter_lints/flutter.yaml
 
 linter:
