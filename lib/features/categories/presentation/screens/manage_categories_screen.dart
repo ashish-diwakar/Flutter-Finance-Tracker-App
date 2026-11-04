@@ -66,6 +66,50 @@ class _ManageCategoriesScreenState
     }
   }
 
+  InputDecoration _categoryInputDecoration({
+    required String labelText,
+    String? hintText,
+    String? prefixText,
+  }) {
+    const enabledBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide(color: Color(0xFFB5D9CA)),
+    );
+    const focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide(color: Color(0xFF3E8877), width: 1.6),
+    );
+    const errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide(color: Color(0xFFB54C44)),
+    );
+
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixText: prefixText,
+      filled: true,
+      fillColor: const Color(0xFFFCFEFC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      labelStyle: const TextStyle(color: Color(0xFF536B61), fontSize: 16),
+      floatingLabelStyle: const TextStyle(
+        color: Color(0xFF315F53),
+        fontSize: 21,
+        fontWeight: FontWeight.w600,
+      ),
+      hintStyle: const TextStyle(color: Color(0xFF6C8A80), fontSize: 16),
+      prefixStyle: const TextStyle(color: Color(0xFF244C40), fontSize: 18),
+      errorStyle: const TextStyle(color: Color(0xFF9E3F38), fontSize: 14),
+      errorMaxLines: 2,
+      enabledBorder: enabledBorder,
+      focusedBorder: focusedBorder,
+      errorBorder: errorBorder,
+      focusedErrorBorder: focusedBorder.copyWith(
+        borderSide: const BorderSide(color: Color(0xFFB54C44), width: 1.6),
+      ),
+    );
+  }
+
   Future<void> showCategoryDialog({CategoryModel? category}) async {
     final formKey = GlobalKey<FormState>();
 
@@ -250,158 +294,164 @@ class _ManageCategoriesScreenState
             }
 
             return AlertDialog(
-              title: Text(category == null ? 'Add Category' : 'Edit Category'),
-
-              content: SingleChildScrollView(
-                child: Form(
-                  key: formKey,
-
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-
-                    children: [
-                      TextFormField(
-                        controller: nameController,
-
-                        enabled: !saving,
-
-                        textCapitalization: TextCapitalization.words,
-
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Category name is required';
-                          }
-
-                          final trimmedName = value.trim();
-
-                          if (trimmedName.length < 2) {
-                            return 'Minimum 2 characters required';
-                          }
-
-                          final normalizedName = trimmedName.toLowerCase();
-
-                          final isDuplicate = categories.any((existing) {
-                            return existing.uuid != category?.uuid &&
-                                existing.type == type &&
-                                existing.name.trim().toLowerCase() ==
-                                    normalizedName;
-                          });
-
-                          if (isDuplicate) {
-                            return 'Category name already exists for this type';
-                          }
-
-                          return null;
-                        },
-
-                        decoration: const InputDecoration(
-                          labelText: 'Category Name',
-
-                          errorMaxLines: 2,
-
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      DropdownButtonFormField<String>(
-                        initialValue: type,
-
-                        decoration: const InputDecoration(
-                          labelText: 'Category Type',
-
-                          border: OutlineInputBorder(),
-                        ),
-
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'expense',
-
-                            child: Text('Expense'),
-                          ),
-
-                          DropdownMenuItem(
-                            value: 'income',
-
-                            child: Text('Income'),
-                          ),
-                        ],
-
-                        onChanged: saving
-                            ? null
-                            : (value) {
-                                if (value == null) {
-                                  return;
-                                }
-
-                                setDialogState(() {
-                                  type = value;
-                                });
-                              },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      TextFormField(
-                        controller: budgetController,
-
-                        enabled: !saving,
-
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d{0,2}'),
-                          ),
-                        ],
-
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return null;
-                          }
-
-                          final amount = double.tryParse(value.trim());
-
-                          if (amount == null) {
-                            return type == 'expense'
-                                ? 'Enter valid budget'
-                                : 'Enter valid income target';
-                          }
-
-                          if (amount < 0) {
-                            return type == 'expense'
-                                ? 'Budget cannot be negative'
-                                : 'Income target cannot be negative';
-                          }
-
-                          if (amount > 999999999) {
-                            return type == 'expense'
-                                ? 'Budget is too large'
-                                : 'Income target is too large';
-                          }
-
-                          return null;
-                        },
-
-                        decoration: InputDecoration(
-                          labelText: type == 'expense'
-                              ? 'Monthly Budget'
-                              : 'Monthly Income Target',
-                          hintText: type == 'expense'
-                              ? 'Optional spending limit'
-                              : 'Optional income target',
-                          prefixText: '₹ ',
-                          border: const OutlineInputBorder(),
-                        ),
-                      ),
-                    ],
-                  ),
+              backgroundColor: const Color(0xFFF3FAF5),
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              constraints: const BoxConstraints(maxWidth: 440),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 24,
+              ),
+              scrollable: true,
+              titlePadding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              actionsOverflowButtonSpacing: 8,
+              title: Text(
+                category == null ? 'Add Category' : 'Edit Category',
+                style: const TextStyle(
+                  color: Color(0xFF315F53),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      enabled: !saving,
+                      textCapitalization: TextCapitalization.words,
+                      style: const TextStyle(
+                        color: Color(0xFF244C40),
+                        fontSize: 18,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Category name is required';
+                        }
 
+                        final trimmedName = value.trim();
+
+                        if (trimmedName.length < 2) {
+                          return 'Minimum 2 characters required';
+                        }
+
+                        final normalizedName = trimmedName.toLowerCase();
+
+                        final isDuplicate = categories.any((existing) {
+                          return existing.uuid != category?.uuid &&
+                              existing.type == type &&
+                              existing.name.trim().toLowerCase() ==
+                                  normalizedName;
+                        });
+
+                        if (isDuplicate) {
+                          return 'Category name already exists for this type';
+                        }
+
+                        return null;
+                      },
+                      decoration: _categoryInputDecoration(
+                        labelText: 'Category Name',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: type,
+                      isExpanded: true,
+                      style: const TextStyle(
+                        color: Color(0xFF244C40),
+                        fontSize: 18,
+                      ),
+                      decoration: _categoryInputDecoration(
+                        labelText: 'Category Type',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'expense',
+                          child: Text('Expense'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'income',
+                          child: Text('Income'),
+                        ),
+                      ],
+                      onChanged: saving
+                          ? null
+                          : (value) {
+                              if (value == null) {
+                                return;
+                              }
+
+                              setDialogState(() {
+                                type = value;
+                              });
+                            },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: budgetController,
+                      enabled: !saving,
+                      style: const TextStyle(
+                        color: Color(0xFF244C40),
+                        fontSize: 18,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d{0,2}'),
+                        ),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return null;
+                        }
+
+                        final amount = double.tryParse(value.trim());
+
+                        if (amount == null) {
+                          return type == 'expense'
+                              ? 'Enter valid budget'
+                              : 'Enter valid income target';
+                        }
+
+                        if (amount < 0) {
+                          return type == 'expense'
+                              ? 'Budget cannot be negative'
+                              : 'Income target cannot be negative';
+                        }
+
+                        if (amount > 999999999) {
+                          return type == 'expense'
+                              ? 'Budget is too large'
+                              : 'Income target is too large';
+                        }
+
+                        return null;
+                      },
+                      decoration: _categoryInputDecoration(
+                        labelText: type == 'expense'
+                            ? 'Monthly Budget'
+                            : 'Monthly Income Target',
+                        hintText: type == 'expense'
+                            ? 'Optional spending limit'
+                            : 'Optional income target',
+                        prefixText: '₹ ',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               actions: [
                 TextButton(
                   onPressed: saving
@@ -410,16 +460,39 @@ class _ManageCategoriesScreenState
                           Navigator.of(dialogContext).pop();
                         },
 
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF315F53),
+                    minimumSize: const Size(88, 48),
+                    side: const BorderSide(color: Color(0xFFB5D9CA)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   child: const Text('Cancel'),
                 ),
 
-                ElevatedButton(
+                FilledButton(
                   onPressed: saving
                       ? null
                       : () {
                           saveCategory();
                         },
-
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF17664F),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(88, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   child: saving
                       ? const SizedBox(
                           height: 20,
