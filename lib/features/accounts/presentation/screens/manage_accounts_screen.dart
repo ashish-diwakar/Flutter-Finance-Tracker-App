@@ -366,12 +366,15 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
 
       floatingActionButton: FloatingActionButton(
         heroTag: 'manageaccounts_fab',
-
+        tooltip: 'Add Account',
+        backgroundColor: const Color(0xFF17664F),
+        foregroundColor: Colors.white,
+        elevation: 2,
+        shape: const CircleBorder(),
         onPressed: () {
           showAccountDialog();
         },
-
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, size: 24),
       ),
 
       body: DecoratedBox(
@@ -444,15 +447,39 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
                                 ),
                               ),
                               if (!account.isDefault)
-                                IconButton(
+                                IconButton.filledTonal(
+                                  tooltip: 'Edit Account',
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: const Color(0xFFDDEFE5),
+                                    foregroundColor: const Color(0xFF17664F),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 48,
+                                    minHeight: 48,
+                                  ),
                                   onPressed: () {
                                     showAccountDialog(account: account);
                                   },
                                   icon: const Icon(Icons.edit),
                                 ),
+                              if (!account.isDefault) const SizedBox(width: 12),
                               if (!account.isDefault)
-                                IconButton(
+                                IconButton.filledTonal(
                                   tooltip: 'Delete Account',
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFBE8E3),
+                                    foregroundColor: const Color(0xFFB54C44),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 48,
+                                    minHeight: 48,
+                                  ),
                                   onPressed: () {
                                     confirmDeleteAccount(account);
                                   },
