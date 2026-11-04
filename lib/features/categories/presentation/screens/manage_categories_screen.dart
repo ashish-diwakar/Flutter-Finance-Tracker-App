@@ -538,56 +538,120 @@ class _ManageCategoriesScreenState
 
                 itemBuilder: (context, index) {
                   final category = categories[index];
+                  final isIncome = category.type == 'income';
 
                   return Card(
                     margin: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 6,
+                      vertical: 5,
                     ),
-
-                    child: ListTile(
-                      title: Text(category.name),
-
-                      subtitle: Column(
+                    color: const Color(0xFFF1F8F2),
+                    surfaceTintColor: Colors.transparent,
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: Color(0xFFB8D8CA)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-
                         children: [
-                          Text(category.type.toUpperCase()),
-
-                          if (category.monthlyBudget != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-
-                              child: Text(
-                                '${category.type == 'income' ? 'Income Target' : 'Budget'}: ${CurrencyFormatter.format(amount: category.monthlyBudget!, currency: currency)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      category.name,
+                                      style: const TextStyle(
+                                        color: Color(0xFF244D3F),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isIncome
+                                            ? const Color(0xFFDFF1E5)
+                                            : const Color(0xFFFBE8E3),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        category.type.toUpperCase(),
+                                        style: TextStyle(
+                                          color: isIncome
+                                              ? const Color(0xFF237F50)
+                                              : const Color(0xFFB54C44),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              showCategoryDialog(category: category);
-                            },
-
-                            icon: const Icon(Icons.edit),
+                              IconButton(
+                                constraints: const BoxConstraints(
+                                  minWidth: 48,
+                                  minHeight: 48,
+                                ),
+                                onPressed: () {
+                                  showCategoryDialog(category: category);
+                                },
+                                icon: const Icon(Icons.edit),
+                              ),
+                              if (!category.isDefault)
+                                IconButton(
+                                  constraints: const BoxConstraints(
+                                    minWidth: 48,
+                                    minHeight: 48,
+                                  ),
+                                  onPressed: () {
+                                    deleteCategory(category);
+                                  },
+                                  icon: const Icon(Icons.delete),
+                                ),
+                            ],
                           ),
-
-                          if (!category.isDefault)
-                            IconButton(
-                              onPressed: () {
-                                deleteCategory(category);
-                              },
-
-                              icon: const Icon(Icons.delete),
+                          if (category.monthlyBudget != null) ...[
+                            const SizedBox(height: 12),
+                            const Divider(height: 1, color: Color(0xFFD5E6DC)),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Text(
+                                  isIncome ? 'Income Target' : 'Budget',
+                                  style: const TextStyle(
+                                    color: Color(0xFF536B61),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  CurrencyFormatter.format(
+                                    amount: category.monthlyBudget!,
+                                    currency: currency,
+                                  ),
+                                  style: const TextStyle(
+                                    color: Color(0xFF244D3F),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
+                          ],
                         ],
                       ),
                     ),
