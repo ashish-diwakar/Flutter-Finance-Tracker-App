@@ -4,75 +4,54 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../shared/models/category_model.dart';
 import '../providers/category_repository_provider.dart';
 import '../../../../shared/providers/currency_provider.dart';
 
-class ManageCategoriesScreen
-    extends ConsumerStatefulWidget {
-
-  const ManageCategoriesScreen({
-    super.key,
-  });
+class ManageCategoriesScreen extends ConsumerStatefulWidget {
+  const ManageCategoriesScreen({super.key});
 
   @override
-  ConsumerState<ManageCategoriesScreen>
-      createState() =>
-          _ManageCategoriesScreenState();
+  ConsumerState<ManageCategoriesScreen> createState() =>
+      _ManageCategoriesScreenState();
 }
 
 class _ManageCategoriesScreenState
-    extends ConsumerState<
-        ManageCategoriesScreen> {
-
-  List<CategoryModel> categories =
-      [];
+    extends ConsumerState<ManageCategoriesScreen> {
+  List<CategoryModel> categories = [];
 
   bool loading = true;
 
   @override
   void initState() {
-
     super.initState();
 
     loadCategories();
   }
 
-  Future<void> loadCategories()
-  async {
-
+  Future<void> loadCategories() async {
     if (mounted) {
-
       setState(() {
         loading = true;
       });
     }
 
     try {
+      final repository = await ref.read(categoryRepositoryProvider.future);
 
-      final repository =
-          await ref.read(
-        categoryRepositoryProvider
-            .future,
-      );
-
-      final result =
-          await repository
-              .getAllCategories();
+      final result = await repository.getAllCategories();
 
       if (!mounted) {
         return;
       }
 
       setState(() {
-
         categories = result;
 
         loading = false;
       });
-
     } catch (_) {
-
       if (!mounted) {
         return;
       }
@@ -81,55 +60,29 @@ class _ManageCategoriesScreenState
         loading = false;
       });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
-
-        const SnackBar(
-          content: Text(
-            'Unable to load categories',
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to load categories')),
       );
     }
   }
 
-  Future<void> showCategoryDialog({
-    CategoryModel? category,
-  }) async {
+  Future<void> showCategoryDialog({CategoryModel? category}) async {
+    final formKey = GlobalKey<FormState>();
 
-    final formKey =
-        GlobalKey<FormState>();
+    final nameController = TextEditingController(text: category?.name ?? '');
 
-    final nameController =
-        TextEditingController(
-      text: category?.name ?? '',
+    final budgetController = TextEditingController(
+      text: category?.monthlyBudget != null
+          ? (category!.monthlyBudget! / 100).toString()
+          : '',
     );
 
-    final budgetController =
-        TextEditingController(
-      text:
-          category?.monthlyBudget !=
-                  null
-              ? (category!
-                          .monthlyBudget! /
-                      100)
-                  .toString()
-              : '',
-    );
-
-    String type =
-        category?.type ??
-            'expense';
+    String type = category?.type ?? 'expense';
 
     bool saving = false;
 
-    final repository =
-        await ref.read(
-      categoryRepositoryProvider
-          .future,
-    );
-    
+    final repository = await ref.read(categoryRepositoryProvider.future);
+
     // final syncService = await ref.read(
     //     syncServiceProvider.future,
     // );
@@ -139,34 +92,17 @@ class _ManageCategoriesScreenState
     }
 
     await showDialog(
-
       context: context,
 
-      barrierDismissible:
-          false,
+      barrierDismissible: false,
 
-      builder:
-          (dialogContext) {
-
+      builder: (dialogContext) {
         return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Future<void> saveCategory() async {
+              FocusScope.of(context).unfocus();
 
-          builder: (
-            context,
-            setDialogState,
-          ) {
-
-            Future<void>
-                saveCategory()
-            async {
-
-              FocusScope.of(
-                context,
-              ).unfocus();
-
-              if (!formKey
-                  .currentState!
-                  .validate()) {
-
+              if (!formKey.currentState!.validate()) {
                 return;
               }
 
@@ -178,64 +114,31 @@ class _ManageCategoriesScreenState
               });
 
               try {
-
-                final parsedBudget =
-                    double.tryParse(
-                  budgetController.text
-                      .trim(),
+                final parsedBudget = double.tryParse(
+                  budgetController.text.trim(),
                 );
 
+                final budget = parsedBudget != null
+                    ? (parsedBudget * 100).toInt()
+                    : null;
 
-                final budget =
-                    parsedBudget !=
-                            null
-                        ? (parsedBudget *
-                                100)
-                            .toInt()
-                        : null;
+                if (category == null) {
+                  final newCategory = CategoryModel()
+                    ..uuid = const Uuid().v4()
+                    ..name = nameController.text.trim()
+                    ..type = type
+                    ..monthlyBudget = budget
+                    ..isDefault = false
+                    ..isDeleted = false
+                    ..isSynced = false
+                    ..updatedAt = DateTime.now().toUtc();
 
-
-                if (category ==
-                    null) {
-
-                  final newCategory =
-                      CategoryModel()
-                        ..uuid = const Uuid().v4()
-
-                        ..name =
-                            nameController
-                                .text
-                                .trim()
-
-                        ..type =
-                            type
-
-                        ..monthlyBudget =
-                            budget
-
-                        ..isDefault =
-                            false
-
-                        ..isDeleted =
-                            false
-
-                        ..isSynced =
-                            false
-
-                        ..updatedAt =
-                            DateTime.now().toUtc();
-
-                  await repository
-                      .addCategory(
-                    newCategory,
-                  );
+                  await repository.addCategory(newCategory);
 
                   ref.invalidate(categoriesProvider('income'));
                   ref.invalidate(categoriesProvider('expense'));
                   ref.invalidate(allCategoriesProvider);
-
                 } else {
-
                   // final updatedCategory =
                   //   CategoryModel()
 
@@ -273,9 +176,7 @@ class _ManageCategoriesScreenState
                     ..isSynced = false
                     ..updatedAt = DateTime.now().toUtc();
 
-                  await repository.updateCategory(
-                    category,
-                  );
+                  await repository.updateCategory(category);
 
                   ref.invalidate(categoriesProvider('income'));
                   ref.invalidate(categoriesProvider('expense'));
@@ -294,17 +195,11 @@ class _ManageCategoriesScreenState
                 }
 
                 if (dialogContext.mounted) {
-                  Navigator.of(
-                    dialogContext,
-                  ).pop();
+                  Navigator.of(dialogContext).pop();
                 }
 
-                ScaffoldMessenger.of(
-                  this.context,
-                ).showSnackBar(
-
+                ScaffoldMessenger.of(this.context).showSnackBar(
                   SnackBar(
-
                     content: Text(
                       category == null
                           ? 'Category added successfully'
@@ -313,127 +208,84 @@ class _ManageCategoriesScreenState
                   ),
                 );
 
-              // } catch (_) {
+                // } catch (_) {
 
-              //   if (!mounted) {
-              //     return;
-              //   }
+                //   if (!mounted) {
+                //     return;
+                //   }
 
-              //   try {
+                //   try {
 
-              //     setDialogState(() {
-              //       saving = false;
-              //     });
+                //     setDialogState(() {
+                //       saving = false;
+                //     });
 
-              //   } catch (_) {}
-                
-              //   ScaffoldMessenger.of(
-              //     this.context,
-              //   ).showSnackBar(
+                //   } catch (_) {}
 
-              //     const SnackBar(
+                //   ScaffoldMessenger.of(
+                //     this.context,
+                //   ).showSnackBar(
 
-              //       content: Text(
-              //         'Unable to save category',
-              //       ),
-              //     ),
-              //   );
-              // }
+                //     const SnackBar(
+
+                //       content: Text(
+                //         'Unable to save category',
+                //       ),
+                //     ),
+                //   );
+                // }
               } catch (e, stackTrace) {
-                debugPrint(
-                  'SAVE CATEGORY ERROR: $e',
-                );
+                debugPrint('SAVE CATEGORY ERROR: $e');
 
-                debugPrint(
-                  stackTrace.toString(),
-                );
+                debugPrint(stackTrace.toString());
 
                 if (!mounted) {
                   return;
                 }
 
-                ScaffoldMessenger.of(
-                  this.context,
-                ).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Unable to save category',
-                    ),
-                  ),
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(content: Text('Unable to save category')),
                 );
               }
             }
 
-
             return AlertDialog(
+              title: Text(category == null ? 'Add Category' : 'Edit Category'),
 
-              title: Text(
-                category == null
-                    ? 'Add Category'
-                    : 'Edit Category',
-              ),
-
-              content:
-                  SingleChildScrollView(
-
+              content: SingleChildScrollView(
                 child: Form(
-
                   key: formKey,
 
                   child: Column(
-
-                    mainAxisSize:
-                        MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.min,
 
                     children: [
-
                       TextFormField(
+                        controller: nameController,
 
-                        controller:
-                            nameController,
+                        enabled: !saving,
 
-                        enabled:
-                            !saving,
+                        textCapitalization: TextCapitalization.words,
 
-                        textCapitalization:
-                            TextCapitalization
-                                .words,
-
-                        validator:
-                            (value) {
-
-                          if (value ==
-                                  null ||
-                              value
-                                  .trim()
-                                  .isEmpty) {
-
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
                             return 'Category name is required';
                           }
 
-                          final trimmedName =
-                              value.trim();
+                          final trimmedName = value.trim();
 
-                          if (trimmedName.length <
-                              2) {
-
+                          if (trimmedName.length < 2) {
                             return 'Minimum 2 characters required';
                           }
 
-                          final normalizedName =
-                              trimmedName.toLowerCase();
+                          final normalizedName = trimmedName.toLowerCase();
 
-                          final isDuplicate = categories.any(
-                            (existing) {
-                              return existing.uuid !=
-                                      category?.uuid &&
-                                  existing.type == type &&
-                                  existing.name
-                                          .trim()
-                                          .toLowerCase() ==
-                                      normalizedName;
-                            },
-                          );
+                          final isDuplicate = categories.any((existing) {
+                            return existing.uuid != category?.uuid &&
+                                existing.type == type &&
+                                existing.name.trim().toLowerCase() ==
+                                    normalizedName;
+                          });
 
                           if (isDuplicate) {
                             return 'Category name already exists for this type';
@@ -442,122 +294,76 @@ class _ManageCategoriesScreenState
                           return null;
                         },
 
-                        decoration:
-                            const InputDecoration(
-
-                          labelText:
-                              'Category Name',
+                        decoration: const InputDecoration(
+                          labelText: 'Category Name',
 
                           errorMaxLines: 2,
 
-                          border:
-                              OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
-                      DropdownButtonFormField<
-                          String>(
-
+                      DropdownButtonFormField<String>(
                         initialValue: type,
 
-                        decoration:
-                            const InputDecoration(
+                        decoration: const InputDecoration(
+                          labelText: 'Category Type',
 
-                          labelText:
-                              'Category Type',
-
-                          border:
-                              OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
 
                         items: const [
-
                           DropdownMenuItem(
+                            value: 'expense',
 
-                            value:
-                                'expense',
-
-                            child: Text(
-                              'Expense',
-                            ),
+                            child: Text('Expense'),
                           ),
 
                           DropdownMenuItem(
+                            value: 'income',
 
-                            value:
-                                'income',
-
-                            child: Text(
-                              'Income',
-                            ),
+                            child: Text('Income'),
                           ),
                         ],
 
-                        onChanged:
-                            saving
-                                ? null
-                                : (value) {
+                        onChanged: saving
+                            ? null
+                            : (value) {
+                                if (value == null) {
+                                  return;
+                                }
 
-                                    if (value ==
-                                        null) {
-                                      return;
-                                    }
-
-                                    setDialogState(() {
-                                      type =
-                                          value;
-                                    });
-                                  },
+                                setDialogState(() {
+                                  type = value;
+                                });
+                              },
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
                       TextFormField(
+                        controller: budgetController,
 
-                        controller:
-                            budgetController,
+                        enabled: !saving,
 
-                        enabled:
-                            !saving,
-
-                        keyboardType:
-                            const TextInputType
-                                .numberWithOptions(
+                        keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
 
                         inputFormatters: [
-
-                          FilteringTextInputFormatter
-                              .allow(
-                            RegExp(
-                              r'^\d*\.?\d{0,2}',
-                            ),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d{0,2}'),
                           ),
                         ],
 
-                        validator:
-                            (value) {
-
-                          if (value ==
-                                  null ||
-                              value
-                                  .trim()
-                                  .isEmpty) {
-
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
                             return null;
                           }
 
-                          final amount =
-                              double.tryParse(
-                            value.trim(),
-                          );
+                          final amount = double.tryParse(value.trim());
 
                           if (amount == null) {
                             return type == 'expense'
@@ -580,20 +386,15 @@ class _ManageCategoriesScreenState
                           return null;
                         },
 
-                        decoration:
-                            InputDecoration(
-                          labelText:
-                              type == 'expense'
-                                  ? 'Monthly Budget'
-                                  : 'Monthly Income Target',
-                          hintText:
-                              type == 'expense'
-                                  ? 'Optional spending limit'
-                                  : 'Optional income target',
-                          prefixText:
-                              '₹ ',
-                          border:
-                              const OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: type == 'expense'
+                              ? 'Monthly Budget'
+                              : 'Monthly Income Target',
+                          hintText: type == 'expense'
+                              ? 'Optional spending limit'
+                              : 'Optional income target',
+                          prefixText: '₹ ',
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                     ],
@@ -602,49 +403,31 @@ class _ManageCategoriesScreenState
               ),
 
               actions: [
-
                 TextButton(
+                  onPressed: saving
+                      ? null
+                      : () {
+                          Navigator.of(dialogContext).pop();
+                        },
 
-                  onPressed:
-                      saving
-                          ? null
-                          : () {
-                              Navigator.of(
-                                dialogContext,
-                              ).pop();
-                            },
-
-                  child: const Text(
-                    'Cancel',
-                  ),
+                  child: const Text('Cancel'),
                 ),
 
                 ElevatedButton(
-
-                  onPressed:
-                      saving
-                          ? null
-                          : () {
-                            saveCategory();                            
-                          },
+                  onPressed: saving
+                      ? null
+                      : () {
+                          saveCategory();
+                        },
 
                   child: saving
-
                       ? const SizedBox(
-
                           height: 20,
                           width: 20,
 
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth:
-                                2,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
-
-                      : const Text(
-                          'Save',
-                        ),
+                      : const Text('Save'),
                 ),
               ],
             );
@@ -658,56 +441,31 @@ class _ManageCategoriesScreenState
     //budgetController.dispose();
   }
 
-  Future<void> deleteCategory(
-    CategoryModel category,
-  ) async {
-
-    final confirm =
-        await showDialog<bool>(
-
+  Future<void> deleteCategory(CategoryModel category) async {
+    final confirm = await showDialog<bool>(
       context: context,
 
-      builder:
-          (dialogContext) {
-
+      builder: (dialogContext) {
         return AlertDialog(
+          title: const Text('Delete Category'),
 
-          title: const Text(
-            'Delete Category',
-          ),
-
-          content: Text(
-            'Delete "${category.name}"?',
-          ),
+          content: Text('Delete "${category.name}"?'),
 
           actions: [
-
             TextButton(
-
               onPressed: () {
-
-                Navigator.of(
-                  dialogContext,
-                ).pop(false);
+                Navigator.of(dialogContext).pop(false);
               },
 
-              child: const Text(
-                'Cancel',
-              ),
+              child: const Text('Cancel'),
             ),
 
             ElevatedButton(
-
               onPressed: () {
-
-                Navigator.of(
-                  dialogContext,
-                ).pop(true);
+                Navigator.of(dialogContext).pop(true);
               },
 
-              child: const Text(
-                'Delete',
-              ),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -719,17 +477,9 @@ class _ManageCategoriesScreenState
     }
 
     try {
+      final repository = await ref.read(categoryRepositoryProvider.future);
 
-      final repository =
-          await ref.read(
-        categoryRepositoryProvider
-            .future,
-      );
-
-      await repository
-          .deleteCategory(
-        category,
-      );
+      await repository.deleteCategory(category);
 
       await loadCategories();
 
@@ -739,208 +489,112 @@ class _ManageCategoriesScreenState
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(
-
-        const SnackBar(
-          content: Text(
-            'Category deleted',
-          ),
-        ),
-      );
-
+      ).showSnackBar(const SnackBar(content: Text('Category deleted')));
     } catch (_) {
-
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
-
-        const SnackBar(
-          content: Text(
-            'Unable to delete category',
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to delete category')),
       );
     }
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-
-    final currency =
-        ref.watch(
-      currencyProvider,
-    );
+  Widget build(BuildContext context) {
+    final currency = ref.watch(currencyProvider);
 
     return Scaffold(
+      appBar: const AuroraAppBar(title: Text('Manage Categories')),
 
-      appBar: AppBar(
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'managecategories_fab',
 
-        title: const Text(
-          'Manage Categories',
-        ),
-      ),
-
-      floatingActionButton:
-          FloatingActionButton(
-
-          heroTag:
-            'managecategories_fab',
-
-          onPressed: () {
-
-            showCategoryDialog();
+        onPressed: () {
+          showCategoryDialog();
         },
 
-        child: const Icon(
-          Icons.add,
-        ),
+        child: const Icon(Icons.add),
       ),
 
-      body: loading
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Color(0xFFB6D7CC), Color(0xFFDAEDE5), Color(0xFFF8FCFA)],
+            stops: [0.0, 0.52, 1.0],
+          ),
+        ),
+        child: loading
+            ? const Center(child: CircularProgressIndicator())
+            : categories.isEmpty
+            ? const Center(child: Text('No categories found'))
+            : ListView.builder(
+                padding: const EdgeInsets.only(bottom: 100),
 
-          ? const Center(
-              child:
-                  CircularProgressIndicator(),
-            )
+                itemCount: categories.length,
 
-          : categories.isEmpty
+                itemBuilder: (context, index) {
+                  final category = categories[index];
 
-              ? const Center(
-                  child: Text(
-                    'No categories found',
-                  ),
-                )
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
 
-              : ListView.builder(
+                    child: ListTile(
+                      title: Text(category.name),
 
-                  padding:
-                      const EdgeInsets.only(
-                    bottom: 100,
-                  ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
 
-                  itemCount:
-                      categories.length,
+                        children: [
+                          Text(category.type.toUpperCase()),
 
-                  itemBuilder:
-                      (
-                    context,
-                    index,
-                  ) {
+                          if (category.monthlyBudget != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
 
-                    final category =
-                        categories[
-                            index];
-
-                    return Card(
-
-                      margin:
-                          const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-
-                      child: ListTile(
-
-                        title: Text(
-                          category.name,
-                        ),
-
-                        subtitle: Column(
-
-                          crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
-
-                          children: [
-
-                            Text(
-                              category.type
-                                  .toUpperCase(),
-                            ),
-
-                            if (category
-                                    .monthlyBudget !=
-                                null)
-
-                              Padding(
-
-                                padding:
-                                    const EdgeInsets.only(
-                                  top: 4,
-                                ),
-
-                                child: Text(
-                                  '${category.type == 'income'
-                                      ? 'Income Target'
-                                      : 'Budget'}: ${
-                                    CurrencyFormatter.format(
-                                      amount: category.monthlyBudget!,
-                                      currency: currency,
-                                    )
-                                  }',
-                                  style:
-                                      const TextStyle(
-                                    fontWeight:
-                                        FontWeight.w500,
-                                  ),
+                              child: Text(
+                                '${category.type == 'income' ? 'Income Target' : 'Budget'}: ${CurrencyFormatter.format(amount: category.monthlyBudget!, currency: currency)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
+                      ),
 
-                        trailing: Row(
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
 
-                          mainAxisSize:
-                              MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              showCategoryDialog(category: category);
+                            },
 
-                          children: [
+                            icon: const Icon(Icons.edit),
+                          ),
 
+                          if (!category.isDefault)
                             IconButton(
-
                               onPressed: () {
-
-                                showCategoryDialog(
-                                  category:
-                                      category,
-                                );
+                                deleteCategory(category);
                               },
 
-                              icon:
-                                  const Icon(
-                                Icons.edit,
-                              ),
+                              icon: const Icon(Icons.delete),
                             ),
-
-                            if (!category
-                                .isDefault)
-
-                              IconButton(
-
-                                onPressed:
-                                    () {
-
-                                  deleteCategory(
-                                    category,
-                                  );
-                                },
-
-                                icon:
-                                    const Icon(
-                                  Icons.delete,
-                                ),
-                              ),
-                          ],
-                        ),
+                        ],
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }
