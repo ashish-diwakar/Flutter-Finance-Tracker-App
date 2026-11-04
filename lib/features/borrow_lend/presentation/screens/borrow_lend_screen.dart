@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../core/utils/currency_formatter.dart';
@@ -494,9 +495,7 @@ class BorrowLendScreen extends ConsumerWidget {
   String _formatDate(DateTime date) {
     final local = date.toLocal();
 
-    return '${local.day.toString().padLeft(2, '0')}/'
-        '${local.month.toString().padLeft(2, '0')}/'
-        '${local.year}';
+    return DateFormat('dd MMM yyyy').format(local);
   }
 
   String _statusLabel(BorrowLendStatus status) {
