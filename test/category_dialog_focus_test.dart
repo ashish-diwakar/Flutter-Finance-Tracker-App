@@ -118,7 +118,7 @@ void main() {
     final category = _category(
       name: 'Expense',
       type: 'expense',
-      amount: 123456,
+      amount: 350000,
     );
     repository.categories.add(category);
     await _pumpCategoryScreen(tester, repository);
@@ -129,7 +129,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(category.monthlyBudget, 123456);
+    expect(category.monthlyBudget, 350000);
     expect(find.text('Edit Category'), findsNothing);
   });
 

@@ -117,9 +117,6 @@ class _ManageCategoriesScreenState
 
     final nameController = TextEditingController(text: category?.name ?? '');
 
-    final initialBudgetInput = category?.monthlyBudget == null
-        ? null
-        : (category!.monthlyBudget! / 100).toStringAsFixed(2);
     final budgetController = TextEditingController(
       text: category?.monthlyBudget != null
           ? (category!.monthlyBudget! / 100).toString()
@@ -213,10 +210,11 @@ class _ManageCategoriesScreenState
                     .trim()
                     .replaceAll(',', '');
                 final parsedBudget = double.tryParse(normalizedBudget);
+                final originalBudget = category?.monthlyBudget;
                 final budget =
-                    category?.monthlyBudget != null &&
-                        normalizedBudget == initialBudgetInput
-                    ? category!.monthlyBudget
+                    originalBudget != null &&
+                        parsedBudget == originalBudget / 100
+                    ? originalBudget
                     : parsedBudget != null
                     ? (parsedBudget * 100).toInt()
                     : null;
