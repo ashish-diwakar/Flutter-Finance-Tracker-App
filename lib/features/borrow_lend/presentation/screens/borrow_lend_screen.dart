@@ -8,6 +8,84 @@ import '../providers/borrow_lend_provider.dart';
 import '../../../../core/config/currency_config.dart';
 import '../../../transactions/presentation/screens/transaction_details_screen.dart';
 
+class _BorrowLendSummaryCard extends StatelessWidget {
+  final String title;
+  final String amount;
+  final String recordCount;
+  final IconData icon;
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color accentColor;
+
+  const _BorrowLendSummaryCard({
+    required this.title,
+    required this.amount,
+    required this.recordCount,
+    required this.icon,
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      color: backgroundColor,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borderColor),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, color: accentColor, size: 21),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: accentColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              amount,
+              style: TextStyle(
+                color: accentColor,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              recordCount,
+              style: TextStyle(
+                color: accentColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class BorrowLendScreen extends ConsumerWidget {
   const BorrowLendScreen({super.key});
 
@@ -42,96 +120,45 @@ class BorrowLendScreen extends ConsumerWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.call_received_rounded,
-                                      color: Colors.orange,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'You Owe',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  CurrencyFormatter.format(
-                                    amount: overview.totalOwed,
-                                    currency: currency,
-                                  ),
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${overview.borrowed.length} '
-                                  '${overview.borrowed.length == 1 ? 'record' : 'records'}',
-                                ),
-                              ],
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: _BorrowLendSummaryCard(
+                            title: 'You Owe',
+                            amount: CurrencyFormatter.format(
+                              amount: overview.totalOwed,
+                              currency: currency,
                             ),
+                            recordCount:
+                                '${overview.borrowed.length} '
+                                '${overview.borrowed.length == 1 ? 'record' : 'records'}',
+                            icon: Icons.call_received_rounded,
+                            backgroundColor: const Color(0xFFFFF5E8),
+                            borderColor: const Color(0xFFF0D6B8),
+                            accentColor: const Color(0xFF80552C),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Row(
-                                  children: [
-                                    Icon(
-                                      Icons.call_made_rounded,
-                                      color: Colors.green,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Owed to You',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  CurrencyFormatter.format(
-                                    amount: overview.totalReceivable,
-                                    currency: currency,
-                                  ),
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${overview.lent.length} '
-                                  '${overview.lent.length == 1 ? 'record' : 'records'}',
-                                ),
-                              ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _BorrowLendSummaryCard(
+                            title: 'Owed to You',
+                            amount: CurrencyFormatter.format(
+                              amount: overview.totalReceivable,
+                              currency: currency,
                             ),
+                            recordCount:
+                                '${overview.lent.length} '
+                                '${overview.lent.length == 1 ? 'record' : 'records'}',
+                            icon: Icons.call_made_rounded,
+                            backgroundColor: const Color(0xFFE9F8EE),
+                            borderColor: const Color(0xFFB9DEC5),
+                            accentColor: const Color(0xFF256141),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   _buildSection(
