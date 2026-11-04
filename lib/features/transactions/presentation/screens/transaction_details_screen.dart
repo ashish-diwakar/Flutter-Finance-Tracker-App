@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/config/currency_config.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../../shared/providers/currency_provider.dart';
@@ -84,13 +85,7 @@ class TransactionDetailsScreen extends ConsumerWidget {
     final transactionsAsync = ref.watch(transactionsStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FCFA),
-        foregroundColor: const Color(0xFF244C40),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: const Text('Transaction Details'),
-      ),
+      appBar: const AuroraAppBar(title: Text('Transaction Details')),
       body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

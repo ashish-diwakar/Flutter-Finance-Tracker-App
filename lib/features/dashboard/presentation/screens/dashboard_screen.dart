@@ -2,6 +2,7 @@ import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/summary_card.dart';
 import '../../../../core/services/logger_service.dart';
@@ -134,13 +135,8 @@ class _DashboardScreenState
 
     return Scaffold(
 
-      appBar: AppBar(
-
-        centerTitle: true,
-
-        title: Text(
-          appName,
-        ),
+      appBar: AuroraAppBar(
+        title: Text(appName),
         actions: [
           IconButton.filledTonal(
             tooltip: 'Add Transaction',

@@ -193,8 +193,8 @@ class MonthlyTrendChart
 
                                 style:
                                     const TextStyle(
-                                  fontSize:
-                                      11,
+                                  color: Color(0xFF536B61),
+                                  fontSize: 12,
                                 ),
                               ),
                             );
@@ -301,8 +301,8 @@ class MonthlyTrendChart
 
                                   style:
                                       const TextStyle(
-                                    fontSize:
-                                        11,
+                                    color: Color(0xFF536B61),
+                                    fontSize: 12,
                                   ),
                                 ),
                               ),
@@ -483,6 +483,11 @@ class MonthlyTrendChart
 
                     const Text(
                       'Income',
+                      style: TextStyle(
+                        color: Color(0xFF536B61),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
@@ -507,6 +512,11 @@ class MonthlyTrendChart
 
                     const Text(
                       'Expense',
+                      style: TextStyle(
+                        color: Color(0xFF536B61),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),

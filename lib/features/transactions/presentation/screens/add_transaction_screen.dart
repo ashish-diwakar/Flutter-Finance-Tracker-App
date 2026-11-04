@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/services/logger_service.dart';
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
 import '../../../../shared/models/transaction_model.dart';
@@ -349,7 +350,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     final accountsAsync = ref.watch(accountsProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AuroraAppBar(
         title: Text(
           widget.transaction == null ? 'Add Transaction' : 'Edit Transaction',
         ),

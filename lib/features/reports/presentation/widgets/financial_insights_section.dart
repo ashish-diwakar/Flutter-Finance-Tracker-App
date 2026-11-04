@@ -51,41 +51,14 @@ class FinancialInsightsSection
 
       children: [
 
-        const Text(
-
-          'AI Financial Insights',
-
-          style: TextStyle(
-
-            fontSize: 20,
-
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
-
-        const SizedBox(
-          height: 6,
-        ),
-
-        const Text(
-
-          'Personalized intelligence based on your spending behavior.',
-
-          style: TextStyle(
-            color: Colors.grey,
-          ),
-        ),
-
-        const SizedBox(
-          height: 16,
-        ),
-
         ...insights.map(
 
           (insight) {
 
             return Card(
+              color: const Color(0xCCFFFFFF),
+              elevation: 0,
+              margin: const EdgeInsets.only(bottom: 8),
 
               child: ListTile(
 
@@ -97,10 +70,20 @@ class FinancialInsightsSection
 
                 title: Text(
                   insight.title,
+                  style: const TextStyle(
+                    color: Color(0xFF244C40),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
 
                 subtitle: Text(
                   insight.description,
+                  style: const TextStyle(
+                    color: Color(0xFF536B61),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             );

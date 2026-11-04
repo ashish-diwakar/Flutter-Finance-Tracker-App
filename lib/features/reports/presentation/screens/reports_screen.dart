@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../data/services/budget_alert_checker.dart';
 import '../providers/budget_progress_provider.dart';
@@ -32,6 +33,76 @@ import 'budget_alerts_screen.dart';
 
 enum ReportChartType { pie, donut, groupedBar, progress, trends }
 
+class _ReportsSectionContainer extends StatelessWidget {
+  final String title;
+  final String description;
+  final Widget child;
+
+  const _ReportsSectionContainer({
+    required this.title,
+    required this.description,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xE6F8FCFA),
+        border: Border.all(color: const Color(0xFF98C4B4)),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 4,
+                height: 24,
+                margin: const EdgeInsets.only(top: 1, right: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF17664F),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Color(0xFF244C40),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: Color(0xFF536B61),
+                        height: 1.4,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
 
@@ -49,12 +120,44 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     await ProviderRefreshHelper.refreshReportsData(ref, selectedMonth);
   }
 
-  TextStyle get sectionTitleStyle {
-    return const TextStyle(fontSize: 22, fontWeight: FontWeight.w700);
-  }
-
-  TextStyle get sectionSubtitleStyle {
-    return TextStyle(color: Colors.grey.shade600, height: 1.4, fontSize: 14);
+  Widget _buildInsightActionButton({
+    required Color backgroundColor,
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          minimumSize: const Size.fromHeight(54),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -96,11 +199,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final recurringAsync = ref.watch(recurringAnalyticsProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AuroraAppBar(
         title: const Text('Reports'),
-
         actions: [
-          IconButton(
+          IconButton.filledTonal(
             onPressed: () async {
               await refreshReports();
 
@@ -108,763 +210,729 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 setState(() {});
               }
             },
-
             icon: const Icon(Icons.refresh),
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFD0F1DC),
+              foregroundColor: const Color(0xFF105C45),
+            ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
 
-      body: RefreshIndicator(
-        onRefresh: refreshReports,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Color(0xFFB6D7CC), Color(0xFFDAEDE5), Color(0xFFF8FCFA)],
+            stops: [0.0, 0.52, 1.0],
+          ),
+        ),
+        child: RefreshIndicator(
+          onRefresh: refreshReports,
 
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
 
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
 
-          children: [
-            // =====================================================
-            // MONTH SELECTOR
-            // =====================================================
+            children: [
+              // =====================================================
+              // MONTH SELECTOR
+              // =====================================================
 
-            Card(
-              child: ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              Card(
+                child: ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
 
-                title: const Text('Selected Month'),
+                  title: const Text(
+                    'Selected Month',
+                    style: TextStyle(
+                      color: Color(0xFF536B61),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
 
-                subtitle: Text(DateFormat('MMMM yyyy').format(selectedMonth)),
+                  subtitle: Text(
+                    DateFormat('MMMM yyyy').format(selectedMonth),
+                    style: const TextStyle(
+                      color: Color(0xFF244C40),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
 
-                trailing: const Icon(Icons.calendar_today),
+                  trailing: const Icon(Icons.calendar_today),
 
-                onTap: () async {
-                  // final picked =
-                  //     await showDatePicker(
+                  onTap: () async {
+                    // final picked =
+                    //     await showDatePicker(
 
-                  //   context: context,
+                    //   context: context,
 
-                  //   initialDate:
-                  //       selectedMonth,
+                    //   initialDate:
+                    //       selectedMonth,
 
-                  //   firstDate:
-                  //       DateTime(2020),
+                    //   firstDate:
+                    //       DateTime(2020),
 
-                  //   lastDate:
-                  //       DateTime(2100),
-                  // );
+                    //   lastDate:
+                    //       DateTime(2100),
+                    // );
 
-                  final picked = await showDialog<DateTime>(
-                    context: context,
-                    builder: (context) {
-                      int selectedYear = selectedMonth.year;
-                      int selectedMonthNumber = selectedMonth.month;
+                    final picked = await showDialog<DateTime>(
+                      context: context,
+                      builder: (context) {
+                        int selectedYear = selectedMonth.year;
+                        int selectedMonthNumber = selectedMonth.month;
 
-                      return StatefulBuilder(
-                        builder: (context, setState) {
-                          return AlertDialog(
-                            title: const Text('Select Month'),
+                        return StatefulBuilder(
+                          builder: (context, setState) {
+                            return AlertDialog(
+                              title: const Text('Select Month'),
 
-                            // content: Row(
-                            //   children: [
-                            //     Expanded(
-                            //       child: DropdownButtonFormField<int>(
-                            //         initialValue: selectedMonthNumber,
-                            //         decoration: const InputDecoration(
-                            //           labelText: 'Month',
-                            //         ),
-                            //         items: List.generate(
-                            //           12,
-                            //           (index) {
-                            //             final month = index + 1;
+                              // content: Row(
+                              //   children: [
+                              //     Expanded(
+                              //       child: DropdownButtonFormField<int>(
+                              //         initialValue: selectedMonthNumber,
+                              //         decoration: const InputDecoration(
+                              //           labelText: 'Month',
+                              //         ),
+                              //         items: List.generate(
+                              //           12,
+                              //           (index) {
+                              //             final month = index + 1;
 
-                            //             return DropdownMenuItem(
-                            //               value: month,
-                            //               child: Text(
-                            //                 DateFormat.MMMM().format(
-                            //                   DateTime(2000, month),
-                            //                 ),
-                            //               ),
-                            //             );
-                            //           },
-                            //         ),
-                            //         onChanged: (value) {
-                            //           if (value != null) {
-                            //             setState(() {
-                            //               selectedMonthNumber = value;
-                            //             });
-                            //           }
-                            //         },
-                            //       ),
-                            //     ),
+                              //             return DropdownMenuItem(
+                              //               value: month,
+                              //               child: Text(
+                              //                 DateFormat.MMMM().format(
+                              //                   DateTime(2000, month),
+                              //                 ),
+                              //               ),
+                              //             );
+                              //           },
+                              //         ),
+                              //         onChanged: (value) {
+                              //           if (value != null) {
+                              //             setState(() {
+                              //               selectedMonthNumber = value;
+                              //             });
+                              //           }
+                              //         },
+                              //       ),
+                              //     ),
 
-                            //     const SizedBox(width: 16),
+                              //     const SizedBox(width: 16),
 
-                            //     Expanded(
-                            //       child: DropdownButtonFormField<int>(
-                            //         initialValue: selectedYear,
-                            //         decoration: const InputDecoration(
-                            //           labelText: 'Year',
-                            //         ),
-                            //         items: List.generate(
-                            //           81,
-                            //           (index) {
-                            //             final year = 2020 + index;
+                              //     Expanded(
+                              //       child: DropdownButtonFormField<int>(
+                              //         initialValue: selectedYear,
+                              //         decoration: const InputDecoration(
+                              //           labelText: 'Year',
+                              //         ),
+                              //         items: List.generate(
+                              //           81,
+                              //           (index) {
+                              //             final year = 2020 + index;
 
-                            //             return DropdownMenuItem(
-                            //               value: year,
-                            //               child: Text(
-                            //                 year.toString(),
-                            //               ),
-                            //             );
-                            //           },
-                            //         ),
-                            //         onChanged: (value) {
-                            //           if (value != null) {
-                            //             setState(() {
-                            //               selectedYear = value;
-                            //             });
-                            //           }
-                            //         },
-                            //       ),
-                            //     ),
-                            //   ],
-                            // ),
-                            content: SizedBox(
-                              width: 320,
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: DropdownButtonFormField<int>(
-                                      initialValue: selectedMonthNumber,
-                                      isExpanded: true,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Month',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                      items: List.generate(12, (index) {
-                                        final month = index + 1;
+                              //             return DropdownMenuItem(
+                              //               value: year,
+                              //               child: Text(
+                              //                 year.toString(),
+                              //               ),
+                              //             );
+                              //           },
+                              //         ),
+                              //         onChanged: (value) {
+                              //           if (value != null) {
+                              //             setState(() {
+                              //               selectedYear = value;
+                              //             });
+                              //           }
+                              //         },
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
+                              content: SizedBox(
+                                width: 320,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 3,
+                                      child: DropdownButtonFormField<int>(
+                                        initialValue: selectedMonthNumber,
+                                        isExpanded: true,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Month',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        items: List.generate(12, (index) {
+                                          final month = index + 1;
 
-                                        return DropdownMenuItem<int>(
-                                          value: month,
-                                          child: Text(
-                                            DateFormat.MMMM().format(
-                                              DateTime(2000, month),
+                                          return DropdownMenuItem<int>(
+                                            value: month,
+                                            child: Text(
+                                              DateFormat.MMMM().format(
+                                                DateTime(2000, month),
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        );
-                                      }),
-                                      onChanged: (value) {
-                                        if (value == null) {
-                                          return;
-                                        }
+                                          );
+                                        }),
+                                        onChanged: (value) {
+                                          if (value == null) {
+                                            return;
+                                          }
 
-                                        setState(() {
-                                          selectedMonthNumber = value;
-                                        });
-                                      },
-                                    ),
-                                  ),
-
-                                  const SizedBox(width: 12),
-
-                                  Expanded(
-                                    flex: 2,
-                                    child: DropdownButtonFormField<int>(
-                                      initialValue: selectedYear,
-                                      isExpanded: true,
-                                      decoration: const InputDecoration(
-                                        labelText: 'Year',
-                                        border: OutlineInputBorder(),
+                                          setState(() {
+                                            selectedMonthNumber = value;
+                                          });
+                                        },
                                       ),
-                                      items: List.generate(81, (index) {
-                                        final year = 2020 + index;
-
-                                        return DropdownMenuItem<int>(
-                                          value: year,
-                                          child: Text(year.toString()),
-                                        );
-                                      }),
-                                      onChanged: (value) {
-                                        if (value == null) {
-                                          return;
-                                        }
-
-                                        setState(() {
-                                          selectedYear = value;
-                                        });
-                                      },
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Cancel'),
-                              ),
 
-                              FilledButton(
-                                onPressed: () {
-                                  Navigator.pop(
-                                    context,
-                                    DateTime(selectedYear, selectedMonthNumber),
-                                  );
-                                },
-                                child: const Text('Select'),
+                                    const SizedBox(width: 12),
+
+                                    Expanded(
+                                      flex: 2,
+                                      child: DropdownButtonFormField<int>(
+                                        initialValue: selectedYear,
+                                        isExpanded: true,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Year',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        items: List.generate(81, (index) {
+                                          final year = 2020 + index;
+
+                                          return DropdownMenuItem<int>(
+                                            value: year,
+                                            child: Text(year.toString()),
+                                          );
+                                        }),
+                                        onChanged: (value) {
+                                          if (value == null) {
+                                            return;
+                                          }
+
+                                          setState(() {
+                                            selectedYear = value;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
-                          );
-                        },
-                      );
-                    },
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text('Cancel'),
+                                ),
+
+                                FilledButton(
+                                  onPressed: () {
+                                    Navigator.pop(
+                                      context,
+                                      DateTime(
+                                        selectedYear,
+                                        selectedMonthNumber,
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Select'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    );
+
+                    if (picked != null && mounted) {
+                      setState(() {
+                        selectedMonth = DateTime(picked.year, picked.month, 1);
+                      });
+                    }
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // =====================================================
+              // MONTHLY SUMMARY
+              // =====================================================
+              summaryAsync.when(
+                data: (summary) {
+                  return MonthlySummaryCard(
+                    income: summary.income,
+
+                    expense: summary.expense,
                   );
-
-                  if (picked != null && mounted) {
-                    setState(() {
-                      selectedMonth = DateTime(picked.year, picked.month, 1);
-                    });
-                  }
                 },
-              ),
-            ),
 
-            const SizedBox(height: 16),
+                error: (_, _) => const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
 
-            // =====================================================
-            // MONTHLY SUMMARY
-            // =====================================================
-            summaryAsync.when(
-              data: (summary) {
-                return MonthlySummaryCard(
-                  income: summary.income,
-
-                  expense: summary.expense,
-                );
-              },
-
-              error: (_, _) => const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-
-                  child: Text('Unable to load summary'),
+                    child: Text('Unable to load summary'),
+                  ),
                 ),
-              ),
 
-              loading: () => const Padding(
-                padding: EdgeInsets.all(24),
-
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // =====================================================
-            // FINANCIAL FORECAST
-            // =====================================================
-            Text('Expense Forecast', style: sectionTitleStyle),
-
-            const SizedBox(height: 6),
-
-            Text(
-              'Projected spending trends based on recent financial activity.',
-
-              style: sectionSubtitleStyle,
-            ),
-
-            const SizedBox(height: 16),
-
-            forecastAsync.when(
-              data: (forecast) {
-                return ExpenseForecastCard(forecast: forecast);
-              },
-
-              error: (_, _) => const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-
-                  child: Text('Unable to generate forecast'),
-                ),
-              ),
-
-              loading: () => const Center(
-                child: Padding(
+                loading: () => const Padding(
                   padding: EdgeInsets.all(24),
 
-                  child: CircularProgressIndicator(),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 20),
 
-            // =====================================================
-            // FINANCIAL HEALTH
-            // =====================================================
-            Text('Financial Health Score', style: sectionTitleStyle),
-
-            const SizedBox(height: 6),
-
-            Text(
-              'Analyze your financial stability, savings discipline and spending efficiency.',
-
-              style: sectionSubtitleStyle,
-            ),
-
-            const SizedBox(height: 16),
-
-            healthAsync.when(
-              data: (health) {
-                return FinancialHealthCard(health: health);
-              },
-
-              error: (_, _) => const SizedBox(),
-
-              loading: () => const Center(child: CircularProgressIndicator()),
-            ),
-
-            const SizedBox(height: 32),
-
-            // =====================================================
-            // RECURRING COMMITMENTS
-            // =====================================================
-            Text('Monthly Commitments', style: sectionTitleStyle),
-
-            const SizedBox(height: 6),
-
-            Text(
-              'Track fixed monthly obligations and recurring financial commitments.',
-
-              style: sectionSubtitleStyle,
-            ),
-
-            const SizedBox(height: 16),
-
-            recurringAsync.when(
-              data: (analytics) {
-                return MonthlyCommitmentsCard(analytics: analytics);
-              },
-
-              loading: () => const Center(child: CircularProgressIndicator()),
-
-              error: (_, _) => const SizedBox(),
-            ),
-
-            const SizedBox(height: 32),
-
-            // =====================================================
-            // AI INSIGHTS
-            // =====================================================
-            insightsAsync.when(
-              data: (insights) {
-                return FinancialInsightsSection(insights: insights);
-              },
-
-              error: (_, _) => const SizedBox(),
-
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // =====================================================
-            // BUDGET ALERTS BUTTON
-            // =====================================================
-            SizedBox(
-              width: double.infinity,
-
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (_) => BudgetAlertsScreen(month: selectedMonth),
+              _ReportsSectionContainer(
+                title: 'Expense Forecast',
+                description:
+                    'Projected spending trends based on recent financial activity.',
+                child: forecastAsync.when(
+                  data: (forecast) {
+                    return ExpenseForecastCard(forecast: forecast);
+                  },
+                  error: (_, _) => const Text('Unable to generate forecast'),
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(),
                     ),
-                  );
-                },
-
-                icon: const Icon(Icons.warning_amber),
-
-                label: const Text('View Budget Alerts'),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // =====================================================
-            // Income Targets BUTTON
-            // =====================================================
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BudgetAlertsScreen(
-                        targetType: FinancialTargetType.incomeTarget,
-                        month: selectedMonth,
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.trending_up),
-                label: const Text('View Income Targets'),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // =====================================================
-            // ANALYTICS HEADER
-            // =====================================================
-            Text('Financial Analytics', style: sectionTitleStyle),
-
-            const SizedBox(height: 6),
-
-            Text(
-              'Explore interactive insights across spending patterns, budgets and income trends.',
-
-              style: sectionSubtitleStyle,
-            ),
-
-            const SizedBox(height: 24),
-
-            // =====================================================
-            // CHART TYPE
-            // =====================================================
-            const Text(
-              'Visualization Mode',
-
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-            ),
-
-            const SizedBox(height: 12),
-
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-
-              child: SegmentedButton<ReportChartType>(
-                showSelectedIcon: false,
-
-                style: ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-
-                  padding: WidgetStateProperty.all(
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   ),
                 ),
-
-                segments: const [
-                  ButtonSegment(
-                    value: ReportChartType.donut,
-
-                    icon: Icon(Icons.donut_large),
-                  ),
-
-                  ButtonSegment(
-                    value: ReportChartType.pie,
-
-                    icon: Icon(Icons.pie_chart),
-                  ),
-
-                  ButtonSegment(
-                    value: ReportChartType.groupedBar,
-
-                    icon: Icon(Icons.bar_chart),
-                  ),
-
-                  ButtonSegment(
-                    value: ReportChartType.progress,
-
-                    icon: Icon(Icons.linear_scale),
-                  ),
-
-                  ButtonSegment(
-                    value: ReportChartType.trends,
-
-                    icon: Icon(Icons.show_chart),
-                  ),
-                ],
-
-                selected: {selectedChart},
-
-                onSelectionChanged: (value) {
-                  setState(() {
-                    selectedChart = value.first;
-                  });
-                },
               ),
-            ),
 
-            const SizedBox(height: 32),
+              const SizedBox(height: 20),
 
-            // =====================================================
-            // CHART TITLE
-            // =====================================================
-            Builder(
-              builder: (_) {
-                String title;
-                String subtitle;
+              _ReportsSectionContainer(
+                title: 'Financial Health Score',
+                description:
+                    'Analyze your financial stability, savings discipline and spending efficiency.',
+                child: healthAsync.when(
+                  data: (health) {
+                    return FinancialHealthCard(health: health);
+                  },
+                  error: (_, _) => const SizedBox(),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                ),
+              ),
 
-                switch (selectedChart) {
-                  case ReportChartType.donut:
-                    title = 'Spending Distribution';
+              const SizedBox(height: 20),
 
-                    subtitle =
-                        'Understand how expenses are distributed across spending categories.';
+              _ReportsSectionContainer(
+                title: 'Monthly Commitments',
+                description:
+                    'Track fixed monthly obligations and recurring financial commitments.',
+                child: recurringAsync.when(
+                  data: (analytics) {
+                    return MonthlyCommitmentsCard(analytics: analytics);
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (_, _) => const SizedBox(),
+                ),
+              ),
 
-                    break;
+              const SizedBox(height: 20),
 
-                  case ReportChartType.pie:
-                    title = 'Category Contribution';
-
-                    subtitle =
-                        'Compare category contribution to your total monthly spending.';
-
-                    break;
-
-                  case ReportChartType.groupedBar:
-                    title = 'Income & Expense Trends';
-
-                    subtitle =
-                        'Analyze monthly cash flow performance across income and expenses.';
-
-                    break;
-
-                  case ReportChartType.progress:
-                    title = 'Budget Performance';
-
-                    subtitle =
-                        'Monitor category-wise budget usage and spending efficiency.';
-
-                    break;
-
-                  case ReportChartType.trends:
-                    title = 'Financial Growth Trends';
-
-                    subtitle =
-                        'Visualize long-term income growth and expense movement patterns.';
-
-                    break;
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-
+              _ReportsSectionContainer(
+                title: 'AI Financial Insights',
+                description:
+                    'Personalized intelligence based on your spending behavior.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      title,
-
-                      style: const TextStyle(
-                        fontSize: 20,
-
-                        fontWeight: FontWeight.w700,
+                    insightsAsync.when(
+                      data: (insights) {
+                        return FinancialInsightsSection(insights: insights);
+                      },
+                      error: (_, _) => const SizedBox(),
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(),
+                        ),
                       ),
                     ),
-
-                    const SizedBox(height: 6),
-
-                    Text(
-                      subtitle,
-
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-
-                        height: 1.4,
-                      ),
+                    const SizedBox(height: 16),
+                    _buildInsightActionButton(
+                      backgroundColor: const Color(0xFF17664F),
+                      icon: Icons.notifications_active_outlined,
+                      label: 'View Budget Alerts',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                BudgetAlertsScreen(month: selectedMonth),
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                );
-              },
-            ),
-
-            const SizedBox(height: 20),
-
-            // =====================================================
-            // CHART CONTENT
-            // =====================================================
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-
-              child: Builder(
-                key: ValueKey(selectedChart),
-
-                builder: (_) {
-                  if (selectedChart == ReportChartType.groupedBar) {
-                    return monthlyChartAsync.when(
-                      data: (monthlyData) {
-                        return MonthlyGroupedBarChart(data: monthlyData);
-                      },
-
-                      error: (_, _) => const Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-
-                          child: Text('Unable to load monthly chart'),
-                        ),
-                      ),
-
-                      loading: () => const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                    );
-                  }
-
-                  if (selectedChart == ReportChartType.progress) {
-                    return budgetAsync.when(
-                      data: (budgetData) {
-                        if (budgetData.isEmpty) {
-                          return const Card(
-                            child: Padding(
-                              padding: EdgeInsets.all(24),
-
-                              child: Center(
-                                child: Text('No budget data available'),
-                              ),
-                            ),
-                          );
-                        }
-
-                        return BudgetProgressChart(data: budgetData);
-                      },
-
-                      error: (_, _) => const Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-
-                          child: Text('Unable to load budget chart'),
-                        ),
-                      ),
-
-                      loading: () => const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                    );
-                  }
-
-                  if (selectedChart == ReportChartType.trends) {
-                    return trendsAsync.when(
-                      data: (trends) {
-                        if (trends.isEmpty) {
-                          return const Card(
-                            child: Padding(
-                              padding: EdgeInsets.all(24),
-
-                              child: Center(
-                                child: Text('No trend data available'),
-                              ),
-                            ),
-                          );
-                        }
-
-                        return MonthlyTrendChart(trends: trends);
-                      },
-
-                      error: (_, _) => const Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-
-                          child: Text('Unable to load trend analytics'),
-                        ),
-                      ),
-
-                      loading: () => const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                    );
-                  }
-
-                  return categoryAsync.when(
-                    data: (categories) {
-                      if (categories.isEmpty) {
-                        return const Card(
-                          child: Padding(
-                            padding: EdgeInsets.all(24),
-
-                            child: Center(
-                              child: Text('No expense data available'),
+                    const SizedBox(height: 12),
+                    _buildInsightActionButton(
+                      backgroundColor: const Color(0xFF2E7564),
+                      icon: Icons.trending_up,
+                      label: 'View Income Targets',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BudgetAlertsScreen(
+                              targetType: FinancialTargetType.incomeTarget,
+                              month: selectedMonth,
                             ),
                           ),
                         );
-                      }
-
-                      final colors = const [
-                        Colors.red,
-                        Colors.blue,
-                        Colors.green,
-                        Colors.orange,
-                        Colors.purple,
-                        Colors.teal,
-                        Colors.indigo,
-                        Colors.pink,
-                      ];
-
-                      if (selectedChart == ReportChartType.donut) {
-                        return ExpenseDonutChart(data: categories);
-                      }
-
-                      return ExpensePieChart(
-                        categories: categories,
-
-                        colors: colors,
-
-                        forecolors: List.generate(
-                          colors.length,
-
-                          (_) => Colors.black,
-                        ),
-                      );
-                    },
-
-                    error: (_, _) => const Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-
-                        child: Text('Unable to load analytics'),
-                      ),
+                      },
                     ),
-
-                    loading: () => const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                  );
-                },
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 20),
+
+              // =====================================================
+              // ANALYTICS HEADER
+              // =====================================================
+              _ReportsSectionContainer(
+                title: 'Financial Analytics',
+                description:
+                    'Explore interactive insights across spending patterns, budgets and income trends.',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Visualization Mode',
+                      style: TextStyle(
+                        color: Color(0xFF315F53),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SegmentedButton<ReportChartType>(
+                        showSelectedIcon: false,
+                        style: ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                          padding: WidgetStateProperty.all(
+                            const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                        segments: const [
+                          ButtonSegment(
+                            value: ReportChartType.donut,
+                            icon: Icon(Icons.donut_large),
+                          ),
+                          ButtonSegment(
+                            value: ReportChartType.pie,
+                            icon: Icon(Icons.pie_chart),
+                          ),
+                          ButtonSegment(
+                            value: ReportChartType.groupedBar,
+                            icon: Icon(Icons.bar_chart),
+                          ),
+                          ButtonSegment(
+                            value: ReportChartType.progress,
+                            icon: Icon(Icons.linear_scale),
+                          ),
+                          ButtonSegment(
+                            value: ReportChartType.trends,
+                            icon: Icon(Icons.show_chart),
+                          ),
+                        ],
+                        selected: {selectedChart},
+                        onSelectionChanged: (value) {
+                          setState(() {
+                            selectedChart = value.first;
+                          });
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // =====================================================
+                    // CHART TITLE
+                    // =====================================================
+                    Builder(
+                      builder: (_) {
+                        String title;
+                        String subtitle;
+
+                        switch (selectedChart) {
+                          case ReportChartType.donut:
+                            title = 'Spending Distribution';
+
+                            subtitle =
+                                'Understand how expenses are distributed across spending categories.';
+
+                            break;
+
+                          case ReportChartType.pie:
+                            title = 'Category Contribution';
+
+                            subtitle =
+                                'Compare category contribution to your total monthly spending.';
+
+                            break;
+
+                          case ReportChartType.groupedBar:
+                            title = 'Income & Expense Trends';
+
+                            subtitle =
+                                'Analyze monthly cash flow performance across income and expenses.';
+
+                            break;
+
+                          case ReportChartType.progress:
+                            title = 'Budget Performance';
+
+                            subtitle =
+                                'Monitor category-wise budget usage and spending efficiency.';
+
+                            break;
+
+                          case ReportChartType.trends:
+                            title = 'Financial Growth Trends';
+
+                            subtitle =
+                                'Visualize long-term income growth and expense movement patterns.';
+
+                            break;
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                          children: [
+                            Text(
+                              title,
+
+                              style: const TextStyle(
+                                color: Color(0xFF244C40),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            Text(
+                              subtitle,
+
+                              style: const TextStyle(
+                                color: Color(0xFF536B61),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // =====================================================
+                    // CHART CONTENT
+                    // =====================================================
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+
+                      child: Builder(
+                        key: ValueKey(selectedChart),
+
+                        builder: (_) {
+                          if (selectedChart == ReportChartType.groupedBar) {
+                            return monthlyChartAsync.when(
+                              data: (monthlyData) {
+                                return MonthlyGroupedBarChart(
+                                  data: monthlyData,
+                                );
+                              },
+
+                              error: (_, _) => const Card(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+
+                                  child: Text('Unable to load monthly chart'),
+                                ),
+                              ),
+
+                              loading: () => const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(24),
+
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (selectedChart == ReportChartType.progress) {
+                            return budgetAsync.when(
+                              data: (budgetData) {
+                                if (budgetData.isEmpty) {
+                                  return const Card(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(24),
+
+                                      child: Center(
+                                        child: Text('No budget data available'),
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                return BudgetProgressChart(data: budgetData);
+                              },
+
+                              error: (_, _) => const Card(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+
+                                  child: Text('Unable to load budget chart'),
+                                ),
+                              ),
+
+                              loading: () => const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(24),
+
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (selectedChart == ReportChartType.trends) {
+                            return trendsAsync.when(
+                              data: (trends) {
+                                if (trends.isEmpty) {
+                                  return const Card(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(24),
+
+                                      child: Center(
+                                        child: Text('No trend data available'),
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                return MonthlyTrendChart(trends: trends);
+                              },
+
+                              error: (_, _) => const Card(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+
+                                  child: Text('Unable to load trend analytics'),
+                                ),
+                              ),
+
+                              loading: () => const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(24),
+
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                            );
+                          }
+
+                          return categoryAsync.when(
+                            data: (categories) {
+                              if (categories.isEmpty) {
+                                return const Card(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(24),
+
+                                    child: Center(
+                                      child: Text('No expense data available'),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final colors = const [
+                                Colors.red,
+                                Colors.blue,
+                                Colors.green,
+                                Colors.orange,
+                                Colors.purple,
+                                Colors.teal,
+                                Colors.indigo,
+                                Colors.pink,
+                              ];
+
+                              if (selectedChart == ReportChartType.donut) {
+                                return ExpenseDonutChart(data: categories);
+                              }
+
+                              return ExpensePieChart(
+                                categories: categories,
+
+                                colors: colors,
+
+                                forecolors: List.generate(
+                                  colors.length,
+
+                                  (_) => Colors.black,
+                                ),
+                              );
+                            },
+
+                            error: (_, _) => const Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+
+                                child: Text('Unable to load analytics'),
+                              ),
+                            ),
+
+                            loading: () => const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(24),
+
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );

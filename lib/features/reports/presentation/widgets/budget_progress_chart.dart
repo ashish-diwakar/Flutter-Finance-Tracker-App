@@ -186,9 +186,9 @@ class BudgetProgressChart
 
                           style:
                               const TextStyle(
-
-                            fontWeight:
-                                FontWeight.bold,
+                            color: Color(0xFF244C40),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -199,9 +199,8 @@ class BudgetProgressChart
 
                         style:
                             TextStyle(
-
-                          fontWeight:
-                              FontWeight.w600,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
 
                           fontStyle:
                               FontStyle.italic,
@@ -252,39 +251,30 @@ class BudgetProgressChart
                     height: 6,
                   ),
 
-                  Row(
-
-                    mainAxisAlignment:
-                        MainAxisAlignment
-                            .spaceBetween,
-
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 4,
                     children: [
-
                       Text(
-
-                        'Spent: '
-                        '${CurrencyFormatter.formatDouble(
+                        'Spent: ${CurrencyFormatter.formatDouble(
                           amount: item.spent,
                           currency: currency,
                         )}',
-
-                        style:
-                            const TextStyle(
-                          fontSize: 12,
+                        style: const TextStyle(
+                          color: Color(0xFF536B61),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-
                       Text(
-
-                        'Budget: '
-                        '${CurrencyFormatter.formatDouble(
+                        'Budget: ${CurrencyFormatter.formatDouble(
                           amount: item.budget,
                           currency: currency,
                         )}',
-
-                        style:
-                            const TextStyle(
-                          fontSize: 12,
+                        style: const TextStyle(
+                          color: Color(0xFF536B61),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],

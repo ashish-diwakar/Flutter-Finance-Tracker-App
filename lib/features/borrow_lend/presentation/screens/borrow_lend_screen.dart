@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../providers/borrow_lend_provider.dart';
@@ -29,10 +30,8 @@ class BorrowLendScreen
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Borrowing & Lending',
-        ),
+      appBar: const AuroraAppBar(
+        title: Text('Borrowing & Lending'),
       ),
       body: overviewAsync.when(
         loading: () =>

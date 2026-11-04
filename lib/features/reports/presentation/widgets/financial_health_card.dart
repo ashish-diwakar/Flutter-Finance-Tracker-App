@@ -52,35 +52,9 @@ class FinancialHealthCard
     final color =
         getScoreColor();
 
-    return Card(
-
-      child: Padding(
-
-        padding:
-            const EdgeInsets.all(
-          20,
-        ),
-
-        child: Column(
+    return Column(
 
           children: [
-
-            const Text(
-
-              'Financial Health Score',
-
-              style: TextStyle(
-
-                fontSize: 20,
-
-                fontWeight:
-                    FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(
-              height: 20,
-            ),
 
             Container(
 
@@ -123,7 +97,7 @@ class FinancialHealthCard
                     style:
                         TextStyle(
 
-                      fontSize: 32,
+                      fontSize: 28,
 
                       fontWeight:
                           FontWeight
@@ -150,10 +124,8 @@ class FinancialHealthCard
 
               style: TextStyle(
 
-                fontSize: 24,
-
-                fontWeight:
-                    FontWeight.bold,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
 
                 color: color,
               ),
@@ -172,7 +144,9 @@ class FinancialHealthCard
 
               style:
                   const TextStyle(
-                color: Colors.grey,
+                color: Color(0xFF536B61),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
 
@@ -181,32 +155,31 @@ class FinancialHealthCard
             ),
 
             Row(
-
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceAround,
-
               children: [
 
-                _metric(
-                  'Savings',
-                  '${health.savingsRate.toStringAsFixed(0)}%',
+                Expanded(
+                  child: _metric(
+                    'Savings',
+                    '${health.savingsRate.toStringAsFixed(0)}%',
+                  ),
                 ),
 
-                _metric(
-                  'Expense',
-                  '${health.expenseRatio.toStringAsFixed(0)}%',
+                Expanded(
+                  child: _metric(
+                    'Expense',
+                    '${health.expenseRatio.toStringAsFixed(0)}%',
+                  ),
                 ),
 
-                _metric(
-                  'Budget',
-                  '${health.budgetUsage.toStringAsFixed(0)}%',
+                Expanded(
+                  child: _metric(
+                    'Budget',
+                    '${health.budgetUsage.toStringAsFixed(0)}%',
+                  ),
                 ),
               ],
             ),
           ],
-        ),
-      ),
     );
   }
 
@@ -226,10 +199,9 @@ class FinancialHealthCard
           style:
               const TextStyle(
 
-            fontWeight:
-                FontWeight.bold,
-
-            fontSize: 18,
+            color: Color(0xFF244C40),
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
           ),
         ),
 
@@ -239,6 +211,12 @@ class FinancialHealthCard
 
         Text(
           title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFF536B61),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );

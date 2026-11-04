@@ -39,52 +39,12 @@ class ExpenseForecastCard
     final remaining =
         projected - current;
 
-    return Card(
-
-      child: Padding(
-
-        padding:
-            const EdgeInsets.all(
-          20,
-        ),
-
-        child: Column(
+    return Column(
 
           crossAxisAlignment:
               CrossAxisAlignment.start,
 
           children: [
-
-            const Row(
-
-              children: [
-
-                Icon(
-                  Icons.insights,
-                ),
-
-                SizedBox(
-                  width: 8,
-                ),
-
-                Text(
-
-                  'Expense Forecast',
-
-                  style: TextStyle(
-
-                    fontSize: 18,
-
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(
-              height: 20,
-            ),
 
             Text(
 
@@ -97,7 +57,8 @@ class ExpenseForecastCard
               style:
                   const TextStyle(
 
-                fontSize: 32,
+                color: Color(0xFF244C40),
+                fontSize: 26,
 
                 fontWeight:
                     FontWeight.bold,
@@ -110,6 +71,11 @@ class ExpenseForecastCard
 
             const Text(
               'Projected month-end expense',
+              style: TextStyle(
+                color: Color(0xFF536B61),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
 
             const SizedBox(
@@ -130,6 +96,11 @@ class ExpenseForecastCard
             Text(
 
               '${forecast.daysPassed}/${forecast.totalDays} days completed',
+              style: const TextStyle(
+                color: Color(0xFF536B61),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
 
             const SizedBox(
@@ -142,6 +113,11 @@ class ExpenseForecastCard
                 amount: (forecast.dailyAverage * 100).round(),
                 currency: currency,
               )}',
+              style: const TextStyle(
+                color: Color(0xFF244C40),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
 
             const SizedBox(
@@ -154,10 +130,13 @@ class ExpenseForecastCard
                 amount: (remaining * 100).round(),
                 currency: currency,
               )}',
+              style: const TextStyle(
+                color: Color(0xFF244C40),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
-        ),
-      ),
     );
   }
 }

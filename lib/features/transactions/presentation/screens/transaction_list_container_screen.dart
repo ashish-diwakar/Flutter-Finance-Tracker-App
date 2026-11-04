@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../../transactions/presentation/screens/add_transaction_screen.dart';
@@ -72,8 +73,7 @@ class _TransactionListContainerScreenState
   Widget build(BuildContext context) {
     return Scaffold(
             
-      appBar: AppBar(
-        centerTitle: true,
+      appBar: AuroraAppBar(
         title: const Text('Transactions'),
         actions: [
           IconButton.filledTonal(

@@ -151,7 +151,7 @@ class ExpenseDonutChart
                         titleStyle:
                             const TextStyle(
 
-                          fontSize: 12,
+                          fontSize: 13,
 
                           fontWeight:
                               FontWeight.bold,
@@ -174,6 +174,11 @@ class ExpenseDonutChart
 
                   const Text(
                     'Total Expense',
+                    style: TextStyle(
+                      color: Color(0xFF536B61),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
 
                   Text(
@@ -261,6 +266,11 @@ class ExpenseDonutChart
 
                     child: Text(
                       item.category,
+                      style: const TextStyle(
+                        color: Color(0xFF536B61),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
 
@@ -273,6 +283,11 @@ class ExpenseDonutChart
 
                       currency:
                           currency,
+                    ),
+                    style: const TextStyle(
+                      color: Color(0xFF244C40),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],

@@ -160,8 +160,8 @@ class MonthlyGroupedBarChart
                               .month,
                           style:
                               const TextStyle(
-                            fontSize:
-                                10,
+                            color: Color(0xFF536B61),
+                            fontSize: 12,
                           ),
                         ),
                       );
@@ -255,6 +255,11 @@ class MonthlyGroupedBarChart
 
                 const Text(
                   'Income',
+                  style: TextStyle(
+                    color: Color(0xFF536B61),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -279,6 +284,11 @@ class MonthlyGroupedBarChart
 
                 const Text(
                   'Expense',
+                  style: TextStyle(
+                    color: Color(0xFF536B61),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
