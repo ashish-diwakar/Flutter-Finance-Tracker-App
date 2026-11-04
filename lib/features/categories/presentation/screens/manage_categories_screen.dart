@@ -2,6 +2,7 @@ import 'package:finance_tracker/features/categories/presentation/providers/categ
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/aurora_app_bar.dart';
@@ -112,14 +113,57 @@ class _ManageCategoriesScreenState
 
   Future<void> showCategoryDialog({CategoryModel? category}) async {
     final formKey = GlobalKey<FormState>();
+    final budgetNumberFormat = NumberFormat('#,##,##0.00', 'en_IN');
 
     final nameController = TextEditingController(text: category?.name ?? '');
 
+    final initialBudgetInput = category?.monthlyBudget == null
+        ? null
+        : (category!.monthlyBudget! / 100).toStringAsFixed(2);
     final budgetController = TextEditingController(
       text: category?.monthlyBudget != null
           ? (category!.monthlyBudget! / 100).toString()
           : '',
     );
+    final budgetFocusNode = FocusNode();
+    budgetFocusNode.addListener(() {
+      final text = budgetController.text;
+      if (text.isEmpty) {
+        return;
+      }
+
+      if (budgetFocusNode.hasFocus) {
+        final selectionOffset = budgetController.selection.extentOffset;
+        if (text.contains(',')) {
+          final commasBeforeSelection = selectionOffset < 0
+              ? 0
+              : ','.allMatches(text.substring(0, selectionOffset)).length;
+          final ungrouped = text.replaceAll(',', '');
+          budgetController.value = TextEditingValue(
+            text: ungrouped,
+            selection: TextSelection.collapsed(
+              offset: selectionOffset < 0
+                  ? ungrouped.length
+                  : (selectionOffset - commasBeforeSelection).clamp(
+                      0,
+                      ungrouped.length,
+                    ),
+            ),
+          );
+        }
+      } else {
+        final normalized = text.replaceAll(',', '');
+        final amount = double.tryParse(normalized);
+        if (amount != null) {
+          budgetController.value = TextEditingValue(
+            text: budgetNumberFormat.format(amount),
+            selection: TextSelection.collapsed(
+              offset: budgetNumberFormat.format(amount).length,
+            ),
+          );
+        }
+      }
+    });
 
     String type = category?.type ?? 'expense';
 
@@ -132,8 +176,13 @@ class _ManageCategoriesScreenState
     // );
 
     if (!mounted) {
+      budgetFocusNode.dispose();
+      nameController.dispose();
+      budgetController.dispose();
       return;
     }
+
+    Future<dynamic>? dialogRouteCompleted;
 
     await showDialog(
       context: context,
@@ -141,6 +190,8 @@ class _ManageCategoriesScreenState
       barrierDismissible: false,
 
       builder: (dialogContext) {
+        dialogRouteCompleted ??= ModalRoute.of(dialogContext)!.completed;
+
         return StatefulBuilder(
           builder: (context, setDialogState) {
             Future<void> saveCategory() async {
@@ -158,11 +209,15 @@ class _ManageCategoriesScreenState
               });
 
               try {
-                final parsedBudget = double.tryParse(
-                  budgetController.text.trim(),
-                );
-
-                final budget = parsedBudget != null
+                final normalizedBudget = budgetController.text
+                    .trim()
+                    .replaceAll(',', '');
+                final parsedBudget = double.tryParse(normalizedBudget);
+                final budget =
+                    category?.monthlyBudget != null &&
+                        normalizedBudget == initialBudgetInput
+                    ? category!.monthlyBudget
+                    : parsedBudget != null
                     ? (parsedBudget * 100).toInt()
                     : null;
 
@@ -301,7 +356,7 @@ class _ManageCategoriesScreenState
               ),
               constraints: const BoxConstraints(maxWidth: 440),
               insetPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
+                horizontal: 18,
                 vertical: 24,
               ),
               scrollable: true,
@@ -322,134 +377,140 @@ class _ManageCategoriesScreenState
               ),
               content: Form(
                 key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: nameController,
-                      enabled: !saving,
-                      textCapitalization: TextCapitalization.words,
-                      style: const TextStyle(
-                        color: Color(0xFF244C40),
-                        fontSize: 18,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Category name is required';
-                        }
-
-                        final trimmedName = value.trim();
-
-                        if (trimmedName.length < 2) {
-                          return 'Minimum 2 characters required';
-                        }
-
-                        final normalizedName = trimmedName.toLowerCase();
-
-                        final isDuplicate = categories.any((existing) {
-                          return existing.uuid != category?.uuid &&
-                              existing.type == type &&
-                              existing.name.trim().toLowerCase() ==
-                                  normalizedName;
-                        });
-
-                        if (isDuplicate) {
-                          return 'Category name already exists for this type';
-                        }
-
-                        return null;
-                      },
-                      decoration: _categoryInputDecoration(
-                        labelText: 'Category Name',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: type,
-                      isExpanded: true,
-                      style: const TextStyle(
-                        color: Color(0xFF244C40),
-                        fontSize: 18,
-                      ),
-                      decoration: _categoryInputDecoration(
-                        labelText: 'Category Type',
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'expense',
-                          child: Text('Expense'),
+                child: SizedBox(
+                  width: 440,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: nameController,
+                        enabled: !saving,
+                        textCapitalization: TextCapitalization.words,
+                        style: const TextStyle(
+                          color: Color(0xFF244C40),
+                          fontSize: 18,
                         ),
-                        DropdownMenuItem(
-                          value: 'income',
-                          child: Text('Income'),
-                        ),
-                      ],
-                      onChanged: saving
-                          ? null
-                          : (value) {
-                              if (value == null) {
-                                return;
-                              }
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Category name is required';
+                          }
 
-                              setDialogState(() {
-                                type = value;
-                              });
-                            },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: budgetController,
-                      enabled: !saving,
-                      style: const TextStyle(
-                        color: Color(0xFF244C40),
-                        fontSize: 18,
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d*\.?\d{0,2}'),
-                        ),
-                      ],
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
+                          final trimmedName = value.trim();
+
+                          if (trimmedName.length < 2) {
+                            return 'Minimum 2 characters required';
+                          }
+
+                          final normalizedName = trimmedName.toLowerCase();
+
+                          final isDuplicate = categories.any((existing) {
+                            return existing.uuid != category?.uuid &&
+                                existing.type == type &&
+                                existing.name.trim().toLowerCase() ==
+                                    normalizedName;
+                          });
+
+                          if (isDuplicate) {
+                            return 'Category name already exists for this type';
+                          }
+
                           return null;
-                        }
-
-                        final amount = double.tryParse(value.trim());
-
-                        if (amount == null) {
-                          return type == 'expense'
-                              ? 'Enter valid budget'
-                              : 'Enter valid income target';
-                        }
-
-                        if (amount < 0) {
-                          return type == 'expense'
-                              ? 'Budget cannot be negative'
-                              : 'Income target cannot be negative';
-                        }
-
-                        if (amount > 999999999) {
-                          return type == 'expense'
-                              ? 'Budget is too large'
-                              : 'Income target is too large';
-                        }
-
-                        return null;
-                      },
-                      decoration: _categoryInputDecoration(
-                        labelText: type == 'expense'
-                            ? 'Monthly Budget'
-                            : 'Monthly Income Target',
-                        hintText: type == 'expense'
-                            ? 'Optional spending limit'
-                            : 'Optional income target',
-                        prefixText: '₹ ',
+                        },
+                        decoration: _categoryInputDecoration(
+                          labelText: 'Category Name',
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: type,
+                        isExpanded: true,
+                        style: const TextStyle(
+                          color: Color(0xFF244C40),
+                          fontSize: 18,
+                        ),
+                        decoration: _categoryInputDecoration(
+                          labelText: 'Category Type',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'expense',
+                            child: Text('Expense'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'income',
+                            child: Text('Income'),
+                          ),
+                        ],
+                        onChanged: saving
+                            ? null
+                            : (value) {
+                                if (value == null) {
+                                  return;
+                                }
+
+                                setDialogState(() {
+                                  type = value;
+                                });
+                              },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: budgetController,
+                        focusNode: budgetFocusNode,
+                        enabled: !saving,
+                        style: const TextStyle(
+                          color: Color(0xFF244C40),
+                          fontSize: 18,
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d{0,2}'),
+                          ),
+                        ],
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return null;
+                          }
+
+                          final amount = double.tryParse(
+                            value.trim().replaceAll(',', ''),
+                          );
+
+                          if (amount == null) {
+                            return type == 'expense'
+                                ? 'Enter valid budget'
+                                : 'Enter valid income target';
+                          }
+
+                          if (amount < 0) {
+                            return type == 'expense'
+                                ? 'Budget cannot be negative'
+                                : 'Income target cannot be negative';
+                          }
+
+                          if (amount > 999999999) {
+                            return type == 'expense'
+                                ? 'Budget is too large'
+                                : 'Income target is too large';
+                          }
+
+                          return null;
+                        },
+                        decoration: _categoryInputDecoration(
+                          labelText: type == 'expense'
+                              ? 'Monthly Budget'
+                              : 'Monthly Income Target',
+                          hintText: type == 'expense'
+                              ? 'Optional spending limit'
+                              : 'Optional income target',
+                          prefixText: '₹ ',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -497,8 +558,10 @@ class _ManageCategoriesScreenState
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Save'),
                 ),
@@ -509,9 +572,10 @@ class _ManageCategoriesScreenState
       },
     );
 
-    //nameController.dispose();
-
-    //budgetController.dispose();
+    await dialogRouteCompleted!;
+    budgetFocusNode.dispose();
+    nameController.dispose();
+    budgetController.dispose();
   }
 
   Future<void> deleteCategory(CategoryModel category) async {
@@ -520,25 +584,94 @@ class _ManageCategoriesScreenState
 
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete Category'),
-
-          content: Text('Delete "${category.name}"?'),
-
+          backgroundColor: const Color(0xFFF3FAF5),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          constraints: const BoxConstraints(maxWidth: 440),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 24,
+          ),
+          scrollable: true,
+          titlePadding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 12,
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          actionsOverflowButtonSpacing: 8,
+          title: const Row(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Color(0xFFFBE6E3),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Icon(Icons.delete_outline, color: Color(0xFFB54C44)),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Delete Category',
+                  style: TextStyle(
+                    color: Color(0xFF315F53),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 440,
+            child: Text(
+              'Delete "${category.name}"?',
+              style: const TextStyle(color: Color(0xFF244C40), fontSize: 16),
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop(false);
               },
-
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF315F53),
+                minimumSize: const Size(88, 48),
+                side: const BorderSide(color: Color(0xFFB5D9CA)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               child: const Text('Cancel'),
             ),
-
-            ElevatedButton(
+            FilledButton.icon(
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },
-
-              child: const Text('Delete'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFB54C44),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(104, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Delete'),
             ),
           ],
         );
