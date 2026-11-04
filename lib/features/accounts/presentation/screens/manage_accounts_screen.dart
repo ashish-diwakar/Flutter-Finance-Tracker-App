@@ -33,6 +33,15 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
 
   bool _deletingAccount = false;
 
+  String _accountTypeLabel(String type) {
+    return switch (type) {
+      'cash' => 'Cash',
+      'bank' => 'Bank',
+      'credit_card' => 'Credit Card',
+      _ => type,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -377,45 +386,110 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
         child: loading
             ? const Center(child: CircularProgressIndicator())
             : ListView.builder(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.paddingOf(context).bottom + 96,
+                ),
                 itemCount: accounts.length,
-
                 itemBuilder: (context, index) {
                   final account = accounts[index];
-
                   final calculatedBalance =
                       balances[account.uuid] ?? account.currentBalance;
+                  final balanceColor = calculatedBalance > 0
+                      ? const Color(0xFF17664F)
+                      : calculatedBalance < 0
+                      ? const Color(0xFFB54C44)
+                      : const Color(0xFF315F53);
 
-                  return ListTile(
-                    title: Text(account.name),
-
-                    subtitle: Text(
-                      '${account.type} • '
-                      '${CurrencyFormatter.format(amount: calculatedBalance, currency: currency)}',
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-
-                      children: [
-                        if (!account.isDefault)
-                          IconButton(
-                            onPressed: () {
-                              showAccountDialog(account: account);
-                            },
-
-                            icon: const Icon(Icons.edit),
+                    color: const Color(0xFFF0F8F2),
+                    surfaceTintColor: Colors.transparent,
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: Color(0xFFB8D8CA)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      account.name,
+                                      style: const TextStyle(
+                                        color: Color(0xFF244D3F),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _accountTypeLabel(account.type),
+                                      style: const TextStyle(
+                                        color: Color(0xFF536B61),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (!account.isDefault)
+                                IconButton(
+                                  onPressed: () {
+                                    showAccountDialog(account: account);
+                                  },
+                                  icon: const Icon(Icons.edit),
+                                ),
+                              if (!account.isDefault)
+                                IconButton(
+                                  tooltip: 'Delete Account',
+                                  onPressed: () {
+                                    confirmDeleteAccount(account);
+                                  },
+                                  icon: const Icon(Icons.delete),
+                                ),
+                            ],
                           ),
-
-                        if (!account.isDefault)
-                          IconButton(
-                            tooltip: 'Delete Account',
-                            onPressed: () {
-                              confirmDeleteAccount(account);
-                            },
-
-                            icon: const Icon(Icons.delete),
+                          const SizedBox(height: 12),
+                          const Divider(height: 1, color: Color(0xFFD5E6DC)),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              const Text(
+                                'Current Balance',
+                                style: TextStyle(
+                                  color: Color(0xFF536B61),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                CurrencyFormatter.format(
+                                  amount: calculatedBalance,
+                                  currency: currency,
+                                ),
+                                style: TextStyle(
+                                  color: balanceColor,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
