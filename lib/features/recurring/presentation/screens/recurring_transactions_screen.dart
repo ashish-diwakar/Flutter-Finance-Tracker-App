@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/aurora_app_bar.dart';
@@ -570,7 +571,7 @@ class RecurringTransactionsScreen extends ConsumerWidget {
                                   runSpacing: 8,
                                   children: [
                                     Text(
-                                      'Next: ${item.nextRunDate.toLocal().day}/${item.nextRunDate.toLocal().month}/${item.nextRunDate.toLocal().year}',
+                                      'Next: ${DateFormat('dd MMM yyyy').format(item.nextRunDate.toLocal())}',
                                       style: const TextStyle(
                                         color: Color(0xFF536B61),
                                         fontSize: 14,
