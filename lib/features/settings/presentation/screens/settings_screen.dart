@@ -99,7 +99,7 @@ class _SettingsOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      minVerticalPadding: 8,
+      minVerticalPadding: 10,
       leading: Container(
         width: 40,
         height: 40,
@@ -108,20 +108,30 @@ class _SettingsOptionTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
-        child: Icon(option.icon, color: const Color(0xFF315F53), size: 21),
+        child: Icon(option.icon, color: const Color(0xFF315F53), size: 22),
       ),
       title: Text(
         option.title,
         style: const TextStyle(
-          color: Color(0xFF244C40),
+          color: Color(0xFF315F53),
+          fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
       ),
       subtitle: Text(
         option.description,
-        style: const TextStyle(color: Color(0xFF536B61)),
+        style: const TextStyle(
+          color: Color(0xFF435F55),
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          height: 1.35,
+        ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: Color(0xFF315F53)),
+      trailing: const Icon(
+        Icons.chevron_right,
+        color: Color(0xFF315F53),
+        size: 20,
+      ),
       onTap: option.onTap,
     );
   }
