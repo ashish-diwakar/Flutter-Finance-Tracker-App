@@ -61,6 +61,42 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
     });
   }
 
+  InputDecoration _accountInputDecoration({required String labelText}) {
+    const enabledBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide(color: Color(0xFFB5D9CA)),
+    );
+    const focusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide(color: Color(0xFF3E8877), width: 1.6),
+    );
+    const errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide(color: Color(0xFFB54C44)),
+    );
+
+    return InputDecoration(
+      labelText: labelText,
+      filled: true,
+      fillColor: const Color(0xFFFCFEFC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      labelStyle: const TextStyle(color: Color(0xFF536B61), fontSize: 16),
+      floatingLabelStyle: const TextStyle(
+        color: Color(0xFF315F53),
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      errorStyle: const TextStyle(color: Color(0xFF9E3F38), fontSize: 14),
+      errorMaxLines: 2,
+      enabledBorder: enabledBorder,
+      focusedBorder: focusedBorder,
+      errorBorder: errorBorder,
+      focusedErrorBorder: focusedBorder.copyWith(
+        borderSide: const BorderSide(color: Color(0xFFB54C44), width: 1.6),
+      ),
+    );
+  }
+
   Future<void> confirmDeleteAccount(AccountModel account) async {
     if (_deletingAccount) {
       return;
@@ -222,91 +258,128 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(account == null ? 'Add Account' : 'Edit Account'),
-
-              content: Form(
-                key: formKey,
-
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-
-                  children: [
-                    TextFormField(
-                      controller: nameController,
-
-                      decoration: const InputDecoration(
-                        labelText: 'Account Name',
-
-                        errorMaxLines: 2,
-                      ),
-
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Account name is required';
-                        }
-
-                        final trimmedName = value.trim();
-
-                        if (trimmedName.length < 2) {
-                          return 'Minimum 2 characters required';
-                        }
-
-                        final normalizedName = trimmedName.toLowerCase();
-
-                        final isDuplicate = accounts.any((existing) {
-                          return existing.uuid != account?.uuid &&
-                              existing.type == type &&
-                              existing.name.trim().toLowerCase() ==
-                                  normalizedName;
-                        });
-
-                        if (isDuplicate) {
-                          return 'Account name already exists\nfor this type';
-                        }
-
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    DropdownButton<String>(
-                      value: type,
-
-                      isExpanded: true,
-
-                      items: const [
-                        DropdownMenuItem(value: 'bank', child: Text('Bank')),
-
-                        DropdownMenuItem(value: 'cash', child: Text('Cash')),
-
-                        DropdownMenuItem(
-                          value: 'credit_card',
-
-                          child: Text('Credit Card'),
-                        ),
-                      ],
-
-                      onChanged: (value) {
-                        setDialogState(() {
-                          type = value!;
-                        });
-                      },
-                    ),
-                  ],
+              backgroundColor: const Color(0xFFF3FAF5),
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              constraints: const BoxConstraints(maxWidth: 440),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 24,
+              ),
+              scrollable: true,
+              titlePadding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              actionsOverflowButtonSpacing: 8,
+              title: Text(
+                account == null ? 'Add Account' : 'Edit Account',
+                style: const TextStyle(
+                  color: Color(0xFF315F53),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
+              content: Form(
+                key: formKey,
+                child: SizedBox(
+                  width: 440,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: nameController,
+                        style: const TextStyle(
+                          color: Color(0xFF244C40),
+                          fontSize: 18,
+                        ),
+                        decoration: _accountInputDecoration(
+                          labelText: 'Account Name',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Account name is required';
+                          }
 
+                          final trimmedName = value.trim();
+
+                          if (trimmedName.length < 2) {
+                            return 'Minimum 2 characters required';
+                          }
+
+                          final normalizedName = trimmedName.toLowerCase();
+
+                          final isDuplicate = accounts.any((existing) {
+                            return existing.uuid != account?.uuid &&
+                                existing.type == type &&
+                                existing.name.trim().toLowerCase() ==
+                                    normalizedName;
+                          });
+
+                          if (isDuplicate) {
+                            return 'Account name already exists\nfor this type';
+                          }
+
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: type,
+                        isExpanded: true,
+                        style: const TextStyle(
+                          color: Color(0xFF244C40),
+                          fontSize: 18,
+                        ),
+                        decoration: _accountInputDecoration(
+                          labelText: 'Account Type',
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'bank', child: Text('Bank')),
+                          DropdownMenuItem(value: 'cash', child: Text('Cash')),
+                          DropdownMenuItem(
+                            value: 'credit_card',
+                            child: Text('Credit Card'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) {
+                            return;
+                          }
+
+                          setDialogState(() {
+                            type = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF315F53),
+                    minimumSize: const Size(88, 48),
+                    side: const BorderSide(color: Color(0xFFB5D9CA)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   child: const Text('Cancel'),
                 ),
-
-                ElevatedButton(
+                FilledButton(
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) {
                       return;
@@ -342,7 +415,18 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
                       await loadAccounts();
                     }
                   },
-
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF17664F),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(88, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   child: const Text('Save'),
                 ),
               ],
