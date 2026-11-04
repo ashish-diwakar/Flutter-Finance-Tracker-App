@@ -10,12 +10,18 @@ import '../widgets/transaction_section_header.dart';
 import '../widgets/transaction_tile.dart';
 
 class TransactionListScreen extends ConsumerWidget {
+    
   final int? defaultLimit;
+  final bool auroraStyle;
+  final bool scrollWithParent;
 
   const TransactionListScreen({
     super.key,
     this.defaultLimit,
+    this.auroraStyle = false,
+    this.scrollWithParent = false,
   });
+
 
   @override
   Widget build(
@@ -121,9 +127,14 @@ class TransactionListScreen extends ConsumerWidget {
                     groupedTransactions.keys
                         .toList();
 
+                
                 return ListView.builder(
-                  padding:
-                      const EdgeInsets.only(
+                  shrinkWrap: scrollWithParent,
+                  physics: scrollWithParent
+                      ? const NeverScrollableScrollPhysics()
+                      : null,
+
+                  padding: const EdgeInsets.only(
                     bottom: 74,
                   ),
                   itemCount:
@@ -144,8 +155,8 @@ class TransactionListScreen extends ConsumerWidget {
                               .start,
                       children: [
                         TransactionSectionHeader(
-                          title:
-                              sectionTitle,
+                          title: sectionTitle,
+                          auroraStyle: auroraStyle,
                         ),
                         ...sectionTransactions
                             .map(
@@ -193,6 +204,7 @@ class TransactionListScreen extends ConsumerWidget {
                                   toAccountName,
                               categoryName:
                                   categoryName,
+                              auroraStyle: auroraStyle,
                             );
                           },
                         ),

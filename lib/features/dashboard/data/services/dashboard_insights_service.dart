@@ -7,49 +7,29 @@ import '../../../../shared/models/transaction_model.dart';
 import '../../domain/models/finance_insight_model.dart';
 
 class DashboardInsightsService {
-
   final Isar isar;
+  final DateTime Function() _clock;
 
-  DashboardInsightsService(
-    this.isar,
-  );
+  DashboardInsightsService(this.isar, {DateTime Function()? clock})
+    : _clock = clock ?? DateTime.now;
 
-  Future<List<
-      FinanceInsightModel>>
-      generateInsights()
-  async {
+  Future<List<FinanceInsightModel>> generateInsights() async {
+    final now = _clock().toLocal();
 
-    final now =
-        DateTime.now().toUtc();
+    final monthStart = DateTime(now.year, now.month, 1);
 
-    final monthStart =
-        DateTime(
-      now.year,
-      now.month,
-      1,
-    );
+    final startOfNextMonth = DateTime(now.year, now.month + 1, 1);
 
-    final startOfNextMonth =
-        DateTime(
-          now.year,
-          now.month + 1,
-          1,
-        );
-
-    final transactions =
-        await isar
-            .transactionModels
-            .filter()
-            .isDeletedEqualTo(
-              false,
-            )
-            .transactionDateBetween(
-              monthStart,
-              startOfNextMonth,
-              includeLower: true,
-              includeUpper: false,
-            )
-            .findAll();
+    final transactions = await isar.transactionModels
+        .filter()
+        .isDeletedEqualTo(false)
+        .transactionDateBetween(
+          monthStart,
+          startOfNextMonth,
+          includeLower: true,
+          includeUpper: false,
+        )
+        .findAll();
     // final transactions =
     //     await isar
     //         .transactionModels
@@ -62,30 +42,18 @@ class DashboardInsightsService {
     //         )
     //         .findAll();
 
-    final categories =
-        await isar
-            .categoryModels
-            .filter()
-            .isDeletedEqualTo(
-              false,
-            )
-            .findAll();
+    final categories = await isar.categoryModels
+        .filter()
+        .isDeletedEqualTo(false)
+        .findAll();
 
-    final recurring =
-        await isar
-            .recurringTransactionModels
-            .filter()
-            .isDeletedEqualTo(
-              false,
-            )
-            .isActiveEqualTo(
-              true,
-            )
-            .findAll();
+    final recurring = await isar.recurringTransactionModels
+        .filter()
+        .isDeletedEqualTo(false)
+        .isActiveEqualTo(true)
+        .findAll();
 
-    final List<
-        FinanceInsightModel>
-        insights = [];
+    final List<FinanceInsightModel> insights = [];
 
     // =====================================
     // TOTAL INCOME / EXPENSE
@@ -105,44 +73,32 @@ class DashboardInsightsService {
       }
     }
 
-    final savings =
-        income - expense;
+    final savings = income - expense;
 
-    if (savings > 0) {
+    // Round to the whole currency unit used in the
+    // displayed insight, avoiding negative-zero output.
+    final roundedSavings = savings.round();
 
+    if (roundedSavings > 0) {
       insights.add(
-
         FinanceInsightModel(
-
-          title:
-              'Savings This Month',
-
+          title: 'Savings This Month',
+          description: 'You saved ₹$roundedSavings this month.',
+          type: FinanceInsightType.success,
+        ),
+      );
+    } else if (roundedSavings < 0) {
+      insights.add(
+        FinanceInsightModel(
+          title: 'Overspending Alert',
           description:
-              'You saved ₹${savings.toStringAsFixed(0)} this month.',
-
-          type:
-              FinanceInsightType
-                  .success,
+              'You spent ₹${-roundedSavings} more than you earned this month.',
+          type: FinanceInsightType.warning,
         ),
       );
     }
-    else {
-      insights.add(
-
-        FinanceInsightModel(
-
-          title:
-              'Overspending Alert',
-
-          description:
-              'You spent ₹${(-savings).toStringAsFixed(0)} more than you earned this month.',
-
-          type:
-              FinanceInsightType
-                  .warning,
-        ),
-      );
-    }
+    // When the displayed difference is zero,
+    // do not generate a savings or overspending alert.
 
     // =====================================
     // HIGHEST EXPENSE CATEGORY
@@ -168,22 +124,10 @@ class DashboardInsightsService {
       );
     }
 
-    if (categorySpending
-        .isNotEmpty) {
-
-      final highest =
-          categorySpending.entries
-              .reduce(
-        (a, b) {
-
-          return a.value >
-                  b.value
-
-              ? a
-
-              : b;
-        },
-      );
+    if (categorySpending.isNotEmpty) {
+      final highest = categorySpending.entries.reduce((a, b) {
+        return a.value > b.value ? a : b;
+      });
 
       // final category =
       //     categories.firstWhere(
@@ -192,71 +136,43 @@ class DashboardInsightsService {
       //       highest.key,
       // );
 
-      final matchingCategories =
-          categories.where(
-        (c) =>
-            c.uuid == highest.key,
-      );
+      final matchingCategories = categories.where((c) => c.uuid == highest.key);
 
       if (matchingCategories.isNotEmpty) {
-
         final category = matchingCategories.first;
-          
+
         insights.add(
-
           FinanceInsightModel(
-
-            title:
-                'Highest Expense',
+            title: 'Highest Expense',
 
             description:
                 '${category.name} consumed ₹${highest.value.toStringAsFixed(0)}.',
 
-            type:
-                FinanceInsightType
-                    .warning,
+            type: FinanceInsightType.warning,
           ),
         );
       }
-
     }
 
     // =====================================
     // RECURRING PAYMENTS
     // =====================================
 
-    final upcoming =
-        recurring.where(
-      (r) {
-
-        // return r.nextRunDate
-        //     .difference(now)
-        //     .inDays <= 7;
-
-        return
-          r.nextRunDate.isAfter(now) &&
-          r.nextRunDate
-                  .difference(now)
-                  .inDays <=
-              7;
-      },
-    ).length;
+    final upcomingLimit = now.add(const Duration(days: 7));
+    final upcoming = recurring.where((r) {
+      return r.nextRunDate.isAfter(now) &&
+          !r.nextRunDate.isAfter(upcomingLimit);
+    }).length;
 
     if (upcoming > 0) {
-
       insights.add(
-
         FinanceInsightModel(
-
-          title:
-              'Upcoming Recurring',
+          title: 'Upcoming Recurring',
 
           description:
               '$upcoming recurring transactions scheduled within 7 days.',
 
-          type:
-              FinanceInsightType
-                  .info,
+          type: FinanceInsightType.info,
         ),
       );
     }

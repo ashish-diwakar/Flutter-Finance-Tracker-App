@@ -4,9 +4,8 @@ part 'account_model.g.dart';
 
 @collection
 class AccountModel {
-
   Id id = Isar.autoIncrement;
-  
+
   @Index(unique: true)
   late String uuid;
 
@@ -33,10 +32,10 @@ class AccountModel {
       'id': uuid,
       'name': name,
       'type': type,
-      'currentBalance':
-          currentBalance,
+      'currentBalance': currentBalance,
       'isDefault': isDefault,
-      'updatedAt': updatedAt?.toIso8601String(),
+      'createdAt': createdAt.toUtc().toIso8601String(),
+      'updatedAt': updatedAt?.toUtc().toIso8601String(),
       'isSynced': isSynced,
       'isDeleted': isDeleted,
     };

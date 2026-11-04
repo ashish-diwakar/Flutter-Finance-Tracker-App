@@ -15,12 +15,14 @@ class TransactionTile extends ConsumerWidget {
     required this.accountName,
     this.toAccountName,
     this.categoryName,
+    this.auroraStyle = false,
   });
 
   final TransactionModel transaction;
   final String accountName;
   final String? toAccountName;
   final String? categoryName;
+  final bool auroraStyle;
 
   @override
   Widget build(
@@ -38,128 +40,146 @@ class TransactionTile extends ConsumerWidget {
       categoryName,
     );
 
+    
     return Card(
-      margin:
-          const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 4,
-      ),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: 4,
-        ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  TransactionDetailsScreen(
-                transaction:
-                    transaction,
-              ),
+      margin: auroraStyle
+          ? const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 3,
+            )
+          : const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
             ),
-          );
-        },
-        leading: CircleAvatar(
-          backgroundColor:
-              presentation.color
-                  .withValues(
-            alpha: 0.12,
+      elevation: auroraStyle ? 2 : null,
+      shadowColor: auroraStyle
+          ? presentation.color.withValues(alpha: 0.16)
+          : null,
+      clipBehavior: auroraStyle
+          ? Clip.antiAlias
+          : Clip.none,
+      shape: auroraStyle
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Colors.white.withValues(alpha: 0.85),
+                width: 1,
+              ),
+            )
+          : null,
+      child: Ink(
+        decoration: auroraStyle
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white,
+                    Color.lerp(
+                      Colors.white,
+                      presentation.color,
+                      0.12,
+                    )!,
+                  ],
+                ),
+              )
+            : null,
+        child: ListTile(
+          dense: auroraStyle,
+          visualDensity: auroraStyle
+              ? const VisualDensity(
+                  horizontal: -1,
+                  vertical: -2,
+                )
+              : null,
+          horizontalTitleGap: auroraStyle ? 8 : null,
+          contentPadding: auroraStyle
+              ? const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                )
+              : const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+
+          // Keep the existing onTap, leading,
+          // title, subtitle and trailing here.
+
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    TransactionDetailsScreen(
+                  transaction:
+                      transaction,
+                ),
+              ),
+            );
+          },
+          leading: CircleAvatar(
+            backgroundColor:
+                presentation.color
+                    .withValues(
+              alpha: 0.12,
+            ),
+            child: Icon(
+              presentation.icon,
+              color:
+                  presentation.color,
+            ),
           ),
-          child: Icon(
-            presentation.icon,
-            color:
-                presentation.color,
-          ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                presentation.title,
-                maxLines: 1,
-                overflow:
-                    TextOverflow.ellipsis,
-                style:
-                    TextStyle(
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  presentation.title,
+                  maxLines: 1,
+                  overflow:
+                      TextOverflow.ellipsis,
+                  style:
+                      TextStyle(
+                    fontSize: 16,
+                    fontWeight:
+                        FontWeight.w600,
+                    color:
+                        presentation.color,
+                  ),
+                ),
+              ),
+              Text(
+                '${presentation.prefix}'
+                '${CurrencyFormatter.format(
+                  amount:
+                      transaction.amount,
+                  currency:
+                      currency,
+                  decimalDigits: transaction.amount % 100 == 0 ? 0 : 2,
+                )}',
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight:
-                      FontWeight.w600,
+                      FontWeight.bold,
                   color:
                       presentation.color,
                 ),
               ),
-            ),
-            Text(
-              '${presentation.prefix}'
-              '${CurrencyFormatter.format(
-                amount:
-                    transaction.amount,
-                currency:
-                    currency,
-                decimalDigits: 0,
-              )}',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight:
-                    FontWeight.bold,
-                color:
-                    presentation.color,
-              ),
-            ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            const SizedBox(
-              height: 6,
-            ),
-            Row(
-              children: [
-                const Icon(
-                  Icons
-                      .account_balance_wallet_outlined,
-                  size: 15,
-                  color: Colors.grey,
-                ),
-                const SizedBox(
-                  width: 4,
-                ),
-                Expanded(
-                  child: Text(
-                    _accountText(),
-                    maxLines: 1,
-                    overflow:
-                        TextOverflow
-                            .ellipsis,
-                    style:
-                        const TextStyle(
-                      fontSize: 13,
-                      color:
-                          Colors.black87,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if ((transaction
-                        .counterpartyName ??
-                    '')
-                .trim()
-                .isNotEmpty) ...[
+            ],
+          ),
+          subtitle: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
               const SizedBox(
-                height: 4,
+                height: 6,
               ),
               Row(
                 children: [
                   const Icon(
                     Icons
-                        .person_outline,
-                    size: 14,
+                        .account_balance_wallet_outlined,
+                    size: 15,
                     color: Colors.grey,
                   ),
                   const SizedBox(
@@ -167,7 +187,7 @@ class TransactionTile extends ConsumerWidget {
                   ),
                   Expanded(
                     child: Text(
-                      _counterpartyText(),
+                      _accountText(),
                       maxLines: 1,
                       overflow:
                           TextOverflow
@@ -175,75 +195,112 @@ class TransactionTile extends ConsumerWidget {
                       style:
                           const TextStyle(
                         fontSize: 13,
+                        color:
+                            Colors.black87,
                       ),
                     ),
                   ),
                 ],
               ),
-            ],
-            if ((transaction.notes ??
-                    '')
-                .trim()
-                .isNotEmpty) ...[
-              const SizedBox(
-                height: 4,
-              ),
-              Text(
-                transaction.notes!,
-                maxLines: 2,
-                overflow:
-                    TextOverflow.ellipsis,
-                style:
-                    const TextStyle(
-                  fontSize: 13,
-                ),
-              ),
-            ],
-            const SizedBox(
-              height: 4,
-            ),
-            Row(
-              children: [
-                const Icon(
-                  Icons
-                      .calendar_today_outlined,
-                  size: 13,
-                  color: Colors.grey,
-                ),
+              if ((transaction
+                          .counterpartyName ??
+                      '')
+                  .trim()
+                  .isNotEmpty) ...[
                 const SizedBox(
-                  width: 4,
+                  height: 4,
+                ),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons
+                          .person_outline,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(
+                      width: 4,
+                    ),
+                    Expanded(
+                      child: Text(
+                        _counterpartyText(),
+                        maxLines: 1,
+                        overflow:
+                            TextOverflow
+                                .ellipsis,
+                        style:
+                            const TextStyle(
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if ((transaction.notes ??
+                      '')
+                  .trim()
+                  .isNotEmpty) ...[
+                const SizedBox(
+                  height: 4,
                 ),
                 Text(
-                  DateFormat(
-                    'dd MMM yyyy',
-                  ).format(
-                    transaction
-                        .transactionDate
-                        .toLocal(),
-                  ),
+                  transaction.notes!,
+                  maxLines: 2,
+                  overflow:
+                      TextOverflow.ellipsis,
                   style:
                       const TextStyle(
-                    fontSize: 12,
-                    color:
-                        Colors.grey,
+                    fontSize: 13,
                   ),
                 ),
               ],
-            ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize:
-              MainAxisSize.min,
-          children: [
-            const SizedBox(
-              width: 4,
-            ),
-            TransactionPopupMenu(
-              transaction:
-                  transaction,
-            ),
-          ],
+              const SizedBox(
+                height: 4,
+              ),
+              Row(
+                children: [
+                  const Icon(
+                    Icons
+                        .calendar_today_outlined,
+                    size: 13,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(
+                    width: 4,
+                  ),
+                  Text(
+                    DateFormat(
+                      'dd MMM yyyy',
+                    ).format(
+                      transaction
+                          .transactionDate
+                          .toLocal(),
+                    ),
+                    style:
+                        const TextStyle(
+                      fontSize: 12,
+                      color:
+                          Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize:
+                MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 4,
+              ),
+              TransactionPopupMenu(
+                transaction:
+                    transaction,
+              ),
+            ],
+          ),
         ),
       ),
     );

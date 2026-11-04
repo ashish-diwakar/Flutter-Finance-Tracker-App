@@ -71,134 +71,153 @@ class _TransactionListContainerScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+            
       appBar: AppBar(
         centerTitle: true,
         title: const Text('Transactions'),
-        
-      ),
-      body: Column(
-
-        children: [
-          const SizedBox(
-            height: 12,
-          ),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 12,
+        actions: [
+          IconButton.filledTonal(
+            tooltip: 'Add Transaction',
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFD0F1DC),
+              foregroundColor: const Color(0xFF105C45),
             ),
-            child: Card(
-              elevation: 1,
-              shape:
-                  RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(
-                  16,
+            icon: const Icon(Icons.add),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AddTransactionScreen(),
                 ),
-              ),
-              child: const Padding(
-                padding:
-                    EdgeInsets.all(
-                  16,
-                ),
+              );
+
+              if (!mounted) return;
+
+              await ProviderRefreshHelper.refreshTransactionData(
+                ref,
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+
+            
+      
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [
+              Color(0xFFB6D7CC),
+              Color(0xFFDAEDE5),
+              Color(0xFFF8FCFA),
+            ],
+            stops: [0.0, 0.52, 1.0],
+          ),
+        ),
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverToBoxAdapter(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        // const Expanded(
-                        //   child: Text(
-                        //     'Recent Transactions',
-                        //     style: TextStyle(
-                        //       fontSize: 20,
-                        //       fontWeight:
-                        //           FontWeight.bold,
-                        //     ),
-                        //   ),
-                        // ),
-                        Text(
-                          'Show',
+                    const SizedBox(height: 8),
+
+                    // Aurora filter panel
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(
+                          12,
+                          10,
+                          12,
+                          10,
                         ),
-                        SizedBox(
-                          width: 8,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          gradient: const LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              Color(0xFFD1EFDE),
+                              Color(0xFFEAF8F0),
+                              Color(0xFFF5FCF8),
+                            ],
+                          ),
+                          border: Border.all(
+                            color: Colors.white.withValues(
+                              alpha: 0.85,
+                            ),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF24795F)
+                                  .withValues(alpha: 0.10),
+                              blurRadius: 12,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
-                        _LimitDropdown(),
-                      ],
+                        child: const Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.tune_rounded,
+                                  size: 18,
+                                  color: Color(0xFF175D46),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Show',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF285544),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                _LimitDropdown(),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            _TypeFilterChips(),
+                            SizedBox(height: 8),
+                            TransactionFilterButton(),
+                          ],
+                        ),
+                      ),
                     ),
-                    SizedBox(
-                      height: 16,
-                    ),
-                    _TypeFilterChips(),
-                    SizedBox(
-                      height: 16,
-                    ),
-                    TransactionFilterButton(),
+
+                    const SizedBox(height: 8),
+
+                    // Aurora financial summary
+                    const TransactionSummaryCard(),
+
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
-            ),
+            ];
+          },
+
+          // The existing list remains independently
+          // lazy-built and works with NestedScrollView.
+          body: const TransactionListScreen(
+            auroraStyle: true,
+            scrollWithParent: false,
           ),
+        ), // NestedScrollView
+      ),   // DecoratedBox
 
-          const SizedBox(height: 8),
-
-          const TransactionSummaryCard(),
-
-          const SizedBox(
-            height: 8,
-          ),
-          const Expanded(
-            child:
-                TransactionListScreen(),
-          ),
-        ],    
-      ),
-      // floatingActionButton: FloatingActionButton(
-      //   heroTag: 'transactions_fab',
-      //   onPressed: () {
-      //     Navigator.push(
-      //       context,
-      //       MaterialPageRoute(builder: (_) => const AddTransactionScreen()),
-      //     );
-      //     ref.invalidate(
-      //       filteredTransactionsProvider,
-      //     );
-      //   },
-      //   child: const Icon(Icons.add),
-      // ),
-      floatingActionButton:
-          FloatingActionButton(
-
-        heroTag:
-            'transactions_fab',
-
-        child: const Icon(
-          Icons.add,
-        ),
-
-        onPressed: () async {
-
-          await Navigator.push(
-
-            context,
-
-            MaterialPageRoute(
-
-              builder: (_) =>
-                  const AddTransactionScreen(),
-            ),
-          );
-
-          if (!mounted) {
-            return;
-          }
-
-          await ProviderRefreshHelper
-              .refreshTransactionData(
-            ref,
-          );
-        },
-      ),
     );
   }
 }

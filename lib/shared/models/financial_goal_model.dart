@@ -4,7 +4,6 @@ part 'financial_goal_model.g.dart';
 
 @collection
 class FinancialGoalModel {
-
   Id id = Isar.autoIncrement;
 
   @Index(unique: true)
@@ -38,11 +37,9 @@ class FinancialGoalModel {
 
   DateTime? targetDate;
 
-  DateTime createdAt =
-      DateTime.now().toUtc();
+  DateTime createdAt = DateTime.now().toUtc();
 
-  DateTime updatedAt =
-      DateTime.now().toUtc();
+  DateTime updatedAt = DateTime.now().toUtc();
 
   // ==========================================
   // STATUS
@@ -59,9 +56,7 @@ class FinancialGoalModel {
   bool isSynced = false;
 
   Map<String, dynamic> toJson() {
-
     return {
-
       'id': uuid,
 
       'name': name,
@@ -74,20 +69,15 @@ class FinancialGoalModel {
 
       'linkedAccountId': linkedAccountId,
 
-      'targetDate':
-          targetDate?.toIso8601String(),
+      'targetDate': targetDate?.toUtc().toIso8601String(),
 
-      'isCompleted':
-          isCompleted,
+      'isCompleted': isCompleted,
 
-      'createdAt':
-          createdAt.toIso8601String(),
+      'createdAt': createdAt.toUtc().toIso8601String(),
 
-      'updatedAt':
-          updatedAt.toIso8601String(),
+      'updatedAt': updatedAt.toUtc().toIso8601String(),
 
-      'isDeleted':
-          isDeleted,
+      'isDeleted': isDeleted,
     };
   }
 }

@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/utils/calendar_date.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../../core/config/currency_config.dart';
@@ -10,12 +11,9 @@ class BorrowLendNotificationService {
     required int outstandingAmount,
     required String outstandingAmountText,
   }) async {
-    await cancelReminders(
-      transaction.uuid,
-    );
+    await cancelReminders(transaction.uuid);
 
-    if (transaction.type != 'borrowed' &&
-        transaction.type != 'lent') {
+    if (transaction.type != 'borrowed' && transaction.type != 'lent') {
       return;
     }
 
@@ -23,15 +21,13 @@ class BorrowLendNotificationService {
       return;
     }
 
-    final dueDate =
-        transaction.dueDate;
+    final dueDate = transaction.dueDate;
 
     if (dueDate == null) {
       return;
     }
 
-    final localDueDate =
-        dueDate.toLocal();
+    final localDueDate = dueDate.toLocal();
 
     final dueAt = DateTime(
       localDueDate.year,
@@ -40,88 +36,57 @@ class BorrowLendNotificationService {
       9,
     );
 
-    final dayBefore =
-        dueAt.subtract(
-      const Duration(
-        days: 1,
-      ),
-    );
+    final dayBefore = CalendarDate.addDays(dueAt, -1);
 
-    final counterparty =
-        transaction
-            .counterpartyName
-            ?.trim();
+    final counterparty = transaction.counterpartyName?.trim();
 
-    final displayName =
-        counterparty == null ||
-                counterparty.isEmpty
-            ? transaction.type ==
-                    'borrowed'
-                ? 'the lender'
-                : 'the borrower'
-            : counterparty;
+    final displayName = counterparty == null || counterparty.isEmpty
+        ? transaction.type == 'borrowed'
+              ? 'the lender'
+              : 'the borrower'
+        : counterparty;
 
-    final baseId =
-        _notificationBaseId(
-      transaction.uuid,
-    );
+    final baseId = _notificationBaseId(transaction.uuid);
 
-    if (transaction.type ==
-        'borrowed') {
-      await NotificationService
-          .scheduleNotification(
+    if (transaction.type == 'borrowed') {
+      await NotificationService.scheduleNotification(
         id: baseId,
-        title:
-            'Repayment due tomorrow',
+        title: 'Repayment due tomorrow',
         body:
             '$outstandingAmountText repayment to '
             '$displayName is due tomorrow.',
-        scheduledAt:
-            dayBefore,
-        payload:
-            'borrow_lend:${transaction.uuid}',
+        scheduledAt: dayBefore,
+        payload: 'borrow_lend:${transaction.uuid}',
       );
 
-      await NotificationService
-          .scheduleNotification(
+      await NotificationService.scheduleNotification(
         id: baseId + 1,
-        title:
-            'Repayment due today',
+        title: 'Repayment due today',
         body:
             '$outstandingAmountText repayment to '
             '$displayName is due today.',
-        scheduledAt:
-            dueAt,
-        payload:
-            'borrow_lend:${transaction.uuid}',
+        scheduledAt: dueAt,
+        payload: 'borrow_lend:${transaction.uuid}',
       );
     } else {
-      await NotificationService
-          .scheduleNotification(
+      await NotificationService.scheduleNotification(
         id: baseId,
-        title:
-            'Money due tomorrow',
+        title: 'Money due tomorrow',
         body:
             '$outstandingAmountText from '
             '$displayName is due tomorrow.',
-        scheduledAt:
-            dayBefore,
-        payload:
-            'borrow_lend:${transaction.uuid}',
+        scheduledAt: dayBefore,
+        payload: 'borrow_lend:${transaction.uuid}',
       );
 
-      await NotificationService
-          .scheduleNotification(
+      await NotificationService.scheduleNotification(
         id: baseId + 1,
-        title:
-            'Money due today',
+        title: 'Money due today',
         body:
             '$outstandingAmountText from '
             '$displayName is due today.',
-        scheduledAt:
-            dueAt,
-        payload:
-            'borrow_lend:${transaction.uuid}',
+        scheduledAt: dueAt,
+        payload: 'borrow_lend:${transaction.uuid}',
       );
     }
   }
@@ -130,72 +95,50 @@ class BorrowLendNotificationService {
     required List<TransactionModel> transactions,
     required CurrencyConfig currency,
   }) async {
-    final activeTransactions =
-        transactions
-            .where(
-              (transaction) =>
-                  !transaction.isDeleted,
-            )
-            .toList();
+    final activeTransactions = transactions
+        .where((transaction) => !transaction.isDeleted)
+        .toList();
 
-    for (final transaction
-        in transactions) {
-      if (transaction.type != 'borrowed' &&
-          transaction.type != 'lent') {
+    for (final transaction in transactions) {
+      if (transaction.type != 'borrowed' && transaction.type != 'lent') {
         continue;
       }
 
       try {
         if (transaction.isDeleted) {
-          await cancelReminders(
-            transaction.uuid,
-          );
+          await cancelReminders(transaction.uuid);
 
           continue;
         }
 
-        final repaymentType =
-            transaction.type == 'borrowed'
-                ? 'repaymentPaid'
-                : 'repaymentReceived';
+        final repaymentType = transaction.type == 'borrowed'
+            ? 'repaymentPaid'
+            : 'repaymentReceived';
 
         var repaidAmount = 0;
 
-        for (final repayment
-            in activeTransactions) {
-          if (repayment.relatedTransactionId !=
-              transaction.uuid) {
+        for (final repayment in activeTransactions) {
+          if (repayment.relatedTransactionId != transaction.uuid) {
             continue;
           }
 
-          if (repayment.type !=
-              repaymentType) {
+          if (repayment.type != repaymentType) {
             continue;
           }
 
-          repaidAmount +=
-              repayment.amount;
+          repaidAmount += repayment.amount;
         }
 
-        final remaining =
-            transaction.amount -
-                repaidAmount;
+        final remaining = transaction.amount - repaidAmount;
 
-        final outstandingAmount =
-            remaining > 0
-                ? remaining
-                : 0;
+        final outstandingAmount = remaining > 0 ? remaining : 0;
 
         await syncReminders(
           transaction: transaction,
-          outstandingAmount:
-              outstandingAmount,
-          outstandingAmountText:
-              CurrencyFormatter.format(
-            amount:
-                outstandingAmount,
-            currency:
-                currency,
+          outstandingAmount: outstandingAmount,
+          outstandingAmountText: CurrencyFormatter.format(
+            amount: outstandingAmount,
+            currency: currency,
           ),
         );
       } catch (e, stackTrace) {
@@ -208,36 +151,19 @@ class BorrowLendNotificationService {
     }
   }
 
-  static Future<void> cancelReminders(
-    String transactionUuid,
-  ) async {
-    final baseId =
-        _notificationBaseId(
-      transactionUuid,
-    );
+  static Future<void> cancelReminders(String transactionUuid) async {
+    final baseId = _notificationBaseId(transactionUuid);
 
-    await NotificationService
-        .cancelNotification(
-      id: baseId,
-    );
+    await NotificationService.cancelNotification(id: baseId);
 
-    await NotificationService
-        .cancelNotification(
-      id: baseId + 1,
-    );
+    await NotificationService.cancelNotification(id: baseId + 1);
   }
 
-  static int _notificationBaseId(
-    String uuid,
-  ) {
+  static int _notificationBaseId(String uuid) {
     var hash = 17;
 
-    for (final codeUnit
-        in uuid.codeUnits) {
-      hash =
-          ((hash * 31) +
-                  codeUnit) &
-              0x3fffffff;
+    for (final codeUnit in uuid.codeUnits) {
+      hash = ((hash * 31) + codeUnit) & 0x3fffffff;
     }
 
     return hash * 2;

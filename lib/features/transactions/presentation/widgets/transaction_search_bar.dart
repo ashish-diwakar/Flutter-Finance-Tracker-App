@@ -69,12 +69,21 @@ class _TransactionSearchBarState
 
       textInputAction: TextInputAction.search,
 
-      decoration: InputDecoration(
+      style: const TextStyle(
+        color: Color(0xFF244C40),
+        fontSize: 16,
+      ),
 
+      decoration: InputDecoration(
         hintText: 'Search transactions...',
+        hintStyle: const TextStyle(
+          color: Color(0xFF6C8A80),
+          fontSize: 16,
+        ),
 
         prefixIcon: const Icon(
           Icons.search,
+          color: Color(0xFF536B61),
         ),
 
         suffixIcon: filter.searchText.isEmpty
@@ -85,6 +94,7 @@ class _TransactionSearchBarState
 
                 icon: const Icon(
                   Icons.clear,
+                  color: Color(0xFF536B61),
                 ),
 
                 onPressed: () {
@@ -101,55 +111,41 @@ class _TransactionSearchBarState
 
         filled: true,
 
-        fillColor:
-            Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest,
+        fillColor: const Color(0xEEFFFFFF),
 
         contentPadding:
             const EdgeInsets.symmetric(
 
-          horizontal: 16,
+          horizontal: 14,
 
-          vertical: 14,
+          vertical: 15,
         ),
 
         border: OutlineInputBorder(
 
-          borderRadius:
-              BorderRadius.circular(
-            12,
-          ),
+          borderRadius: BorderRadius.circular(14),
 
-          borderSide:
-              BorderSide.none,
+          borderSide: const BorderSide(
+            color: Color(0xFFBDDBD1),
+          ),
         ),
 
         enabledBorder: OutlineInputBorder(
 
-          borderRadius:
-              BorderRadius.circular(
-            12,
-          ),
+          borderRadius: BorderRadius.circular(14),
 
-          borderSide:
-              BorderSide.none,
+          borderSide: const BorderSide(
+            color: Color(0xFFBDDBD1),
+          ),
         ),
 
         focusedBorder: OutlineInputBorder(
 
-          borderRadius:
-              BorderRadius.circular(
-            12,
-          ),
+          borderRadius: BorderRadius.circular(14),
 
-          borderSide: BorderSide(
-
-            color: Theme.of(context)
-                .colorScheme
-                .primary,
-
-            width: 1.5,
+          borderSide: const BorderSide(
+            color: Color(0xFF3E8877),
+            width: 1.6,
           ),
         ),
       ),

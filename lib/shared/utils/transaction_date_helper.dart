@@ -1,28 +1,16 @@
+import 'package:finance_tracker/core/utils/calendar_date.dart';
 import 'package:intl/intl.dart';
 
 class TransactionDateHelper {
+  static String getGroupTitle(DateTime date, {DateTime? now}) {
+    final current = CalendarDate.local(now ?? DateTime.now());
+    date = CalendarDate.local(date);
 
-  static String getGroupTitle(
-    DateTime date,
-  ) {
+    final today = CalendarDate.startOfDay(current);
 
-    final now = DateTime.now();
+    final yesterday = CalendarDate.addDays(today, -1);
 
-    final today = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
-
-    final yesterday = today.subtract(
-      const Duration(days: 1),
-    );
-
-    final transactionDay = DateTime(
-      date.year,
-      date.month,
-      date.day,
-    );
+    final transactionDay = CalendarDate.startOfDay(date);
 
     if (transactionDay == today) {
       return 'Today';
@@ -32,21 +20,15 @@ class TransactionDateHelper {
       return 'Yesterday';
     }
 
-    if (transactionDay.isAfter(
-      today.subtract(
-        const Duration(days: 7),
-      ),
-    )) {
+    if (transactionDay.isAfter(CalendarDate.addDays(today, -7))) {
       return 'This Week';
     }
 
-    if (transactionDay.month == now.month &&
-        transactionDay.year == now.year) {
+    if (transactionDay.month == current.month &&
+        transactionDay.year == current.year) {
       return 'This Month';
     }
 
-    return DateFormat(
-      'MMMM yyyy',
-    ).format(date);
+    return DateFormat('MMMM yyyy').format(date);
   }
 }

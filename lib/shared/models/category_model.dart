@@ -4,8 +4,7 @@ part 'category_model.g.dart';
 
 @collection
 class CategoryModel {
-
-  Id id  = Isar.autoIncrement;
+  Id id = Isar.autoIncrement;
 
   @Index(unique: true)
   late String uuid;
@@ -36,10 +35,11 @@ class CategoryModel {
       'name': name,
       'type': type,
       'isDefault': isDefault,
-      'updatedAt': updatedAt?.toIso8601String(),
+      'createdAt': createdAt.toUtc().toIso8601String(),
+      'updatedAt': updatedAt?.toUtc().toIso8601String(),
       'isSynced': isSynced,
       'isDeleted': isDeleted,
-      'monthlyBudget': monthlyBudget
+      'monthlyBudget': monthlyBudget,
     };
   }
 }

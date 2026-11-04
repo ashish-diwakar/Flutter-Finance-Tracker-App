@@ -24,353 +24,187 @@ import '../../features/reports/presentation/providers/monthly_summary_provider.d
 import '../../features/reports/presentation/providers/monthly_trends_provider.dart';
 
 class ProviderRefreshHelper {
-
   // ==========================================
   // TRANSACTIONS
   // ==========================================
 
-  static Future<void>
-      refreshTransactionData(
-    WidgetRef ref,
-  ) async {
-
-    ref.invalidate(
-      transactionsStreamProvider,
-    );
+  static Future<void> refreshTransactionData(WidgetRef ref) async {
+    ref.invalidate(transactionsStreamProvider);
 
     ref.invalidate(filteredTransactionsProvider);
 
-    ref.invalidate(
-      totalIncomeProvider,
-    );
+    ref.invalidate(totalIncomeProvider);
 
-    ref.invalidate(
-      totalExpenseProvider,
-    );
+    ref.invalidate(totalExpenseProvider);
 
-    ref.invalidate(
-      totalBalanceProvider,
-    );
+    ref.invalidate(totalBalanceProvider);
 
     await Future.wait([
+      ref.read(totalIncomeProvider.future),
 
-      ref.read(
-        totalIncomeProvider.future,
-      ),
-
-      ref.read(
-        totalExpenseProvider.future,
-      ),
+      ref.read(totalExpenseProvider.future),
     ]);
   }
 
-  
   // ==========================================
   // RECURRING TRANSACTIONS
   // ==========================================
 
-  static Future<void>
-      refreshRecurringTransactionData(
-    WidgetRef ref,
-  ) async {
-
+  static Future<void> refreshRecurringTransactionData(WidgetRef ref) async {
     ref.invalidate(filteredTransactionsProvider);
-    ref.invalidate(
-      recurringTransactionsProvider,
-    );
-
+    ref.invalidate(recurringTransactionsProvider);
   }
 
   // ==========================================
   // BUDGETS
   // ==========================================
 
-  static Future<void>
-      refreshBudgetData(
-    WidgetRef ref,
-  ) async {
+  static Future<void> refreshBudgetData(WidgetRef ref) async {
     // Invalidate all parameterized target instances:
     // - expenseBudget
     // - incomeTarget
-    ref.invalidate(
-      financialTargetAlertsProvider,
-    );
+    ref.invalidate(financialTargetAlertsProvider);
 
     // Keep the existing compatibility provider
     // in sync as well.
-    ref.invalidate(
-      budgetAlertsProvider,
-    );
+    ref.invalidate(budgetAlertsProvider);
 
-    await ref.read(
-      budgetAlertsProvider.future,
-    );
+    await ref.read(budgetAlertsProvider.future);
   }
 
   // ==========================================
   // DASHBOARD
   // ==========================================
 
-  static Future<void>
-      refreshDashboardData(
-    WidgetRef ref,
-  ) async {
+  static Future<void> refreshDashboardData(WidgetRef ref) async {
+    ref.invalidate(dashboardInsightsProvider);
 
-    ref.invalidate(
-      dashboardInsightsProvider,
-    );
+    ref.invalidate(goalAnalyticsProvider);
 
-    ref.invalidate(
-      goalAnalyticsProvider,
-    );
-
-    await ref.read(
-      dashboardInsightsProvider.future,
-    );
+    await ref.read(dashboardInsightsProvider.future);
   }
 
-  static Future<void> 
-    refreshFinancialGoalsData(
-    WidgetRef ref,
-  ) async {
+  static Future<void> refreshFinancialGoalsData(WidgetRef ref) async {
+    ref.invalidate(goalAnalyticsProvider);
 
-    ref.invalidate(
-      goalAnalyticsProvider,
-    );
-
-    await Future.wait([
-        ref.read(
-          goalAnalyticsProvider.future,
-        )
-    ]);
-
+    await Future.wait([ref.read(goalAnalyticsProvider.future)]);
   }
 
   // ==========================================
   // INVESTMENTS
   // ==========================================
 
-  static Future<void>
-      refreshInvestmentData(
-    WidgetRef ref,
-  ) async {
+  static Future<void> refreshInvestmentData(WidgetRef ref) async {
+    ref.invalidate(investmentsProvider);
 
-    ref.invalidate(
-      investmentsProvider,
-    );
-
-    ref.invalidate(
-      investmentAnalyticsProvider,
-    );
+    ref.invalidate(investmentAnalyticsProvider);
     await Future.wait([
-        ref.read(
-          investmentsProvider.future,
-        ),
-        ref.read(
-          investmentAnalyticsProvider.future,
-        )
+      ref.read(investmentsProvider.future),
+      ref.read(investmentAnalyticsProvider.future),
     ]);
   }
-
 
   // ==========================================
   // Reports
   // ==========================================
 
-  static Future<void> refreshReportsData(
-    WidgetRef ref,
-    DateTime month,
-  ) async {
+  static Future<void> refreshReportsData(WidgetRef ref, DateTime month) async {
     // =========================================
     // INVALIDATE REPORT PROVIDERS
     // =========================================
 
-    ref.invalidate(
-      monthlySummaryProvider(
-        month,
-      ),
-    );
+    ref.invalidate(monthlySummaryProvider(month));
 
-    ref.invalidate(
-      categoryAnalyticsProvider(
-        month,
-      ),
-    );
+    ref.invalidate(categoryAnalyticsProvider(month));
 
-    ref.invalidate(
-      monthlyChartProvider,
-    );
+    ref.invalidate(monthlyChartProvider);
 
-    ref.invalidate(
-      budgetProgressProvider(
-        month,
-      ),
-    );
+    ref.invalidate(budgetProgressProvider(month));
 
-    ref.invalidate(
-      monthlyTrendsProvider,
-    );
+    ref.invalidate(monthlyTrendsProvider);
 
-    ref.invalidate(
-      expenseForecastProvider(
-        month,
-      ),
-    );
+    ref.invalidate(expenseForecastProvider(month));
 
-    ref.invalidate(
-      financialInsightsProvider(
-        month,
-      ),
-    );
+    ref.invalidate(financialInsightsProvider(month));
 
-    ref.invalidate(
-      financialHealthProvider(
-        month,
-      ),
-    );
+    ref.invalidate(financialHealthProvider(month));
 
-    ref.invalidate(
-      recurringAnalyticsProvider,
-    );
+    ref.invalidate(recurringAnalyticsProvider);
 
     // Other report-related providers
-    ref.invalidate(
-      goalAnalyticsProvider,
-    );
+    ref.invalidate(goalAnalyticsProvider);
 
-    ref.invalidate(
-      filteredTransactionsProvider,
-    );
+    ref.invalidate(filteredTransactionsProvider);
 
     // =========================================
     // WAIT FOR REPORT DATA TO REFRESH
     // =========================================
 
     await Future.wait([
-      ref.read(
-        monthlySummaryProvider(
-          month,
-        ).future,
-      ),
+      ref.read(monthlySummaryProvider(month).future),
 
-      ref.read(
-        categoryAnalyticsProvider(
-          month,
-        ).future,
-      ),
+      ref.read(categoryAnalyticsProvider(month).future),
 
-      ref.read(
-        monthlyChartProvider.future,
-      ),
+      ref.read(monthlyChartProvider.future),
 
-      ref.read(
-        budgetProgressProvider(
-          month,
-        ).future,
-      ),
+      ref.read(budgetProgressProvider(month).future),
 
-      ref.read(
-        monthlyTrendsProvider.future,
-      ),
+      ref.read(monthlyTrendsProvider.future),
 
-      ref.read(
-        expenseForecastProvider(
-          month,
-        ).future,
-      ),
+      ref.read(expenseForecastProvider(month).future),
 
-      ref.read(
-        financialInsightsProvider(
-          month,
-        ).future,
-      ),
+      ref.read(financialInsightsProvider(month).future),
 
-      ref.read(
-        financialHealthProvider(
-          month,
-        ).future,
-      ),
+      ref.read(financialHealthProvider(month).future),
 
-      ref.read(
-        recurringAnalyticsProvider.future,
-      ),
+      ref.read(recurringAnalyticsProvider.future),
     ]);
   }
 
-  
   // ==========================================
   // CATEGORIES
   // ==========================================
 
-  static Future<void>
-      refreshCategoriesData(
-    WidgetRef ref,
-  ) async {
-
-    ref.invalidate(
-      categoriesProvider,
-    );
+  static Future<void> refreshCategoriesData(WidgetRef ref) async {
+    ref.invalidate(categoriesProvider);
 
     ref.invalidate(allCategoriesProvider);
 
     ref.invalidate(categoriesProvider('income'));
     ref.invalidate(categoriesProvider('expense'));
-
   }
-  
+
   // ==========================================
   // ACCOUNTS
   // ==========================================
 
-  static Future<void>
-      refreshAccountsData(
-    WidgetRef ref,
-  ) async {
-
-    ref.invalidate(
-      accountsProvider,
-    );
-
+  static Future<void> refreshAccountsData(WidgetRef ref) async {
+    ref.invalidate(accountsProvider);
   }
 
   // ==========================================
   // EVERYTHING FINANCIAL
   // ==========================================
 
-  static Future<void>
-      refreshAllFinancialData(
-    WidgetRef ref,
-  ) async {
-
+  static Future<void> refreshAllFinancialData(WidgetRef ref) async {
     await Future.wait([
-
       refreshCategoriesData(ref),
-      
+
       refreshAccountsData(ref),
 
       refreshTransactionData(ref),
 
-      refreshBudgetData(
-        ref,
-      ),
+      refreshBudgetData(ref),
 
-      refreshDashboardData(
-        ref,
-      ),
+      refreshDashboardData(ref),
 
-      refreshInvestmentData(
-        ref,
-      ),
+      refreshInvestmentData(ref),
 
-      refreshRecurringTransactionData(
-        ref,
-      ),
+      refreshRecurringTransactionData(ref),
 
-      refreshFinancialGoalsData(
-        ref,
-      ),
+      refreshFinancialGoalsData(ref),
 
-      refreshReportsData(ref, DateTime.now().toUtc()),
+      refreshReportsData(ref, DateTime.now()),
     ]);
   }
 }

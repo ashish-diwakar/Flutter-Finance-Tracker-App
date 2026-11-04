@@ -141,305 +141,384 @@ class _DashboardScreenState
         title: Text(
           appName,
         ),
+        actions: [
+          IconButton.filledTonal(
+            tooltip: 'Add Transaction',
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFD0F1DC),
+              foregroundColor: const Color(0xFF105C45),
+            ),
+            icon: const Icon(Icons.add),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const AddTransactionScreen(),
+                ),
+              );
 
+              if (!mounted) return;
+
+              await refreshDashboard();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
 
-      body: RefreshIndicator(
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [
+              Color(0xFFB6D7CC),
+              Color(0xFFDAEDE5),
+              Color(0xFFF8FCFA),
+            ],
+            stops: [0.0, 0.52, 1.0],
+          ),
+        ),
+        child: RefreshIndicator(
+          onRefresh: refreshDashboard,
+            child: CustomScrollView(
 
-        onRefresh:
-            refreshDashboard,
+            physics:
+                const AlwaysScrollableScrollPhysics(),
 
-        child:
-            CustomScrollView(
+            slivers: [
 
-          physics:
-              const AlwaysScrollableScrollPhysics(),
+              // =========================================
+              // SUMMARY CARDS
+              // =========================================
 
-          slivers: [
+              SliverToBoxAdapter(
 
-            // =========================================
-            // SUMMARY CARDS
-            // =========================================
+                child: Padding(
 
-            SliverToBoxAdapter(
+                  padding:
+                      const EdgeInsets.all(
+                    12,
+                  ),
 
-              child: Padding(
+                  child: Row(
 
-                padding:
-                    const EdgeInsets.all(
-                  12,
-                ),
+                    children: [
 
-                child: Row(
+                      Expanded(
 
-                  children: [
+                        child: SummaryCard(
 
-                    Expanded(
+                          title:
+                              'Income',
 
-                      child: SummaryCard(
+                          amount:
+                            CurrencyFormatter.format(
 
-                        title:
-                            'Income',
+                            amount: income,
 
-                        amount:
-                          CurrencyFormatter.format(
+                            currency: currency,
+                          ),
 
-                          amount: income,
-
-                          currency: currency,
+                          icon:
+                              Icons
+                                  .trending_up,
+                          variant: SummaryCardVariant.income,
                         ),
-
-                        icon:
-                            Icons
-                                .trending_up,
                       ),
-                    ),
 
-                    const SizedBox(
-                      width: 8,
-                    ),
+                      const SizedBox(
+                        width: 8,
+                      ),
 
-                    Expanded(
+                      Expanded(
 
-                      child: SummaryCard(
+                        child: SummaryCard(
 
-                        title:
-                            'Expense',
+                          title:
+                              'Expense',
 
-                        amount:
-                          CurrencyFormatter.format(
+                          amount:
+                            CurrencyFormatter.format(
 
-                          amount: expense,
+                            amount: expense,
 
-                          currency: currency,
+                            currency: currency,
+                          ),
+
+                          icon:
+                              Icons
+                                  .trending_down,
+                          variant: SummaryCardVariant.expense,
                         ),
-
-                        icon:
-                            Icons
-                                .trending_down,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // =========================================
-            // BALANCE CARD
-            // =========================================
+              // =========================================
+              // BALANCE CARD
+              // =========================================
 
-            SliverToBoxAdapter(
-
-              child: Padding(
-
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 12,
-                ),
-
-                child: Card(
-
-                  child: Padding(
-
-                    padding:
-                        const EdgeInsets.all(
-                      20,
-                    ),
-
-                    child: Column(
-
-                      children: [
-
-                        const Text(
-
-                          'Total Balance',
-
-                          style: TextStyle(
-
-                            fontWeight:
-                                FontWeight.bold,
-
-                            fontSize: 16,
-                          ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF103D39),
+                          Color(0xFF176C61),
+                          Color(0xFF4BA88B),
+                        ],
+                        stops: [0.0, 0.55, 1.0],
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withValues(
+                          alpha: 0.55,
                         ),
-
-                        const SizedBox(
-                          height: 16,
-                        ),
-
-                        Text(
-
-                          CurrencyFormatter.format(
-
-                          amount: balance,
-
-                          currency: currency,
-                        ),
-
-                          style:
-                              const TextStyle(
-
-                            fontSize: 32,
-
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0D6D60)
+                              .withValues(alpha: 0.24),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ),
-            ),
-
-            // =========================================
-            // FINANCIAL GOALS
-            // =========================================
-
-            const SliverToBoxAdapter(
-
-              child: Padding(
-
-                padding: EdgeInsets.fromLTRB(
-                  12,
-                  20,
-                  12,
-                  0,
-                ),
-
-                child: GoalsSummaryCard(),
-              ),
-            ),
-
-            // =========================================
-            // INSIGHTS
-            // =========================================
-
-            SliverToBoxAdapter(
-
-              child: Padding(
-
-                padding:
-                    const EdgeInsets.fromLTRB(
-                  12,
-                  20,
-                  12,
-                  0,
-                ),
-
-                child: insightsAsync.when(
-
-                  data: (insights) {
-
-                    return DashboardInsightsSection(
-                      insights:
-                          insights,
-                    );
-                  },
-
-                  error: (_, _) =>
-                    const SizedBox(),
-
-                  loading: () =>
-
-                      const Center(
-
-                    child:
-                        Padding(
-
-                      padding:
-                          EdgeInsets.all(
-                        24,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            top: -55,
+                            right: -25,
+                            child: Container(
+                              width: 170,
+                              height: 170,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    Color(0x66FFFFFF),
+                                    Color(0x00FFFFFF),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.account_balance_wallet_outlined,
+                                      color: Color(0xFFE2FFF2),
+                                      size: 19,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Total Balance',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.95,
+                                        ),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      CurrencyFormatter.format(
+                                        amount: balance,
+                                        currency: currency,
+                                      ),
+                                      maxLines: 1,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 30,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-
-                      child:
-                          CircularProgressIndicator(),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            // =========================================
-            // RECENT TRANSACTIONS HEADER
-            // =========================================
 
-            const SliverToBoxAdapter(
+              // =========================================
+              // FINANCIAL GOALS
+              // =========================================
 
-              child: Padding(
+              const SliverToBoxAdapter(
 
-                padding:
-                    EdgeInsets.fromLTRB(
-                  16,
-                  20,
-                  16,
-                  8,
+                child: Padding(
+
+                  padding: EdgeInsets.fromLTRB(
+                    12,
+                    10,
+                    12,
+                    0,
+                  ),
+
+                  child: GoalsSummaryCard(auroraStyle: true,),
                 ),
+              ),
 
-                child: Text(
+              // =========================================
+              // INSIGHTS
+              // =========================================
 
-                  'Recent Transactions',
+              SliverToBoxAdapter(
 
-                  style: TextStyle(
+                child: Padding(
 
-                    fontSize: 18,
+                  padding:
+                      const EdgeInsets.fromLTRB(
+                    12,
+                    10,
+                    12,
+                    0,
+                  ),
 
-                    fontWeight:
-                        FontWeight.bold,
+                  child: insightsAsync.when(
+
+                    data: (insights) {
+
+                      return DashboardInsightsSection(
+                        insights:
+                            insights,
+                      );
+                    },
+
+                    error: (_, _) =>
+                      const SizedBox(),
+
+                    loading: () =>
+
+                        const Center(
+
+                      child:
+                          Padding(
+
+                        padding:
+                            EdgeInsets.all(
+                          24,
+                        ),
+
+                        child:
+                            CircularProgressIndicator(),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // =========================================
-            // TRANSACTION LIST
-            // =========================================
+              // =========================================
+              // RECENT TRANSACTIONS HEADER
+              // =========================================
 
-            SliverToBoxAdapter(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxHeight: 300, // 🔥 Set your maximum height here
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.only(
-                    bottom: 20,
+              const SliverToBoxAdapter(
+
+                child: Padding(
+
+                  padding:
+                      EdgeInsets.fromLTRB(
+                    16,
+                    10,
+                    16,
+                    8,
                   ),
-                  child: TransactionListScreen(
-                    defaultLimit: 3,
+
+                  child: Text(
+
+                    'Recent Transactions',
+
+                    style: TextStyle(
+
+                      fontSize: 18,
+
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-          ],
+              // =========================================
+              // TRANSACTION LIST
+              // =========================================
+
+              const SliverToBoxAdapter(
+                child: TransactionListScreen(
+                  defaultLimit: 3,
+                  auroraStyle: true,
+                  scrollWithParent: true,
+                ),
+              ),
+
+            ],
+          ),
         ),
       ),
 
-      floatingActionButton:
-          FloatingActionButton(
+      // floatingActionButton:
+      //     FloatingActionButton(
 
-        heroTag:
-            'dashboard_fab',
+      //   heroTag:
+      //       'dashboard_fab',
 
-        onPressed: () async {
+      //   onPressed: () async {
 
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  const AddTransactionScreen(),
-            ),
-          );
+      //     await Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (_) =>
+      //             const AddTransactionScreen(),
+      //       ),
+      //     );
 
-          if (!mounted) return;
+      //     if (!mounted) return;
 
-          await refreshDashboard();
-        },
+      //     await refreshDashboard();
+      //   },
 
-        child: const Icon(
-          Icons.add,
-        ),
-      ),
+      //   child: const Icon(
+      //     Icons.add,
+      //   ),
+      // ),
     );
   }
 }

@@ -19,69 +19,38 @@ class BackupRepository {
   BackupRepository(this.isar);
 
   Future<File> exportBackup() async {
-    final transactions =
-        await isar.transactionModels
-            .where()
-            .findAll();
+    final transactions = await isar.transactionModels.where().findAll();
 
-    final categories =
-        await isar.categoryModels
-            .where()
-            .findAll();
+    final categories = await isar.categoryModels.where().findAll();
 
-    final accounts =
-        await isar.accountModels
-            .where()
-            .findAll();
+    final accounts = await isar.accountModels.where().findAll();
 
-    final backup =
-        BackupDataModel(
-      transactions:
-          transactions
-              .map((e) => e.toJson())
-              .toList(),
-      categories:
-          categories
-              .map((e) => e.toJson())
-              .toList(),
-      accounts:
-          accounts
-              .map((e) => e.toJson())
-              .toList(),
+    final backup = BackupDataModel(
+      transactions: transactions.map((e) => e.toJson()).toList(),
+      categories: categories.map((e) => e.toJson()).toList(),
+      accounts: accounts.map((e) => e.toJson()).toList(),
     );
 
-    final jsonString =
-        jsonEncode(
-      backup.toJson(),
-    );
+    final jsonString = jsonEncode(backup.toJson());
 
-    final directory =
-        await getApplicationDocumentsDirectory();
+    final directory = await getApplicationDocumentsDirectory();
 
-    final file = File(
-      '${directory.path}/finance_backup.json',
-    );
+    final file = File('${directory.path}/finance_backup.json');
 
-    await file.writeAsString(
-      jsonString,
-    );
+    await file.writeAsString(jsonString);
 
     return file;
   }
 
   Future<void> shareBackup() async {
-    final file =
-        await exportBackup();
+    final file = await exportBackup();
 
-    await Share.shareXFiles([
-      XFile(file.path),
-    ]);
+    await Share.shareXFiles([XFile(file.path)]);
   }
 
   Future<void> importBackup() async {
     try {
-      final result =
-          await FilePicker.platform.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
@@ -90,41 +59,28 @@ class BackupRepository {
         'Backup file picker returned: ${result?.files.single.name}',
       );
 
-
       if (result == null) {
-        LoggerService.error(
-          'BackupRepository: User cancelled file picker',
-        );
+        LoggerService.error('BackupRepository: User cancelled file picker');
         return;
       }
 
-      final path =
-          result.files.single.path;
+      final path = result.files.single.path;
 
       if (path == null) {
-        throw Exception(
-          'Selected file has no path.',
-        );
+        throw Exception('Selected file has no path.');
       }
 
       final file = File(path);
 
-      final content =
-          await file.readAsString();
+      final content = await file.readAsString();
 
-      final decoded =
-          jsonDecode(content);
+      final decoded = jsonDecode(content);
 
       if (decoded is! Map<String, dynamic>) {
-        throw Exception(
-          'Invalid backup file format.',
-        );
+        throw Exception('Invalid backup file format.');
       }
 
-      final backup =
-          BackupDataModel.fromJson(
-        decoded,
-      );
+      final backup = BackupDataModel.fromJson(decoded);
 
       const uuid = Uuid();
 
@@ -139,14 +95,11 @@ class BackupRepository {
 
         final Map<dynamic, String> categoryMap = {};
 
-        final categories =
-            backup.categories.map((e) {
+        final categories = backup.categories.map((e) {
           final oldId = e['id'];
 
           if (oldId == null) {
-            throw Exception(
-              'Category ID missing in backup.',
-            );
+            throw Exception('Category ID missing in backup.');
           }
 
           final newUuid = uuid.v4();
@@ -157,24 +110,19 @@ class BackupRepository {
             ..uuid = newUuid
             ..name = e['name']
             ..type = e['type']
-            ..isDefault =
-                e['isDefault'] ?? false
-            ..monthlyBudget =
-                e['monthlyBudget'] ?? 0
-            ..updatedAt =
-                e['updatedAt'] != null
-                    ? DateTime.parse(
-                        e['updatedAt'],
-                      )
-                    : DateTime.now().toUtc()
-            ..isDeleted =
-                e['isDeleted'] ?? false
+            ..isDefault = e['isDefault'] ?? false
+            ..monthlyBudget = e['monthlyBudget'] ?? 0
+            ..createdAt = e['createdAt'] != null
+                ? DateTime.parse(e['createdAt'])
+                : DateTime.now().toUtc()
+            ..updatedAt = e['updatedAt'] != null
+                ? DateTime.parse(e['updatedAt'])
+                : DateTime.now().toUtc()
+            ..isDeleted = e['isDeleted'] ?? false
             ..isSynced = false;
         }).toList();
 
-        await isar.categoryModels.putAll(
-          categories,
-        );
+        await isar.categoryModels.putAll(categories);
 
         // ======================================================
         // ACCOUNT ID -> NEW UUID
@@ -182,14 +130,11 @@ class BackupRepository {
 
         final Map<dynamic, String> accountMap = {};
 
-        final accounts =
-            backup.accounts.map((e) {
+        final accounts = backup.accounts.map((e) {
           final oldId = e['id'];
 
           if (oldId == null) {
-            throw Exception(
-              'Account ID missing in backup.',
-            );
+            throw Exception('Account ID missing in backup.');
           }
 
           final newUuid = uuid.v4();
@@ -200,24 +145,19 @@ class BackupRepository {
             ..uuid = newUuid
             ..name = e['name']
             ..type = e['type']
-            ..currentBalance =
-                e['currentBalance'] ?? 0
-            ..isDefault =
-                e['isDefault'] ?? false
-            ..updatedAt =
-                e['updatedAt'] != null
-                    ? DateTime.parse(
-                        e['updatedAt'],
-                      )
-                    : DateTime.now().toUtc()
-            ..isDeleted =
-                e['isDeleted'] ?? false
+            ..currentBalance = e['currentBalance'] ?? 0
+            ..isDefault = e['isDefault'] ?? false
+            ..createdAt = e['createdAt'] != null
+                ? DateTime.parse(e['createdAt'])
+                : DateTime.now().toUtc()
+            ..updatedAt = e['updatedAt'] != null
+                ? DateTime.parse(e['updatedAt'])
+                : DateTime.now().toUtc()
+            ..isDeleted = e['isDeleted'] ?? false
             ..isSynced = false;
         }).toList();
 
-        await isar.accountModels.putAll(
-          accounts,
-        );
+        await isar.accountModels.putAll(accounts);
 
         // ======================================================
         // TRANSACTION ID -> NEW UUID
@@ -233,76 +173,53 @@ class BackupRepository {
           final oldId = e['id'];
 
           if (oldId == null) {
-            throw Exception(
-              'Transaction ID missing in backup.',
-            );
+            throw Exception('Transaction ID missing in backup.');
           }
 
-          transactionMap[oldId] =
-              uuid.v4();
+          transactionMap[oldId] = uuid.v4();
         }
 
         // ======================================================
         // TRANSACTIONS
         // ======================================================
 
-        final transactions =
-            backup.transactions.map((e) {
+        final transactions = backup.transactions.map((e) {
           final oldId = e['id'];
 
-          final rawCategoryId =
-              e['categoryId'];
+          final rawCategoryId = e['categoryId'];
 
-          final rawAccountId =
-              e['accountId'];
+          final rawAccountId = e['accountId'];
 
-          final rawToAccountId =
-              e['toAccountId'];
+          final rawToAccountId = e['toAccountId'];
 
-          final rawRelatedTransactionId =
-              e['relatedTransactionId'];
+          final rawRelatedTransactionId = e['relatedTransactionId'];
 
           if (rawAccountId == null) {
-            throw Exception(
-              'Transaction account ID missing in backup.',
-            );
+            throw Exception('Transaction account ID missing in backup.');
           }
 
-          final mappedAccountId =
-              accountMap[rawAccountId];
+          final mappedAccountId = accountMap[rawAccountId];
 
           if (mappedAccountId == null) {
-            throw Exception(
-              'Unable to restore transaction account.',
-            );
+            throw Exception('Unable to restore transaction account.');
           }
 
           String? mappedCategoryId;
 
           if (rawCategoryId != null &&
-              rawCategoryId
-                  .toString()
-                  .trim()
-                  .isNotEmpty) {
-            mappedCategoryId =
-                categoryMap[rawCategoryId];
+              rawCategoryId.toString().trim().isNotEmpty) {
+            mappedCategoryId = categoryMap[rawCategoryId];
 
             if (mappedCategoryId == null) {
-              throw Exception(
-                'Unable to restore transaction category.',
-              );
+              throw Exception('Unable to restore transaction category.');
             }
           }
 
           String? mappedToAccountId;
 
           if (rawToAccountId != null &&
-              rawToAccountId
-                  .toString()
-                  .trim()
-                  .isNotEmpty) {
-            mappedToAccountId =
-                accountMap[rawToAccountId];
+              rawToAccountId.toString().trim().isNotEmpty) {
+            mappedToAccountId = accountMap[rawToAccountId];
 
             if (mappedToAccountId == null) {
               throw Exception(
@@ -314,78 +231,45 @@ class BackupRepository {
           String? mappedRelatedTransactionId;
 
           if (rawRelatedTransactionId != null &&
-              rawRelatedTransactionId
-                  .toString()
-                  .trim()
-                  .isNotEmpty) {
+              rawRelatedTransactionId.toString().trim().isNotEmpty) {
             mappedRelatedTransactionId =
-                transactionMap[
-                  rawRelatedTransactionId
-                ];
+                transactionMap[rawRelatedTransactionId];
 
-            if (mappedRelatedTransactionId ==
-                null) {
-              throw Exception(
-                'Unable to restore related transaction.',
-              );
+            if (mappedRelatedTransactionId == null) {
+              throw Exception('Unable to restore related transaction.');
             }
           }
 
           return TransactionModel()
-            ..uuid =
-                transactionMap[oldId]!
+            ..uuid = transactionMap[oldId]!
             ..amount = e['amount']
             ..type = e['type']
-            ..categoryId =
-                mappedCategoryId
-            ..accountId =
-                mappedAccountId
-            ..toAccountId =
-                mappedToAccountId
-            ..counterpartyName =
-                e['counterpartyName']
-            ..relatedTransactionId =
-                mappedRelatedTransactionId
-            ..dueDate =
-                e['dueDate'] != null
-                    ? DateTime.parse(
-                        e['dueDate'],
-                      )
-                    : null
+            ..categoryId = mappedCategoryId
+            ..accountId = mappedAccountId
+            ..toAccountId = mappedToAccountId
+            ..counterpartyName = e['counterpartyName']
+            ..relatedTransactionId = mappedRelatedTransactionId
+            ..dueDate = e['dueDate'] != null
+                ? DateTime.parse(e['dueDate'])
+                : null
             ..notes = e['notes']
-            ..transactionDate =
-                DateTime.parse(
-              e['transactionDate'],
-            )
-            ..createdAt =
-                e['createdAt'] != null
-                    ? DateTime.parse(
-                        e['createdAt'],
-                      )
-                    : DateTime.now().toUtc()
-            ..updatedAt =
-                e['updatedAt'] != null
-                    ? DateTime.parse(
-                        e['updatedAt'],
-                      )
-                    : DateTime.now().toUtc()
-            ..isDeleted =
-                e['isDeleted'] ?? false
+            ..transactionDate = DateTime.parse(e['transactionDate'])
+            ..createdAt = e['createdAt'] != null
+                ? DateTime.parse(e['createdAt'])
+                : DateTime.now().toUtc()
+            ..updatedAt = e['updatedAt'] != null
+                ? DateTime.parse(e['updatedAt'])
+                : DateTime.now().toUtc()
+            ..isDeleted = e['isDeleted'] ?? false
             ..isSynced = false;
         }).toList();
 
-        await isar.transactionModels.putAll(
-          transactions,
-        );
+        await isar.transactionModels.putAll(transactions);
       });
     } catch (e, stack) {
-      LoggerService.error(
-        'Backup Error: $e',
-      );
+      LoggerService.error('Backup Error: $e');
 
-      LoggerService.error(
-        'Backup Error: $stack',
-      );
+      LoggerService.error('Backup Error: $stack');
 
       rethrow;
     }

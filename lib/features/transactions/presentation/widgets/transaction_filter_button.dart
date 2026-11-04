@@ -26,24 +26,22 @@ class TransactionFilterButton extends StatelessWidget {
         ),
 
         onPressed: () {
+          final screenHeight = MediaQuery.sizeOf(context).height;
 
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
             useSafeArea: true,
             showDragHandle: true,
-            builder: (_) {
-              return DraggableScrollableSheet(
-                expand: false,
-                initialChildSize: 0.80,
-                minChildSize: 0.60,
-                maxChildSize: 0.95,
-                builder: (context, scrollController) {
-                  return TransactionFilterBottomSheet(
-                    scrollController:
-                        scrollController,
-                  );
-                },
+            constraints: BoxConstraints(
+              maxHeight: screenHeight * 0.9,
+            ),
+            builder: (sheetContext) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+                ),
+                child: const TransactionFilterBottomSheet(),
               );
             },
           );

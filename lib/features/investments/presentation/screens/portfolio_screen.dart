@@ -17,52 +17,27 @@ import '../widgets/portfolio_summary_card.dart';
 import 'add_investment_screen.dart';
 import 'edit_investment_screen.dart';
 
-class PortfolioScreen
-    extends ConsumerStatefulWidget {
-
-  const PortfolioScreen({
-    super.key,
-  });
+class PortfolioScreen extends ConsumerStatefulWidget {
+  const PortfolioScreen({super.key});
 
   @override
-  ConsumerState<PortfolioScreen>
-      createState() =>
-          _PortfolioScreenState();
+  ConsumerState<PortfolioScreen> createState() => _PortfolioScreenState();
 }
 
-class _PortfolioScreenState
-    extends ConsumerState<
-        PortfolioScreen> {
-
+class _PortfolioScreenState extends ConsumerState<PortfolioScreen> {
   bool isSyncing = false;
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
+    final analyticsAsync = ref.watch(investmentAnalyticsProvider);
 
-    final analyticsAsync =
-        ref.watch(
-      investmentAnalyticsProvider,
-    );
+    final investmentsAsync = ref.watch(investmentsProvider);
 
-    final investmentsAsync =
-        ref.watch(
-      investmentsProvider,
-    );
-
-    final currency =
-        ref.watch(
-      currencyProvider,
-    );
+    final currency = ref.watch(currencyProvider);
 
     return Scaffold(
-
       appBar: AppBar(
-
-        title: const Text(
-          'Investments',
-        ),
+        title: const Text('Investments'),
 
         // Commented Sync
         // actions: [
@@ -102,225 +77,116 @@ class _PortfolioScreenState
         // ],
       ),
 
-      floatingActionButton:
-          FloatingActionButton(
-
-        heroTag:
-            'portfolio_add_investment',
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'portfolio_add_investment',
 
         onPressed: () async {
-
-          final result =
-              await Navigator.push(
-
+          final result = await Navigator.push(
             context,
 
-            MaterialPageRoute(
-
-              builder: (_) =>
-                  const AddInvestmentScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const AddInvestmentScreen()),
           );
 
           if (result == true) {
-
-           await ProviderRefreshHelper
-                .refreshInvestmentData(
-              ref,
-            );
+            await ProviderRefreshHelper.refreshInvestmentData(ref);
           }
         },
 
-        child: const Icon(
-          Icons.add,
-        ),
+        child: const Icon(Icons.add),
       ),
 
       body: RefreshIndicator(
-
         onRefresh: () async {
-
-          await ProviderRefreshHelper
-              .refreshInvestmentData(
-            ref,
-          );
+          await ProviderRefreshHelper.refreshInvestmentData(ref);
         },
 
         child: ListView(
-
-          padding:
-              const EdgeInsets.all(
-            16,
-          ),
+          padding: const EdgeInsets.all(16),
 
           children: [
-
             // ====================================
             // PORTFOLIO SUMMARY
             // ====================================
 
             analyticsAsync.when(
-
               data: (analytics) {
-
-                return PortfolioSummaryCard(
-                  analytics: analytics,
-                );
+                return PortfolioSummaryCard(analytics: analytics);
               },
 
-              loading: () =>
-
-                  const Card(
-
+              loading: () => const Card(
                 child: Padding(
+                  padding: EdgeInsets.all(24),
 
-                  padding:
-                      EdgeInsets.all(
-                    24,
-                  ),
-
-                  child: Center(
-
-                    child:
-                        CircularProgressIndicator(),
-                  ),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
               ),
 
-              error: (_, _) =>
-
-                  const Card(
-
+              error: (_, _) => const Card(
                 child: Padding(
+                  padding: EdgeInsets.all(16),
 
-                  padding:
-                      EdgeInsets.all(
-                    16,
-                  ),
-
-                  child: Text(
-                    'Unable to load portfolio analytics',
-                  ),
+                  child: Text('Unable to load portfolio analytics'),
                 ),
               ),
             ),
 
-            const SizedBox(
-              height: 24,
-            ),
+            const SizedBox(height: 24),
 
             // ====================================
             // HOLDINGS HEADER
             // ====================================
-
             const Text(
-
               'Holdings',
 
-              style: TextStyle(
-
-                fontSize: 20,
-
-                fontWeight:
-                    FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
-            const SizedBox(
-              height: 8,
-            ),
+            const SizedBox(height: 8),
 
             Text(
-
               'Track your investment portfolio and performance.',
 
-              style: TextStyle(
-
-                color:
-                    Colors.grey.shade600,
-              ),
+              style: TextStyle(color: Colors.grey.shade600),
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
             // ====================================
             // HOLDINGS LIST
             // ====================================
-
             investmentsAsync.when(
-
               data: (investments) {
+                LoggerService.info('investments count: ${investments.length}');
 
-                
-                LoggerService.info(
-                  'investments count: ${investments.length}',
-                );
-                
-
-                if (investments
-                    .isEmpty) {
-
+                if (investments.isEmpty) {
                   return Card(
-
                     child: Padding(
-
-                      padding:
-                          const EdgeInsets.all(
-                        24,
-                      ),
+                      padding: const EdgeInsets.all(24),
 
                       child: Column(
-
                         children: [
+                          const Icon(Icons.trending_up, size: 64),
 
-                          const Icon(
-
-                            Icons
-                                .trending_up,
-
-                            size: 64,
-                          ),
-
-                          const SizedBox(
-                            height: 16,
-                          ),
+                          const SizedBox(height: 16),
 
                           const Text(
-
                             'No Investments Yet',
 
-                            style:
-                                TextStyle(
-
+                            style: TextStyle(
                               fontSize: 18,
 
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
 
-                          const SizedBox(
-                            height: 8,
-                          ),
+                          const SizedBox(height: 8),
 
                           Text(
-
                             'Add your first investment to start tracking portfolio performance.',
 
-                            textAlign:
-                                TextAlign
-                                    .center,
+                            textAlign: TextAlign.center,
 
-                            style:
-                                TextStyle(
-
-                              color: Colors
-                                  .grey
-                                  .shade600,
-                            ),
+                            style: TextStyle(color: Colors.grey.shade600),
                           ),
                         ],
                       ),
@@ -329,106 +195,57 @@ class _PortfolioScreenState
                 }
 
                 return Column(
+                  children: investments.map((investment) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
 
-                  children:
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
 
-                      investments
-                          .map(
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
 
-                    (investment) {
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  EditInvestmentScreen(investment: investment),
+                            ),
+                          );
 
-                      return Padding(
-
-                        padding:
-                            const EdgeInsets.only(
-                          bottom: 12,
-                        ),
-
-                        child: InkWell(
-
-                          borderRadius:
-                              BorderRadius.circular(
-                            12,
-                          ),
-
-                          onTap: () async {
-
-                            final result =
-                                await Navigator.push(
-
-                              context,
-
-                              MaterialPageRoute(
-
-                                builder: (_) =>
-                                    EditInvestmentScreen(
-                                  investment:
-                                      investment,
-                                ),
-                              ),
+                          if (result == true) {
+                            await ProviderRefreshHelper.refreshInvestmentData(
+                              ref,
                             );
+                          }
+                        },
 
-                            if (result == true) {
+                        child: _InvestmentCard(
+                          investment: investment,
 
-                              await ProviderRefreshHelper
-                                  .refreshInvestmentData(
-                                ref,
-                              );
-                            }
-                          },
-
-                          child: _InvestmentCard(
-
-                            investment:
-                                investment,
-
-                            currency:
-                                currency,
-                          ),
+                          currency: currency,
                         ),
-                      );
-                    },
-                  ).toList(),
+                      ),
+                    );
+                  }).toList(),
                 );
               },
 
-              loading: () =>
+              loading: () => const Padding(
+                padding: EdgeInsets.all(24),
 
-                  const Padding(
-
-                padding:
-                    EdgeInsets.all(
-                  24,
-                ),
-
-                child: Center(
-
-                  child:
-                      CircularProgressIndicator(),
-                ),
+                child: Center(child: CircularProgressIndicator()),
               ),
 
-              error: (_, _) =>
-
-                  const Card(
-
+              error: (_, _) => const Card(
                 child: Padding(
+                  padding: EdgeInsets.all(16),
 
-                  padding:
-                      EdgeInsets.all(
-                    16,
-                  ),
-
-                  child: Text(
-                    'Unable to load investments',
-                  ),
+                  child: Text('Unable to load investments'),
                 ),
               ),
             ),
 
-            const SizedBox(
-              height: 100,
-            ),
+            const SizedBox(height: 100),
           ],
         ),
       ),
@@ -436,26 +253,15 @@ class _PortfolioScreenState
   }
 }
 
-class _InvestmentCard
-    extends StatelessWidget {
-
-  final InvestmentModel
-      investment;
+class _InvestmentCard extends StatelessWidget {
+  final InvestmentModel investment;
 
   final CurrencyConfig currency;
 
-  const _InvestmentCard({
-
-    required this.investment,
-
-    required this.currency,
-  });
+  const _InvestmentCard({required this.investment, required this.currency});
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-
+  Widget build(BuildContext context) {
     // final isFixedReturn = [
 
     //   'FD',
@@ -469,114 +275,55 @@ class _InvestmentCard
     //   investment.type,
     // );
 
-    final isFixedReturn =
-      InvestmentHelper.isFixedReturn(
-      investment.type,
-    );
+    final isFixedReturn = InvestmentHelper.isFixedReturn(investment.type);
 
-    final investedValue =
-
-    isFixedReturn
-
+    final investedValue = isFixedReturn
         ? investment.purchasePrice / 100
+        : (investment.quantity * investment.purchasePrice) / 100;
 
-        : (investment.quantity *
-                investment.purchasePrice) /
-            100;
+    final currentValue = isFixedReturn
+        ? ((investment.maturityValue ?? investment.purchasePrice) / 100)
+        : ((investment.quantity * investment.currentPrice) / 100);
 
-    final currentValue =
+    final profitLoss = currentValue - investedValue;
 
-        isFixedReturn
-
-            ? ((investment.maturityValue ??
-                        investment.purchasePrice) /
-                    100)
-
-            : ((investment.quantity *
-                        investment.currentPrice) /
-                    100);
-
-    final profitLoss =
-        currentValue -
-            investedValue;
-
-    final isProfit =
-        profitLoss >= 0;
+    final isProfit = profitLoss >= 0;
 
     return Card(
-
       child: Padding(
-
-        padding:
-            const EdgeInsets.all(
-          16,
-        ),
+        padding: const EdgeInsets.all(16),
 
         child: Column(
-
-          crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-
             Row(
-
               children: [
-
                 CircleAvatar(
-
-                  child: Text(
-
-                    investment.name
-                        .substring(
-                      0,
-                      1,
-                    )
-                        .toUpperCase(),
-                  ),
+                  child: Text(investment.name.substring(0, 1).toUpperCase()),
                 ),
 
-                const SizedBox(
-                  width: 12,
-                ),
+                const SizedBox(width: 12),
 
                 Expanded(
-
                   child: Column(
-
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
 
                     children: [
-
                       Text(
-
                         investment.name,
 
-                        style:
-                            const TextStyle(
-
+                        style: const TextStyle(
                           fontSize: 16,
 
-                          fontWeight:
-                              FontWeight
-                                  .bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
 
                       Text(
-
                         investment.type,
 
-                        style:
-                            TextStyle(
-
-                          color: Colors
-                              .grey
-                              .shade600,
-                        ),
+                        style: TextStyle(color: Colors.grey.shade600),
                       ),
                     ],
                   ),
@@ -584,44 +331,24 @@ class _InvestmentCard
               ],
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
             if (!isFixedReturn)
-
               Row(
-
-                mainAxisAlignment:
-                    MainAxisAlignment
-                        .spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
                 children: [
+                  const Text('Quantity'),
 
-                  const Text(
-                    'Quantity',
-                  ),
-
-                  Text(
-                    investment.quantity
-                        .toString(),
-                  ),
+                  Text(investment.quantity.toString()),
                 ],
               )
-
             else
-
               Row(
-
-                mainAxisAlignment:
-                    MainAxisAlignment
-                        .spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
                 children: [
-
-                  const Text(
-                    'Interest Rate',
-                  ),
+                  const Text('Interest Rate'),
 
                   Text(
                     investment.interestRate == null
@@ -631,171 +358,95 @@ class _InvestmentCard
                 ],
               ),
 
-            const SizedBox(
-              height: 8,
-            ),
+            const SizedBox(height: 8),
 
             Row(
-
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
               children: [
-
-                const Text(
-                  'Invested',
-                ),
+                const Text('Invested'),
 
                 Text(
+                  CurrencyFormatter.formatDouble(
+                    amount: investedValue,
 
-                  CurrencyFormatter
-                      .formatDouble(
-
-                    amount:
-                        investedValue,
-
-                    currency:
-                        currency,
+                    currency: currency,
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(
-              height: 8,
-            ),
+            const SizedBox(height: 8),
 
             Row(
-
               children: [
-
                 Expanded(
-
                   child: Text(
-
-                    isFixedReturn
-
-                        ? 'Maturity Value'
-
-                        : 'Current Value',
+                    isFixedReturn ? 'Maturity Value' : 'Current Value',
                   ),
                 ),
 
                 Text(
+                  CurrencyFormatter.formatDouble(
+                    amount: currentValue,
 
-                  CurrencyFormatter
-                      .formatDouble(
-
-                    amount:
-                        currentValue,
-
-                    currency:
-                        currency,
+                    currency: currency,
                   ),
                 ),
               ],
             ),
 
-            if (isFixedReturn &&
-                investment.maturityDate != null)
-              ...[
+            if (isFixedReturn && investment.maturityDate != null) ...[
+              const SizedBox(height: 8),
 
-                const SizedBox(
-                  height: 8,
-                ),
+              Row(
+                children: [
+                  const Expanded(child: Text('Maturity Date')),
 
-                Row(
+                  Text(
+                    // '${investment.maturityDate!.day}/'
+                    // '${investment.maturityDate!.month}/'
+                    // '${investment.maturityDate!.year}',
+                    DateFormat(
+                      'dd MMM yyyy',
+                    ).format(investment.maturityDate!.toLocal()),
+                  ),
+                ],
+              ),
+            ],
 
-                  children: [
-
-                    const Expanded(
-
-                      child: Text(
-                        'Maturity Date',
-                      ),
-                    ),
-
-                    Text(
-
-                      // '${investment.maturityDate!.day}/'
-                      // '${investment.maturityDate!.month}/'
-                      // '${investment.maturityDate!.year}',
-                      DateFormat(
-                        'dd MMM yyyy',
-                      ).format(
-                        investment.maturityDate!,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-
-            const Divider(
-              height: 24,
-            ),
+            const Divider(height: 24),
 
             Row(
-
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
               children: [
-
-                const Text(
-                  'Profit / Loss',
-                ),
+                const Text('Profit / Loss'),
 
                 Text(
+                  CurrencyFormatter.formatDouble(
+                    amount: profitLoss,
 
-                  CurrencyFormatter
-                      .formatDouble(
-
-                    amount:
-                        profitLoss,
-
-                    currency:
-                        currency,
+                    currency: currency,
                   ),
 
                   style: TextStyle(
+                    color: isProfit ? Colors.green : Colors.red,
 
-                    color:
-
-                        isProfit
-
-                            ? Colors.green
-
-                            : Colors.red,
-
-                    fontWeight:
-                        FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
 
-            if (investment.notes !=
-                    null &&
-                investment
-                    .notes!
-                    .trim()
-                    .isNotEmpty) ...[
-
-              const SizedBox(
-                height: 12,
-              ),
+            if (investment.notes != null &&
+                investment.notes!.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
 
               Text(
-
                 investment.notes!,
 
-                style: TextStyle(
-
-                  color: Colors
-                      .grey.shade600,
-                ),
+                style: TextStyle(color: Colors.grey.shade600),
               ),
             ],
           ],

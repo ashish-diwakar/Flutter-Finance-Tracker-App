@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/utils/calendar_date.dart';
 import 'package:finance_tracker/shared/utils/provider_refresh_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,24 +14,16 @@ import '../../../transactions/presentation/providers/transactions_provider.dart'
 import '../../../transactions/presentation/screens/transaction_details_screen.dart';
 import '../../../borrow_lend/presentation/providers/borrow_lend_provider.dart';
 
-class MainNavigationScreen
-    extends ConsumerStatefulWidget {
-
-  const MainNavigationScreen({
-    super.key,
-  });
+class MainNavigationScreen extends ConsumerStatefulWidget {
+  const MainNavigationScreen({super.key});
 
   @override
-  ConsumerState<MainNavigationScreen>
-      createState() =>
-          _MainNavigationScreenState();
+  ConsumerState<MainNavigationScreen> createState() =>
+      _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState
-    extends ConsumerState<MainNavigationScreen> {
-
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int currentIndex = 0;
-
 
   bool _handlingPendingNotification = false;
 
@@ -48,11 +41,9 @@ class _MainNavigationScreenState
       SettingsScreen(),
     ];
 
-    NotificationService.setPendingPayloadHandler(
-      () {
-        _handlePendingNotification();
-      },
-    );
+    NotificationService.setPendingPayloadHandler(() {
+      _handlePendingNotification();
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handlePendingNotification();
@@ -60,60 +51,32 @@ class _MainNavigationScreenState
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
+    final borrowLendOverviewAsync = ref.watch(borrowLendOverviewProvider);
 
-    final borrowLendOverviewAsync =
-        ref.watch(
-      borrowLendOverviewProvider,
-    );
-
-    final borrowLendActionableCount =
-        borrowLendOverviewAsync.maybeWhen(
-      data: (overview) =>
-          overview.actionableCount,
+    final borrowLendActionableCount = borrowLendOverviewAsync.maybeWhen(
+      data: (overview) => overview.actionableCount,
       orElse: () => 0,
     );
 
     return Scaffold(
+      body: IndexedStack(index: currentIndex, children: screens),
 
-      body: IndexedStack(
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color.fromRGBO(176, 211, 245, 0.498),
 
-        index: currentIndex,
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
 
-        children: screens,
-      ),
+        selectedIndex: currentIndex,
 
-      bottomNavigationBar:
-          NavigationBar(
-
-        backgroundColor:
-            const Color.fromRGBO(
-          176,
-          211,
-          245,
-          0.498,
-        ),
-
-        labelBehavior:
-            NavigationDestinationLabelBehavior
-                .onlyShowSelected,
-
-        selectedIndex:
-            currentIndex,
-
-        onDestinationSelected:
-          (index) {
-
+        onDestinationSelected: (index) {
           // =====================================================
           // REFRESH REPORTS WHEN REPORTS TAB IS OPENED
           // =====================================================
           if (index == 3) {
-            
-            DateTime selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+            final selectedMonth = CalendarDate.startOfMonth(DateTime.now());
             ProviderRefreshHelper.refreshReportsData(ref, selectedMonth);
-           
+
             /*
               // TEST POPUP
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -201,70 +164,48 @@ class _MainNavigationScreenState
         // ],
         destinations: [
           const NavigationDestination(
-            icon: Icon(
-              Icons.home_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.home,
-            ),
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
             label: 'Home',
           ),
 
           const NavigationDestination(
-            icon: Icon(
-              Icons.receipt_long_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.receipt_long,
-            ),
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(Icons.receipt_long),
             label: 'Transactions',
           ),
 
           NavigationDestination(
             icon: Badge(
-              isLabelVisible:
-                  borrowLendActionableCount > 0,
+              isLabelVisible: borrowLendActionableCount > 0,
               label: Text(
                 borrowLendActionableCount > 99
                     ? '99+'
                     : '$borrowLendActionableCount',
               ),
-              child: const Icon(
-                Icons.handshake_outlined,
-              ),
+              child: const Icon(Icons.handshake_outlined),
             ),
             selectedIcon: Badge(
-              isLabelVisible:
-                  borrowLendActionableCount > 0,
+              isLabelVisible: borrowLendActionableCount > 0,
               label: Text(
                 borrowLendActionableCount > 99
                     ? '99+'
                     : '$borrowLendActionableCount',
               ),
-              child: const Icon(
-                Icons.handshake,
-              ),
+              child: const Icon(Icons.handshake),
             ),
             label: 'Borrow/Lend',
           ),
 
           const NavigationDestination(
-            icon: Icon(
-              Icons.bar_chart_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.bar_chart,
-            ),
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart),
             label: 'Reports',
           ),
 
           const NavigationDestination(
-            icon: Icon(
-              Icons.settings_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.settings,
-            ),
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
             label: 'Settings',
           ),
         ],
@@ -273,13 +214,11 @@ class _MainNavigationScreenState
   }
 
   Future<void> _handlePendingNotification() async {
-    if (_handlingPendingNotification ||
-        !mounted) {
+    if (_handlingPendingNotification || !mounted) {
       return;
     }
 
-    final payload =
-        NotificationService.takePendingPayload();
+    final payload = NotificationService.takePendingPayload();
 
     if (payload == null) {
       return;
@@ -291,10 +230,7 @@ class _MainNavigationScreenState
       return;
     }
 
-    final transactionUuid =
-        payload
-            .substring(prefix.length)
-            .trim();
+    final transactionUuid = payload.substring(prefix.length).trim();
 
     if (transactionUuid.isEmpty) {
       return;
@@ -303,28 +239,21 @@ class _MainNavigationScreenState
     _handlingPendingNotification = true;
 
     try {
-      final transactions =
-          await ref.read(
-        transactionsStreamProvider.future,
-      );
+      final transactions = await ref.read(transactionsStreamProvider.future);
 
       if (!mounted) {
         return;
       }
 
-      final matchingTransactions =
-          transactions.where(
+      final matchingTransactions = transactions.where(
         (transaction) =>
             !transaction.isDeleted &&
-            transaction.uuid ==
-                transactionUuid &&
-            (transaction.type == 'borrowed' ||
-                transaction.type == 'lent'),
+            transaction.uuid == transactionUuid &&
+            (transaction.type == 'borrowed' || transaction.type == 'lent'),
       );
 
       if (matchingTransactions.isEmpty) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
               'This Borrow/Lend transaction is no longer available.',
@@ -335,8 +264,7 @@ class _MainNavigationScreenState
         return;
       }
 
-      final transaction =
-          matchingTransactions.first;
+      final transaction = matchingTransactions.first;
 
       setState(() {
         currentIndex = 2;
@@ -344,10 +272,7 @@ class _MainNavigationScreenState
 
       await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) =>
-              TransactionDetailsScreen(
-            transaction: transaction,
-          ),
+          builder: (_) => TransactionDetailsScreen(transaction: transaction),
         ),
       );
     } catch (e, stackTrace) {
@@ -358,13 +283,8 @@ class _MainNavigationScreenState
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Unable to open the reminder.',
-            ),
-          ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open the reminder.')),
         );
       }
     } finally {
@@ -374,12 +294,8 @@ class _MainNavigationScreenState
 
   @override
   void dispose() {
-    NotificationService
-        .setPendingPayloadHandler(
-      null,
-    );
+    NotificationService.setPendingPayloadHandler(null);
 
     super.dispose();
   }
-
 }

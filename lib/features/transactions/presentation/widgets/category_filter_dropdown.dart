@@ -44,17 +44,48 @@ class CategoryFilterDropdown extends ConsumerWidget {
                 _allCategoriesValue;
 
         return DropdownButtonFormField<String>(
+          isExpanded: true,
           key: ValueKey(
             selectedValue,
           ),
+          style: const TextStyle(
+            color: Color(0xFF244C40),
+            fontSize: 16,
+          ),
           initialValue:
               selectedValue,
-          decoration:
-              const InputDecoration(
-            labelText:
-                'Category',
-            border:
-                OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: 'Category',
+            labelStyle: const TextStyle(
+              color: Color(0xFF536B61),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            floatingLabelStyle: const TextStyle(
+              color: Color(0xFF536B61),
+              fontSize: 18.67,
+              fontWeight: FontWeight.w500,
+            ),
+            filled: true,
+            fillColor: const Color(0xEEFFFFFF),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 15,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFFBDDBD1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                color: Color(0xFF3E8877),
+                width: 1.6,
+              ),
+            ),
           ),
           items: [
             const DropdownMenuItem<String>(
@@ -62,6 +93,8 @@ class CategoryFilterDropdown extends ConsumerWidget {
                   _allCategoriesValue,
               child: Text(
                 'All Categories',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             ...categories.map(
@@ -71,6 +104,8 @@ class CategoryFilterDropdown extends ConsumerWidget {
                       category.uuid,
                   child: Text(
                     category.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 );
               },

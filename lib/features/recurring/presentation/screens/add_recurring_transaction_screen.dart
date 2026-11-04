@@ -14,46 +14,31 @@ import '../../../categories/presentation/providers/categories_provider.dart';
 
 import '../providers/recurring_provider.dart';
 
-class AddRecurringTransactionScreen
-    extends ConsumerStatefulWidget {
+class AddRecurringTransactionScreen extends ConsumerStatefulWidget {
+  final RecurringTransactionModel? recurring;
 
-  final RecurringTransactionModel?
-      recurring;
-
-  const AddRecurringTransactionScreen({
-    super.key,
-    this.recurring,
-  });
+  const AddRecurringTransactionScreen({super.key, this.recurring});
 
   @override
-  ConsumerState<
-      AddRecurringTransactionScreen>
-      createState() =>
-          _AddRecurringTransactionScreenState();
+  ConsumerState<AddRecurringTransactionScreen> createState() =>
+      _AddRecurringTransactionScreenState();
 }
 
 class _AddRecurringTransactionScreenState
-    extends ConsumerState<
-        AddRecurringTransactionScreen> {
+    extends ConsumerState<AddRecurringTransactionScreen> {
+  final formKey = GlobalKey<FormState>();
 
-  final formKey =
-      GlobalKey<FormState>();
+  final amountController = TextEditingController();
 
-  final amountController =
-      TextEditingController();
-
-  final notesController =
-      TextEditingController();
+  final notesController = TextEditingController();
 
   String type = 'expense';
 
-  String frequency =
-      'monthly';
+  String frequency = 'monthly';
 
   int interval = 1;
 
-  DateTime startDate =
-      DateTime.now().toUtc();
+  DateTime startDate = DateTime.now();
 
   DateTime? endDate;
 
@@ -67,50 +52,35 @@ class _AddRecurringTransactionScreenState
 
   @override
   void initState() {
-
     super.initState();
 
-    final recurring =
-        widget.recurring;
+    final recurring = widget.recurring;
 
     if (recurring != null) {
+      amountController.text = (recurring.amount / 100).toStringAsFixed(2);
 
-      amountController.text =
-          (recurring.amount / 100)
-              .toStringAsFixed(2);
+      notesController.text = recurring.notes ?? '';
 
-      notesController.text =
-          recurring.notes ?? '';
+      type = recurring.type;
 
-      type =
-          recurring.type;
+      frequency = recurring.frequency;
 
-      frequency =
-          recurring.frequency;
+      interval = recurring.interval;
 
-      interval =
-          recurring.interval;
+      startDate = recurring.startDate.toLocal();
 
-      startDate =
-          recurring.startDate;
+      endDate = recurring.endDate?.toLocal();
 
-      endDate =
-          recurring.endDate;
+      selectedCategoryId = recurring.categoryId;
 
-      selectedCategoryId =
-          recurring.categoryId;
+      selectedAccountId = recurring.accountId;
 
-      selectedAccountId =
-          recurring.accountId;
-
-      active =
-          recurring.isActive;
+      active = recurring.isActive;
     }
   }
 
   @override
   void dispose() {
-
     amountController.dispose();
 
     notesController.dispose();
@@ -118,50 +88,25 @@ class _AddRecurringTransactionScreenState
     super.dispose();
   }
 
-  Future<void> saveRecurring()
-  async {
+  Future<void> saveRecurring() async {
+    FocusScope.of(context).unfocus();
 
-    FocusScope.of(
-      context,
-    ).unfocus();
+    if (!formKey.currentState!.validate()) {
+      return;
+    }
 
-    if (!formKey
-        .currentState!
-        .validate()) {
+    if (selectedCategoryId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Select category')));
 
       return;
     }
 
-    if (selectedCategoryId ==
-        null) {
-
+    if (selectedAccountId == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(
-
-        const SnackBar(
-          content: Text(
-            'Select category',
-          ),
-        ),
-      );
-
-      return;
-    }
-
-    if (selectedAccountId ==
-        null) {
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
-
-        const SnackBar(
-          content: Text(
-            'Select account',
-          ),
-        ),
-      );
+      ).showSnackBar(const SnackBar(content: Text('Select account')));
 
       return;
     }
@@ -171,86 +116,51 @@ class _AddRecurringTransactionScreenState
     });
 
     try {
+      final repository = await ref.read(recurringRepositoryProvider.future);
 
-      final repository =
-          await ref.read(
-        recurringRepositoryProvider
-            .future,
-      );
+      final amount = ((double.parse(amountController.text.trim()) * 100)
+          .round());
 
-      final amount =
-          ((double.parse(
-                        amountController
-                            .text
-                            .trim(),
-                      ) *
-                      100)
-                  .round());
+      final recurring = widget.recurring ?? RecurringTransactionModel();
+      recurring.uuid = widget.recurring?.uuid ?? const Uuid().v4();
 
-      final recurring =
-          widget.recurring ??
-              RecurringTransactionModel();
-      recurring.uuid =
-          widget.recurring?.uuid ??
-              const Uuid().v4();
+      recurring.amount = amount;
 
-      recurring.amount =
-          amount;
+      recurring.type = type;
 
-      recurring.type =
-          type;
+      recurring.categoryId = selectedCategoryId!;
 
-      recurring.categoryId =
-          selectedCategoryId!;
+      recurring.accountId = selectedAccountId!;
 
-      recurring.accountId =
-          selectedAccountId!;
+      recurring.notes = notesController.text.trim();
 
-      recurring.notes =
-          notesController.text
-              .trim();
+      recurring.frequency = frequency;
 
-      recurring.frequency =
-          frequency;
+      recurring.interval = interval;
 
-      recurring.interval =
-          interval;
+      recurring.startDate = startDate;
 
-      recurring.startDate =
-          startDate;
-
-      recurring.endDate =
-          endDate;
+      recurring.endDate = endDate;
 
       if (widget.recurring == null) {
-
-        recurring.nextRunDate =
-            startDate;
+        recurring.nextRunDate = startDate;
       }
 
-      recurring.isActive =
-          active;
+      recurring.isActive = active;
 
-      recurring.updatedAt =
-          DateTime.now().toUtc();
+      recurring.updatedAt = DateTime.now().toUtc();
 
-      recurring.isDeleted =
-          false;
+      recurring.isDeleted = false;
 
-      recurring.isSynced =
-          false;
+      recurring.isSynced = false;
 
-      await repository
-          .updateRecurring(
-        recurring,
-      );
+      await repository.updateRecurring(recurring);
 
       if (!mounted) {
         return;
       }
 
-      await ProviderRefreshHelper
-        .refreshRecurringTransactionData(ref);
+      await ProviderRefreshHelper.refreshRecurringTransactionData(ref);
 
       if (!mounted) {
         return;
@@ -269,29 +179,16 @@ class _AddRecurringTransactionScreenState
           ),
         ),
       );
-
     } catch (_) {
-
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
-
-        const SnackBar(
-
-          content: Text(
-            'Unable to save recurring transaction',
-          ),
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to save recurring transaction')),
       );
-
     } finally {
-
       if (mounted) {
-
         setState(() {
           saving = false;
         });
@@ -300,590 +197,335 @@ class _AddRecurringTransactionScreenState
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
+    final accountsAsync = ref.watch(accountsProvider);
 
-    final accountsAsync =
-        ref.watch(
-      accountsProvider,
-    );
-
-    final categoriesAsync =
-        ref.watch(
-      categoriesProvider(
-        type,
-      ),
-    );
+    final categoriesAsync = ref.watch(categoriesProvider(type));
 
     return Scaffold(
-
       appBar: AppBar(
-
         title: Text(
-
-          widget.recurring ==
-                  null
-
-              ? 'Add Recurring'
-
-              : 'Edit Recurring',
+          widget.recurring == null ? 'Add Recurring' : 'Edit Recurring',
         ),
       ),
 
       body: accountsAsync.when(
-
         data: (accounts) {
-
           return categoriesAsync.when(
-
             data: (categories) {
-
               return Form(
-
                 key: formKey,
 
-                child:
-                    SingleChildScrollView(
-
-                  padding:
-                      const EdgeInsets.fromLTRB(
-                    16,
-                    16,
-                    16,
-                    40,
-                  ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
 
                   child: Column(
-
                     children: [
-
                       TextFormField(
+                        controller: amountController,
 
-                        controller:
-                            amountController,
-
-                        keyboardType:
-                            const TextInputType
-                                .numberWithOptions(
+                        keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
 
                         inputFormatters: [
-
-                          FilteringTextInputFormatter
-                              .allow(
-                            RegExp(
-                              r'^\d*\.?\d{0,2}',
-                            ),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d{0,2}'),
                           ),
                         ],
 
-                        validator:
-                            (value) {
-
-                          if (value ==
-                                  null ||
-                              value
-                                  .trim()
-                                  .isEmpty) {
-
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
                             return 'Enter amount';
                           }
 
-                          final amount =
-                              double.tryParse(
-                            value.trim(),
-                          );
+                          final amount = double.tryParse(value.trim());
 
-                          if (amount ==
-                              null) {
-
+                          if (amount == null) {
                             return 'Invalid amount';
                           }
 
-                          if (amount <=
-                              0) {
-
+                          if (amount <= 0) {
                             return 'Amount must be greater than 0';
                           }
 
                           return null;
                         },
 
-                        decoration:
-                            const InputDecoration(
+                        decoration: const InputDecoration(
+                          labelText: 'Amount',
 
-                          labelText:
-                              'Amount',
+                          prefixText: '₹ ',
 
-                          prefixText:
-                              '₹ ',
-
-                          border:
-                              OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
-                      DropdownButtonFormField<
-                          String>(
-
+                      DropdownButtonFormField<String>(
                         initialValue: type,
 
-                        decoration:
-                            const InputDecoration(
+                        decoration: const InputDecoration(
+                          labelText: 'Type',
 
-                          labelText:
-                              'Type',
-
-                          border:
-                              OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
 
                         items: const [
-
                           DropdownMenuItem(
+                            value: 'expense',
 
-                            value:
-                                'expense',
-
-                            child: Text(
-                              'Expense',
-                            ),
+                            child: Text('Expense'),
                           ),
 
                           DropdownMenuItem(
+                            value: 'income',
 
-                            value:
-                                'income',
-
-                            child: Text(
-                              'Income',
-                            ),
+                            child: Text('Income'),
                           ),
                         ],
 
-                        onChanged:
-                            (value) {
-
-                          if (value ==
-                              null) {
+                        onChanged: (value) {
+                          if (value == null) {
                             return;
                           }
 
                           setState(() {
+                            type = value;
 
-                            type =
-                                value;
-
-                            selectedCategoryId =
-                                null;
+                            selectedCategoryId = null;
                           });
                         },
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
-                      DropdownButtonFormField<
-                          String>(
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedCategoryId,
 
-                        initialValue:
-                            selectedCategoryId,
+                        decoration: const InputDecoration(
+                          labelText: 'Category',
 
-                        decoration:
-                            const InputDecoration(
-
-                          labelText:
-                              'Category',
-
-                          border:
-                              OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
 
-                        items:
-                            categories.map(
-                          (
-                            CategoryModel
-                                category,
-                          ) {
+                        items: categories.map((CategoryModel category) {
+                          return DropdownMenuItem(
+                            value: category.uuid,
 
-                            return DropdownMenuItem(
+                            child: Text(category.name),
+                          );
+                        }).toList(),
 
-                              value:
-                                  category.uuid,
-
-                              child: Text(
-                                category.name,
-                              ),
-                            );
-                          },
-                        ).toList(),
-
-                        onChanged:
-                            (value) {
-
+                        onChanged: (value) {
                           setState(() {
-
-                            selectedCategoryId =
-                                value;
+                            selectedCategoryId = value;
                           });
                         },
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
-                      DropdownButtonFormField<
-                          String>(
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedAccountId,
 
-                        initialValue:
-                            selectedAccountId,
+                        decoration: const InputDecoration(
+                          labelText: 'Account',
 
-                        decoration:
-                            const InputDecoration(
-
-                          labelText:
-                              'Account',
-
-                          border:
-                              OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
 
-                        items:
-                            accounts.map(
-                          (
-                            AccountModel
-                                account,
-                          ) {
+                        items: accounts.map((AccountModel account) {
+                          return DropdownMenuItem(
+                            value: account.uuid,
 
-                            return DropdownMenuItem(
+                            child: Text(account.name),
+                          );
+                        }).toList(),
 
-                              value:
-                                  account.uuid,
-
-                              child: Text(
-                                account.name,
-                              ),
-                            );
-                          },
-                        ).toList(),
-
-                        onChanged:
-                            (value) {
-
+                        onChanged: (value) {
                           setState(() {
-
-                            selectedAccountId =
-                                value;
+                            selectedAccountId = value;
                           });
                         },
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
                       TextFormField(
-
-                        controller:
-                            notesController,
+                        controller: notesController,
 
                         maxLines: 3,
 
-                        decoration:
-                            const InputDecoration(
+                        decoration: const InputDecoration(
+                          labelText: 'Notes',
 
-                          labelText:
-                              'Notes',
-
-                          border:
-                              OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
-                      DropdownButtonFormField<
-                          String>(
+                      DropdownButtonFormField<String>(
+                        initialValue: frequency,
 
-                        initialValue:
-                            frequency,
+                        decoration: const InputDecoration(
+                          labelText: 'Frequency',
 
-                        decoration:
-                            const InputDecoration(
-
-                          labelText:
-                              'Frequency',
-
-                          border:
-                              OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
 
                         items: const [
-
                           DropdownMenuItem(
+                            value: 'daily',
 
-                            value:
-                                'daily',
-
-                            child: Text(
-                              'Daily',
-                            ),
+                            child: Text('Daily'),
                           ),
 
                           DropdownMenuItem(
+                            value: 'weekly',
 
-                            value:
-                                'weekly',
-
-                            child: Text(
-                              'Weekly',
-                            ),
+                            child: Text('Weekly'),
                           ),
 
                           DropdownMenuItem(
+                            value: 'monthly',
 
-                            value:
-                                'monthly',
-
-                            child: Text(
-                              'Monthly',
-                            ),
+                            child: Text('Monthly'),
                           ),
 
                           DropdownMenuItem(
+                            value: 'yearly',
 
-                            value:
-                                'yearly',
-
-                            child: Text(
-                              'Yearly',
-                            ),
+                            child: Text('Yearly'),
                           ),
                         ],
 
-                        onChanged:
-                            (value) {
-
-                          if (value ==
-                              null) {
+                        onChanged: (value) {
+                          if (value == null) {
                             return;
                           }
 
                           setState(() {
-
-                            frequency =
-                                value;
+                            frequency = value;
                           });
                         },
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
-                      DropdownButtonFormField<
-                          int>(
-
+                      DropdownButtonFormField<int>(
                         initialValue: interval,
 
-                        decoration:
-                            const InputDecoration(
+                        decoration: const InputDecoration(
+                          labelText: 'Interval',
 
-                          labelText:
-                              'Interval',
-
-                          border:
-                              OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                         ),
 
-                        items:
-                            List.generate(
-                          12,
-                          (index) {
+                        items: List.generate(12, (index) {
+                          final value = index + 1;
 
-                            final value =
-                                index + 1;
+                          return DropdownMenuItem(
+                            value: value,
 
-                            return DropdownMenuItem(
+                            child: Text(
+                              frequency == 'daily'
+                                  ? 'Every $value day(s)'
+                                  : frequency == 'weekly'
+                                  ? 'Every $value week(s)'
+                                  : frequency == 'monthly'
+                                  ? 'Every $value month(s)'
+                                  : 'Every $value year(s)',
+                            ),
+                          );
+                        }),
 
-                              value:
-                                  value,
-
-                              child: Text(
-
-                                  frequency == 'daily'
-
-                                      ? 'Every $value day(s)'
-
-                                      : frequency == 'weekly'
-
-                                          ? 'Every $value week(s)'
-
-                                          : frequency == 'monthly'
-
-                                              ? 'Every $value month(s)'
-
-                                              : 'Every $value year(s)',
-                                ),
-                            );
-                          },
-                        ),
-
-                        onChanged:
-                            (value) {
-
-                          if (value ==
-                              null) {
+                        onChanged: (value) {
+                          if (value == null) {
                             return;
                           }
 
                           setState(() {
-
-                            interval =
-                                value;
+                            interval = value;
                           });
                         },
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
                       ListTile(
+                        contentPadding: EdgeInsets.zero,
 
-                        contentPadding:
-                            EdgeInsets.zero,
-
-                        title: const Text(
-                          'Start Date',
-                        ),
+                        title: const Text('Start Date'),
 
                         subtitle: Text(
-                          DateFormat(
-                            'dd MMM yyyy',
-                          ).format(
-                            startDate,
-                          ),
+                          DateFormat('dd MMM yyyy').format(startDate),
                         ),
 
-                        trailing:
-                            const Icon(
-                          Icons.calendar_today,
-                        ),
+                        trailing: const Icon(Icons.calendar_today),
 
                         onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
 
-                          final picked =
-                              await showDatePicker(
+                            initialDate: startDate,
 
-                            context:
-                                context,
+                            firstDate: DateTime(2020),
 
-                            initialDate:
-                                startDate,
-
-                            firstDate:
-                                DateTime(2020),
-
-                            lastDate:
-                                DateTime(2100),
+                            lastDate: DateTime(2100),
                           );
 
-                          if (picked !=
-                              null) {
-
+                          if (picked != null) {
                             setState(() {
-
-                              startDate =
-                                  picked;
+                              startDate = picked;
                             });
                           }
                         },
                       ),
 
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
 
                       SwitchListTile(
-
                         value: active,
 
-                        title: const Text(
-                          'Active',
-                        ),
+                        title: const Text('Active'),
 
-                        onChanged:
-                            (value) {
-
+                        onChanged: (value) {
                           setState(() {
-
-                            active =
-                                value;
+                            active = value;
                           });
                         },
                       ),
 
-                      const SizedBox(
-                        height: 24,
-                      ),
+                      const SizedBox(height: 24),
 
                       SizedBox(
+                        width: double.infinity,
 
-                        width:
-                            double.infinity,
-
-                        child:
-                            ElevatedButton(
-
-                          onPressed:
-                              saving
-                                  ? null
-                                  : saveRecurring,
+                        child: ElevatedButton(
+                          onPressed: saving ? null : saveRecurring,
 
                           child: saving
-
                               ? const SizedBox(
+                                  height: 20,
 
-                                  height:
-                                      20,
+                                  width: 20,
 
-                                  width:
-                                      20,
-
-                                  child:
-                                      CircularProgressIndicator(
-                                    strokeWidth:
-                                        2,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
                                   ),
                                 )
-
                               : Text(
-
-                                  widget.recurring ==
-                                          null
-
+                                  widget.recurring == null
                                       ? 'Add Recurring'
-
                                       : 'Update Recurring',
                                 ),
                         ),
                       ),
-                      
-                      const SizedBox(
-                        height: 24,
-                      ),
 
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -891,36 +533,15 @@ class _AddRecurringTransactionScreenState
             },
 
             error: (_, _) =>
+                const Center(child: Text('Unable to load categories')),
 
-                const Center(
-                  child: Text(
-                    'Unable to load categories',
-                  ),
-                ),
-
-            loading: () =>
-
-                const Center(
-                  child:
-                      CircularProgressIndicator(),
-                ),
+            loading: () => const Center(child: CircularProgressIndicator()),
           );
         },
 
-        error: (_, _) =>
+        error: (_, _) => const Center(child: Text('Unable to load accounts')),
 
-            const Center(
-              child: Text(
-                'Unable to load accounts',
-              ),
-            ),
-
-        loading: () =>
-
-            const Center(
-              child:
-                  CircularProgressIndicator(),
-            ),
+        loading: () => const Center(child: CircularProgressIndicator()),
       ),
     );
   }

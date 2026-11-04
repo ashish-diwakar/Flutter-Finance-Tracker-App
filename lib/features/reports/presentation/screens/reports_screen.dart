@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/utils/calendar_date.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -29,109 +30,45 @@ import '../../../recurring/presentation/widgets/monthly_commitments_card.dart';
 
 import 'budget_alerts_screen.dart';
 
-enum ReportChartType {
+enum ReportChartType { pie, donut, groupedBar, progress, trends }
 
-  pie,
-
-  donut,
-
-  groupedBar,
-
-  progress,
-
-  trends,
-}
-
-class ReportsScreen
-    extends ConsumerStatefulWidget {
-
-  const ReportsScreen({
-    super.key,
-  });
+class ReportsScreen extends ConsumerStatefulWidget {
+  const ReportsScreen({super.key});
 
   @override
-  ConsumerState<ReportsScreen>
-      createState() =>
-          _ReportsScreenState();
+  ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState
-    extends ConsumerState<
-        ReportsScreen> {
+class _ReportsScreenState extends ConsumerState<ReportsScreen> {
+  DateTime selectedMonth = CalendarDate.startOfMonth(DateTime.now());
+  //DateTime.now(); //.toUtc();
 
-  DateTime selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
-      //DateTime.now(); //.toUtc();
+  ReportChartType selectedChart = ReportChartType.donut;
 
-  ReportChartType selectedChart =
-      ReportChartType.donut;
-
-  Future<void> refreshReports()
-  async {
-    await ProviderRefreshHelper
-      .refreshReportsData(ref, selectedMonth);
-
+  Future<void> refreshReports() async {
+    await ProviderRefreshHelper.refreshReportsData(ref, selectedMonth);
   }
 
   TextStyle get sectionTitleStyle {
-
-    return const TextStyle(
-
-      fontSize: 22,
-
-      fontWeight:
-          FontWeight.w700,
-    );
+    return const TextStyle(fontSize: 22, fontWeight: FontWeight.w700);
   }
 
   TextStyle get sectionSubtitleStyle {
-
-    return TextStyle(
-
-      color:
-          Colors.grey.shade600,
-
-      height: 1.4,
-
-      fontSize: 14,
-    );
+    return TextStyle(color: Colors.grey.shade600, height: 1.4, fontSize: 14);
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
+    final summaryAsync = ref.watch(monthlySummaryProvider(selectedMonth));
 
-    final summaryAsync =
-        ref.watch(
-      monthlySummaryProvider(
-        selectedMonth,
-      ),
-    );
+    final categoryAsync = ref.watch(categoryAnalyticsProvider(selectedMonth));
 
-    final categoryAsync =
-        ref.watch(
-      categoryAnalyticsProvider(
-        selectedMonth,
-      ),
-    );
-
-    final budgetAsync =
-        ref.watch(
-      budgetProgressProvider(
-        selectedMonth,
-      ),
-    );
+    final budgetAsync = ref.watch(budgetProgressProvider(selectedMonth));
 
     // Multi-month comparison/trend
-    final monthlyChartAsync =
-        ref.watch(
-      monthlyChartProvider,
-    );
+    final monthlyChartAsync = ref.watch(monthlyChartProvider);
 
-    final trendsAsync =
-        ref.watch(
-      monthlyTrendsProvider,
-    );
+    final trendsAsync = ref.watch(monthlyTrendsProvider);
 
     // Forecast based on selected month
     // final forecastAsync =
@@ -139,127 +76,70 @@ class _ReportsScreenState
     //   expenseForecastProvider,
     // );
     //final forcastMonth = DateTime(selectedMonth.year, selectedMonth.month + 1);
-    final forecastAsync =
-        ref.watch(
-      expenseForecastProvider(
-       selectedMonth,
-      ),
-    );
+    final forecastAsync = ref.watch(expenseForecastProvider(selectedMonth));
 
     // Selected-month analysis
-    final insightsAsync =
-        ref.watch(
-      financialInsightsProvider(
-        selectedMonth,
-      ),
-    );
+    final insightsAsync = ref.watch(financialInsightsProvider(selectedMonth));
     // final insightsAsync =
     //     ref.watch(
     //   financialInsightsProvider,
     // );
 
     // Selected-month analysis
-    final healthAsync =
-        ref.watch(
-      financialHealthProvider(
-        selectedMonth,
-      ),
-    );
+    final healthAsync = ref.watch(financialHealthProvider(selectedMonth));
     // final healthAsync =
     //     ref.watch(
     //   financialHealthProvider,
     // );
 
     // Current recurring commitments
-    final recurringAsync =
-        ref.watch(
-      recurringAnalyticsProvider,
-    );
+    final recurringAsync = ref.watch(recurringAnalyticsProvider);
 
     return Scaffold(
-
       appBar: AppBar(
-
-        title: const Text(
-          'Reports',
-        ),
+        title: const Text('Reports'),
 
         actions: [
-
           IconButton(
-
             onPressed: () async {
-
               await refreshReports();
 
               if (mounted) {
-
                 setState(() {});
               }
             },
 
-            icon: const Icon(
-              Icons.refresh,
-            ),
+            icon: const Icon(Icons.refresh),
           ),
         ],
       ),
 
       body: RefreshIndicator(
-
-        onRefresh:
-            refreshReports,
+        onRefresh: refreshReports,
 
         child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
 
-          physics:
-              const AlwaysScrollableScrollPhysics(),
-
-          padding:
-              const EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            40,
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
 
           children: [
-
             // =====================================================
             // MONTH SELECTOR
             // =====================================================
 
             Card(
-
               child: ListTile(
-
-                shape:
-                    RoundedRectangleBorder(
-
-                  borderRadius:
-                      BorderRadius.circular(
-                    12,
-                  ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
 
-                title: const Text(
-                  'Selected Month',
-                ),
+                title: const Text('Selected Month'),
 
-                subtitle: Text(
-                  DateFormat(
-                      'MMMM yyyy',
-                    ).format(
-                      selectedMonth,
-                    ),
-                ),
+                subtitle: Text(DateFormat('MMMM yyyy').format(selectedMonth)),
 
-                trailing: const Icon(
-                  Icons.calendar_today,
-                ),
+                trailing: const Icon(Icons.calendar_today),
 
                 onTap: () async {
-
                   // final picked =
                   //     await showDatePicker(
 
@@ -351,7 +231,6 @@ class _ReportsScreenState
                             //     ),
                             //   ],
                             // ),
-
                             content: SizedBox(
                               width: 320,
                               child: Row(
@@ -359,52 +238,38 @@ class _ReportsScreenState
                                   Expanded(
                                     flex: 3,
                                     child: DropdownButtonFormField<int>(
-                                      initialValue:
-                                          selectedMonthNumber,
+                                      initialValue: selectedMonthNumber,
                                       isExpanded: true,
-                                      decoration:
-                                          const InputDecoration(
+                                      decoration: const InputDecoration(
                                         labelText: 'Month',
-                                        border:
-                                            OutlineInputBorder(),
+                                        border: OutlineInputBorder(),
                                       ),
-                                      items: List.generate(
-                                        12,
-                                        (index) {
-                                          final month =
-                                              index + 1;
+                                      items: List.generate(12, (index) {
+                                        final month = index + 1;
 
-                                          return DropdownMenuItem<int>(
-                                            value: month,
-                                            child: Text(
-                                              DateFormat.MMMM().format(
-                                                DateTime(
-                                                  2000,
-                                                  month,
-                                                ),
-                                              ),
-                                              overflow:
-                                                  TextOverflow.ellipsis,
+                                        return DropdownMenuItem<int>(
+                                          value: month,
+                                          child: Text(
+                                            DateFormat.MMMM().format(
+                                              DateTime(2000, month),
                                             ),
-                                          );
-                                        },
-                                      ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        );
+                                      }),
                                       onChanged: (value) {
                                         if (value == null) {
                                           return;
                                         }
 
                                         setState(() {
-                                          selectedMonthNumber =
-                                              value;
+                                          selectedMonthNumber = value;
                                         });
                                       },
                                     ),
                                   ),
 
-                                  const SizedBox(
-                                    width: 12,
-                                  ),
+                                  const SizedBox(width: 12),
 
                                   Expanded(
                                     flex: 2,
@@ -415,19 +280,14 @@ class _ReportsScreenState
                                         labelText: 'Year',
                                         border: OutlineInputBorder(),
                                       ),
-                                      items: List.generate(
-                                        81,
-                                        (index) {
-                                          final year = 2020 + index;
+                                      items: List.generate(81, (index) {
+                                        final year = 2020 + index;
 
-                                          return DropdownMenuItem<int>(
-                                            value: year,
-                                            child: Text(
-                                              year.toString(),
-                                            ),
-                                          );
-                                        },
-                                      ),
+                                        return DropdownMenuItem<int>(
+                                          value: year,
+                                          child: Text(year.toString()),
+                                        );
+                                      }),
                                       onChanged: (value) {
                                         if (value == null) {
                                           return;
@@ -454,10 +314,7 @@ class _ReportsScreenState
                                 onPressed: () {
                                   Navigator.pop(
                                     context,
-                                    DateTime(
-                                      selectedYear,
-                                      selectedMonthNumber,
-                                    ),
+                                    DateTime(selectedYear, selectedMonthNumber),
                                   );
                                 },
                                 child: const Text('Select'),
@@ -469,346 +326,188 @@ class _ReportsScreenState
                     },
                   );
 
-                  if (picked != null &&
-                      mounted) {
-
+                  if (picked != null && mounted) {
                     setState(() {
-
-                      selectedMonth =
-                          DateTime(
-                        picked.year,
-                        picked.month,
-                        1
-                      );
+                      selectedMonth = DateTime(picked.year, picked.month, 1);
                     });
                   }
                 },
               ),
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
             // =====================================================
             // MONTHLY SUMMARY
             // =====================================================
-
             summaryAsync.when(
-
               data: (summary) {
-
                 return MonthlySummaryCard(
+                  income: summary.income,
 
-                  income:
-                      summary.income,
-
-                  expense:
-                      summary.expense,
+                  expense: summary.expense,
                 );
               },
 
-              error: (_, _) =>
+              error: (_, _) => const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
 
-                  const Card(
+                  child: Text('Unable to load summary'),
+                ),
+              ),
 
-                    child: Padding(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(24),
 
-                      padding:
-                          EdgeInsets.all(
-                        16,
-                      ),
-
-                      child: Text(
-                        'Unable to load summary',
-                      ),
-                    ),
-                  ),
-
-              loading: () =>
-
-                  const Padding(
-
-                    padding:
-                        EdgeInsets.all(
-                      24,
-                    ),
-
-                    child: Center(
-
-                      child:
-                          CircularProgressIndicator(),
-                    ),
-                  ),
+                child: Center(child: CircularProgressIndicator()),
+              ),
             ),
 
-            const SizedBox(
-              height: 24,
-            ),
+            const SizedBox(height: 24),
 
             // =====================================================
             // FINANCIAL FORECAST
             // =====================================================
+            Text('Expense Forecast', style: sectionTitleStyle),
+
+            const SizedBox(height: 6),
 
             Text(
-
-              'Expense Forecast',
-
-              style:
-                  sectionTitleStyle,
-            ),
-
-            const SizedBox(
-              height: 6,
-            ),
-
-            Text(
-
               'Projected spending trends based on recent financial activity.',
 
-              style:
-                  sectionSubtitleStyle,
+              style: sectionSubtitleStyle,
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
             forecastAsync.when(
-
               data: (forecast) {
-
-                return ExpenseForecastCard(
-                  forecast: forecast,
-                );
+                return ExpenseForecastCard(forecast: forecast);
               },
 
-              error: (_, _) =>
+              error: (_, _) => const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
 
-                  const Card(
+                  child: Text('Unable to generate forecast'),
+                ),
+              ),
 
-                    child: Padding(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
 
-                      padding:
-                          EdgeInsets.all(
-                        16,
-                      ),
-
-                      child: Text(
-                        'Unable to generate forecast',
-                      ),
-                    ),
-                  ),
-
-              loading: () =>
-
-                  const Center(
-
-                    child: Padding(
-
-                      padding:
-                          EdgeInsets.all(
-                        24,
-                      ),
-
-                      child:
-                          CircularProgressIndicator(),
-                    ),
-                  ),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
             ),
 
-            const SizedBox(
-              height: 32,
-            ),
+            const SizedBox(height: 32),
 
             // =====================================================
             // FINANCIAL HEALTH
             // =====================================================
+            Text('Financial Health Score', style: sectionTitleStyle),
+
+            const SizedBox(height: 6),
 
             Text(
-
-              'Financial Health Score',
-
-              style:
-                  sectionTitleStyle,
-            ),
-
-            const SizedBox(
-              height: 6,
-            ),
-
-            Text(
-
               'Analyze your financial stability, savings discipline and spending efficiency.',
 
-              style:
-                  sectionSubtitleStyle,
+              style: sectionSubtitleStyle,
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
             healthAsync.when(
-
               data: (health) {
-
-                return FinancialHealthCard(
-                  health: health,
-                );
+                return FinancialHealthCard(health: health);
               },
 
-              error: (_, _) =>
-                  const SizedBox(),
+              error: (_, _) => const SizedBox(),
 
-              loading: () =>
-
-                  const Center(
-
-                    child:
-                        CircularProgressIndicator(),
-                  ),
+              loading: () => const Center(child: CircularProgressIndicator()),
             ),
 
-            const SizedBox(
-              height: 32,
-            ),
+            const SizedBox(height: 32),
 
             // =====================================================
             // RECURRING COMMITMENTS
             // =====================================================
+            Text('Monthly Commitments', style: sectionTitleStyle),
+
+            const SizedBox(height: 6),
 
             Text(
-
-              'Monthly Commitments',
-
-              style:
-                  sectionTitleStyle,
-            ),
-
-            const SizedBox(
-              height: 6,
-            ),
-
-            Text(
-
               'Track fixed monthly obligations and recurring financial commitments.',
 
-              style:
-                  sectionSubtitleStyle,
+              style: sectionSubtitleStyle,
             ),
 
-            const SizedBox(
-              height: 16,
-            ),
+            const SizedBox(height: 16),
 
             recurringAsync.when(
-
               data: (analytics) {
-
-                return MonthlyCommitmentsCard(
-                  analytics: analytics,
-                );
+                return MonthlyCommitmentsCard(analytics: analytics);
               },
 
-              loading: () =>
+              loading: () => const Center(child: CircularProgressIndicator()),
 
-                  const Center(
-
-                    child:
-                        CircularProgressIndicator(),
-                  ),
-
-              error: (_, _) =>
-                  const SizedBox(),
+              error: (_, _) => const SizedBox(),
             ),
 
-            const SizedBox(
-              height: 32,
-            ),
+            const SizedBox(height: 32),
 
             // =====================================================
             // AI INSIGHTS
             // =====================================================
-
             insightsAsync.when(
-
               data: (insights) {
-
-                return FinancialInsightsSection(
-                  insights: insights,
-                );
+                return FinancialInsightsSection(insights: insights);
               },
 
-              error: (_, _) =>
+              error: (_, _) => const SizedBox(),
 
-                  const SizedBox(),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
 
-              loading: () =>
-
-                  const Center(
-
-                    child: Padding(
-
-                      padding:
-                          EdgeInsets.all(
-                        24,
-                      ),
-
-                      child:
-                          CircularProgressIndicator(),
-                    ),
-                  ),
+                  child: CircularProgressIndicator(),
+                ),
+              ),
             ),
 
-            const SizedBox(
-              height: 24,
-            ),
+            const SizedBox(height: 24),
 
             // =====================================================
             // BUDGET ALERTS BUTTON
             // =====================================================
-
             SizedBox(
-
               width: double.infinity,
 
               child: OutlinedButton.icon(
-
                 onPressed: () {
-
                   Navigator.push(
-
                     context,
 
                     MaterialPageRoute(
-
-                      builder: (_) =>
-                          BudgetAlertsScreen(
-                            month: selectedMonth,
-                          ),
+                      builder: (_) => BudgetAlertsScreen(month: selectedMonth),
                     ),
                   );
                 },
 
-                icon: const Icon(
-                  Icons.warning_amber,
-                ),
+                icon: const Icon(Icons.warning_amber),
 
-                label: const Text(
-                  'View Budget Alerts',
-                ),
+                label: const Text('View Budget Alerts'),
               ),
             ),
 
-            const SizedBox(
-              height: 12,
-            ),
+            const SizedBox(height: 12),
 
             // =====================================================
             // Income Targets BUTTON
             // =====================================================
-
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -816,243 +515,147 @@ class _ReportsScreenState
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                        BudgetAlertsScreen(
-                          targetType: FinancialTargetType.incomeTarget,
-                          month: selectedMonth,
-                        ),
+                      builder: (_) => BudgetAlertsScreen(
+                        targetType: FinancialTargetType.incomeTarget,
+                        month: selectedMonth,
+                      ),
                     ),
                   );
                 },
-                icon: const Icon(
-                  Icons.trending_up,
-                ),
-                label: const Text(
-                  'View Income Targets',
-                ),
+                icon: const Icon(Icons.trending_up),
+                label: const Text('View Income Targets'),
               ),
             ),
 
-            const SizedBox(
-              height: 32,
-            ),
+            const SizedBox(height: 32),
 
             // =====================================================
             // ANALYTICS HEADER
             // =====================================================
+            Text('Financial Analytics', style: sectionTitleStyle),
+
+            const SizedBox(height: 6),
 
             Text(
-
-              'Financial Analytics',
-
-              style:
-                  sectionTitleStyle,
-            ),
-
-            const SizedBox(
-              height: 6,
-            ),
-
-            Text(
-
               'Explore interactive insights across spending patterns, budgets and income trends.',
 
-              style:
-                  sectionSubtitleStyle,
+              style: sectionSubtitleStyle,
             ),
 
-            const SizedBox(
-              height: 24,
-            ),
+            const SizedBox(height: 24),
 
             // =====================================================
             // CHART TYPE
             // =====================================================
-
             const Text(
-
               'Visualization Mode',
 
-              style: TextStyle(
-
-                fontWeight:
-                    FontWeight.w600,
-
-                fontSize: 15,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
             ),
 
-            const SizedBox(
-              height: 12,
-            ),
+            const SizedBox(height: 12),
 
             SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
 
-              scrollDirection:
-                  Axis.horizontal,
-
-              child: SegmentedButton<
-                  ReportChartType>(
-
-                showSelectedIcon:
-                    false,
+              child: SegmentedButton<ReportChartType>(
+                showSelectedIcon: false,
 
                 style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
 
-                  visualDensity:
-                      VisualDensity.compact,
-
-                  padding:
-                      WidgetStateProperty.all(
-
-                    const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
+                  padding: WidgetStateProperty.all(
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   ),
                 ),
 
                 segments: const [
-
                   ButtonSegment(
+                    value: ReportChartType.donut,
 
-                    value:
-                        ReportChartType
-                            .donut,
-
-                    icon: Icon(
-                      Icons.donut_large,
-                    ),
+                    icon: Icon(Icons.donut_large),
                   ),
 
                   ButtonSegment(
+                    value: ReportChartType.pie,
 
-                    value:
-                        ReportChartType
-                            .pie,
-
-                    icon: Icon(
-                      Icons.pie_chart,
-                    ),
+                    icon: Icon(Icons.pie_chart),
                   ),
 
                   ButtonSegment(
+                    value: ReportChartType.groupedBar,
 
-                    value:
-                        ReportChartType
-                            .groupedBar,
-
-                    icon: Icon(
-                      Icons.bar_chart,
-                    ),
+                    icon: Icon(Icons.bar_chart),
                   ),
 
                   ButtonSegment(
+                    value: ReportChartType.progress,
 
-                    value:
-                        ReportChartType
-                            .progress,
-
-                    icon: Icon(
-                      Icons.linear_scale,
-                    ),
+                    icon: Icon(Icons.linear_scale),
                   ),
 
                   ButtonSegment(
+                    value: ReportChartType.trends,
 
-                    value:
-                        ReportChartType
-                            .trends,
-
-                    icon: Icon(
-                      Icons.show_chart,
-                    ),
+                    icon: Icon(Icons.show_chart),
                   ),
                 ],
 
-                selected: {
-                  selectedChart,
-                },
+                selected: {selectedChart},
 
-                onSelectionChanged:
-                    (value) {
-
+                onSelectionChanged: (value) {
                   setState(() {
-
-                    selectedChart =
-                        value.first;
+                    selectedChart = value.first;
                   });
                 },
               ),
             ),
 
-            const SizedBox(
-              height: 32,
-            ),
+            const SizedBox(height: 32),
 
             // =====================================================
             // CHART TITLE
             // =====================================================
-
             Builder(
-
               builder: (_) {
-
                 String title;
                 String subtitle;
 
-                switch (
-                    selectedChart) {
-
-                  case ReportChartType
-                        .donut:
-
-                    title =
-                        'Spending Distribution';
+                switch (selectedChart) {
+                  case ReportChartType.donut:
+                    title = 'Spending Distribution';
 
                     subtitle =
                         'Understand how expenses are distributed across spending categories.';
 
                     break;
 
-                  case ReportChartType
-                        .pie:
-
-                    title =
-                        'Category Contribution';
+                  case ReportChartType.pie:
+                    title = 'Category Contribution';
 
                     subtitle =
                         'Compare category contribution to your total monthly spending.';
 
                     break;
 
-                  case ReportChartType
-                        .groupedBar:
-
-                    title =
-                        'Income & Expense Trends';
+                  case ReportChartType.groupedBar:
+                    title = 'Income & Expense Trends';
 
                     subtitle =
                         'Analyze monthly cash flow performance across income and expenses.';
 
                     break;
 
-                  case ReportChartType
-                        .progress:
-
-                    title =
-                        'Budget Performance';
+                  case ReportChartType.progress:
+                    title = 'Budget Performance';
 
                     subtitle =
                         'Monitor category-wise budget usage and spending efficiency.';
 
                     break;
 
-                  case ReportChartType
-                        .trends:
-
-                    title =
-                        'Financial Growth Trends';
+                  case ReportChartType.trends:
+                    title = 'Financial Growth Trends';
 
                     subtitle =
                         'Visualize long-term income growth and expense movement patterns.';
@@ -1061,40 +664,26 @@ class _ReportsScreenState
                 }
 
                 return Column(
-
-                  crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
                   children: [
-
                     Text(
-
                       title,
 
-                      style:
-                          const TextStyle(
-
+                      style: const TextStyle(
                         fontSize: 20,
 
-                        fontWeight:
-                            FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 6,
-                    ),
+                    const SizedBox(height: 6),
 
                     Text(
-
                       subtitle,
 
-                      style:
-                          TextStyle(
-
-                        color:
-                            Colors.grey.shade600,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
 
                         height: 1.4,
                       ),
@@ -1104,263 +693,129 @@ class _ReportsScreenState
               },
             ),
 
-            const SizedBox(
-              height: 20,
-            ),
+            const SizedBox(height: 20),
 
             // =====================================================
             // CHART CONTENT
             // =====================================================
-
             AnimatedSwitcher(
-
-              duration:
-                  const Duration(
-                milliseconds: 300,
-              ),
+              duration: const Duration(milliseconds: 300),
 
               child: Builder(
-
-                key: ValueKey(
-                  selectedChart,
-                ),
+                key: ValueKey(selectedChart),
 
                 builder: (_) {
-
-                  if (selectedChart ==
-                      ReportChartType
-                          .groupedBar) {
-
-                    return monthlyChartAsync
-                        .when(
-
-                      data:
-                          (monthlyData) {
-
-                        return MonthlyGroupedBarChart(
-                          data:
-                              monthlyData,
-                        );
+                  if (selectedChart == ReportChartType.groupedBar) {
+                    return monthlyChartAsync.when(
+                      data: (monthlyData) {
+                        return MonthlyGroupedBarChart(data: monthlyData);
                       },
 
-                      error:
-                          (_, _) =>
+                      error: (_, _) => const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
 
-                              const Card(
-
-                        child:
-                            Padding(
-
-                          padding:
-                              EdgeInsets.all(
-                            16,
-                          ),
-
-                          child: Text(
-                            'Unable to load monthly chart',
-                          ),
+                          child: Text('Unable to load monthly chart'),
                         ),
                       ),
 
-                      loading: () =>
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
 
-                          const Center(
-
-                        child:
-                            Padding(
-
-                          padding:
-                              EdgeInsets.all(
-                            24,
-                          ),
-
-                          child:
-                              CircularProgressIndicator(),
+                          child: CircularProgressIndicator(),
                         ),
                       ),
                     );
                   }
 
-                  if (selectedChart ==
-                      ReportChartType
-                          .progress) {
-
+                  if (selectedChart == ReportChartType.progress) {
                     return budgetAsync.when(
-
-                      data:
-                          (budgetData) {
-
-                        if (budgetData
-                            .isEmpty) {
-
+                      data: (budgetData) {
+                        if (budgetData.isEmpty) {
                           return const Card(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
 
-                            child:
-                                Padding(
-
-                              padding:
-                                  EdgeInsets.all(
-                                24,
-                              ),
-
-                              child:
-                                  Center(
-
-                                child: Text(
-                                  'No budget data available',
-                                ),
+                              child: Center(
+                                child: Text('No budget data available'),
                               ),
                             ),
                           );
                         }
 
-                        return BudgetProgressChart(
-                          data:
-                              budgetData,
-                        );
+                        return BudgetProgressChart(data: budgetData);
                       },
 
-                      error:
-                          (_, _) =>
+                      error: (_, _) => const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
 
-                              const Card(
-
-                        child:
-                            Padding(
-
-                          padding:
-                              EdgeInsets.all(
-                            16,
-                          ),
-
-                          child: Text(
-                            'Unable to load budget chart',
-                          ),
+                          child: Text('Unable to load budget chart'),
                         ),
                       ),
 
-                      loading: () =>
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
 
-                          const Center(
-
-                        child:
-                            Padding(
-
-                          padding:
-                              EdgeInsets.all(
-                            24,
-                          ),
-
-                          child:
-                              CircularProgressIndicator(),
+                          child: CircularProgressIndicator(),
                         ),
                       ),
                     );
                   }
 
-                  if (selectedChart ==
-                      ReportChartType
-                          .trends) {
-
+                  if (selectedChart == ReportChartType.trends) {
                     return trendsAsync.when(
-
                       data: (trends) {
-
-                        if (trends
-                            .isEmpty) {
-
+                        if (trends.isEmpty) {
                           return const Card(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
 
-                            child:
-                                Padding(
-
-                              padding:
-                                  EdgeInsets.all(
-                                24,
-                              ),
-
-                              child:
-                                  Center(
-
-                                child: Text(
-                                  'No trend data available',
-                                ),
+                              child: Center(
+                                child: Text('No trend data available'),
                               ),
                             ),
                           );
                         }
 
-                        return MonthlyTrendChart(
-                          trends: trends,
-                        );
+                        return MonthlyTrendChart(trends: trends);
                       },
 
-                      error:
-                          (_, _) =>
+                      error: (_, _) => const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
 
-                              const Card(
-
-                        child:
-                            Padding(
-
-                          padding:
-                              EdgeInsets.all(
-                            16,
-                          ),
-
-                          child: Text(
-                            'Unable to load trend analytics',
-                          ),
+                          child: Text('Unable to load trend analytics'),
                         ),
                       ),
 
-                      loading: () =>
+                      loading: () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
 
-                          const Center(
-
-                        child:
-                            Padding(
-
-                          padding:
-                              EdgeInsets.all(
-                            24,
-                          ),
-
-                          child:
-                              CircularProgressIndicator(),
+                          child: CircularProgressIndicator(),
                         ),
                       ),
                     );
                   }
 
                   return categoryAsync.when(
-
                     data: (categories) {
-
-                      if (categories
-                          .isEmpty) {
-
+                      if (categories.isEmpty) {
                         return const Card(
-
                           child: Padding(
-
-                            padding:
-                                EdgeInsets.all(
-                              24,
-                            ),
+                            padding: EdgeInsets.all(24),
 
                             child: Center(
-
-                              child: Text(
-                                'No expense data available',
-                              ),
+                              child: Text('No expense data available'),
                             ),
                           ),
                         );
                       }
 
                       final colors = const [
-
                         Colors.red,
                         Colors.blue,
                         Colors.green,
@@ -1371,68 +826,36 @@ class _ReportsScreenState
                         Colors.pink,
                       ];
 
-                      if (selectedChart ==
-                          ReportChartType
-                              .donut) {
-
-                        return ExpenseDonutChart(
-                          data:
-                              categories,
-                        );
+                      if (selectedChart == ReportChartType.donut) {
+                        return ExpenseDonutChart(data: categories);
                       }
 
                       return ExpensePieChart(
+                        categories: categories,
 
-                        categories:
-                            categories,
+                        colors: colors,
 
-                        colors:
-                            colors,
-
-                        forecolors:
-                            List.generate(
-
+                        forecolors: List.generate(
                           colors.length,
 
-                          (_) =>
-                              Colors.black,
+                          (_) => Colors.black,
                         ),
                       );
                     },
 
-                    error:
-                        (_, _) =>
+                    error: (_, _) => const Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
 
-                            const Card(
-
-                      child:
-                          Padding(
-
-                        padding:
-                            EdgeInsets.all(
-                          16,
-                        ),
-
-                        child: Text(
-                          'Unable to load analytics',
-                        ),
+                        child: Text('Unable to load analytics'),
                       ),
                     ),
 
-                    loading: () =>
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
 
-                        const Center(
-
-                      child:
-                          Padding(
-
-                        padding:
-                            EdgeInsets.all(
-                          24,
-                        ),
-
-                        child:
-                            CircularProgressIndicator(),
+                        child: CircularProgressIndicator(),
                       ),
                     ),
                   );
@@ -1440,9 +863,7 @@ class _ReportsScreenState
               ),
             ),
 
-            const SizedBox(
-              height: 40,
-            ),
+            const SizedBox(height: 40),
           ],
         ),
       ),

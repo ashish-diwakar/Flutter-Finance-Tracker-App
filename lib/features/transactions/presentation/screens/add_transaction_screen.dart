@@ -1,6 +1,8 @@
+import 'package:finance_tracker/core/utils/calendar_date.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../shared/models/account_model.dart';
@@ -16,17 +18,24 @@ import '../../../../shared/providers/currency_provider.dart';
 import '../../../borrow_lend/data/services/borrow_lend_notification_service.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
-  final TransactionModel?
-      transaction;
-  const AddTransactionScreen({
-    super.key,
-    this.transaction,
-  });
+  final TransactionModel? transaction;
+  const AddTransactionScreen({super.key, this.transaction});
   @override
   ConsumerState<AddTransactionScreen> createState() =>
       _AddTransactionScreenState();
 }
+
 class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
+  static const _inputValueStyle = TextStyle(
+    color: Color(0xFF244C40),
+    fontSize: 18,
+    fontWeight: FontWeight.w400,
+  );
+  static const _inputPlaceholderStyle = TextStyle(
+    color: Color(0xFF6C8A80),
+    fontSize: 17,
+  );
+
   final formKey = GlobalKey<FormState>();
   final amountController = TextEditingController();
   final notesController = TextEditingController();
@@ -35,7 +44,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   CategoryModel? selectedCategory;
   AccountModel? selectedAccount;
   AccountModel? selectedToAccount;
-  DateTime selectedDate = DateTime.now().toUtc();
+  DateTime selectedDate = DateTime.now();
   DateTime? selectedDueDate;
   bool saving = false;
   String? categoryError;
@@ -51,23 +60,17 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     super.initState();
     final transaction = widget.transaction;
     if (transaction != null) {
-      amountController.text =
-          (transaction.amount / 100)
-              .toString();
-      notesController.text =
-          transaction.notes ?? '';
-      counterpartyController.text =
-          transaction.counterpartyName ?? '';
-      transactionType =
-          transaction.type;
-      selectedDate =
-          transaction.transactionDate;
-      selectedDueDate =
-          transaction.dueDate;
+      amountController.text = (transaction.amount / 100).toString();
+      notesController.text = transaction.notes ?? '';
+      counterpartyController.text = transaction.counterpartyName ?? '';
+      transactionType = transaction.type;
+      selectedDate = transaction.transactionDate.toLocal();
+      selectedDueDate = transaction.dueDate?.toLocal();
       loadSelectedValues();
       loadLinkedRepaymentInfo();
     }
   }
+
   @override
   void dispose() {
     amountController.dispose();
@@ -75,76 +78,57 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     counterpartyController.dispose();
     super.dispose();
   }
-  Future<void> loadSelectedValues()
-      async {
-    final transaction =
-        widget.transaction;
+
+  Future<void> loadSelectedValues() async {
+    final transaction = widget.transaction;
     if (transaction == null) {
       return;
     }
     final requiresCategory =
-        transaction.type == 'income' ||
-        transaction.type == 'expense';
-    List<CategoryModel> categories =
-        <CategoryModel>[];
-    if (requiresCategory &&
-        transaction.categoryId != null) {
-      categories = await ref.read(
-        categoriesProvider(
-          transaction.type,
-        ).future,
-      );
+        transaction.type == 'income' || transaction.type == 'expense';
+    List<CategoryModel> categories = <CategoryModel>[];
+    if (requiresCategory && transaction.categoryId != null) {
+      categories = await ref.read(categoriesProvider(transaction.type).future);
     }
-    final accounts =
-        await ref.read(
-      accountsProvider.future,
-    );
+    final accounts = await ref.read(accountsProvider.future);
     if (!mounted) {
       return;
     }
     setState(() {
-      selectedCategory =
-          categories.cast<CategoryModel?>().firstWhere(
+      selectedCategory = categories.cast<CategoryModel?>().firstWhere(
         (c) => c?.uuid == transaction.categoryId,
         orElse: () => null,
       );
-      selectedAccount =
-          accounts.cast<AccountModel?>().firstWhere(
+      selectedAccount = accounts.cast<AccountModel?>().firstWhere(
         (a) => a?.uuid == transaction.accountId,
         orElse: () => null,
       );
-      selectedToAccount =
-          accounts.cast<AccountModel?>().firstWhere(
+      selectedToAccount = accounts.cast<AccountModel?>().firstWhere(
         (a) => a?.uuid == transaction.toAccountId,
         orElse: () => null,
       );
     });
   }
+
   Future<void> loadLinkedRepaymentInfo() async {
-    final transaction =
-        widget.transaction;
+    final transaction = widget.transaction;
 
     if (transaction == null ||
-        (transaction.type != 'borrowed' &&
-            transaction.type != 'lent')) {
+        (transaction.type != 'borrowed' && transaction.type != 'lent')) {
       return;
     }
 
     loadingLinkedRepayments = true;
 
-    final transactions =
-        await ref.read(
-      transactionsStreamProvider.future,
-    );
+    final transactions = await ref.read(transactionsStreamProvider.future);
 
     if (!mounted) {
       return;
     }
 
-    final repaymentType =
-        transaction.type == 'borrowed'
-            ? 'repaymentPaid'
-            : 'repaymentReceived';
+    final repaymentType = transaction.type == 'borrowed'
+        ? 'repaymentPaid'
+        : 'repaymentReceived';
 
     var total = 0;
 
@@ -153,8 +137,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         continue;
       }
 
-      if (item.relatedTransactionId !=
-          transaction.uuid) {
+      if (item.relatedTransactionId != transaction.uuid) {
         continue;
       }
 
@@ -177,771 +160,783 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     }
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(
-      SnackBar(
-        content: Text(message),
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  InputDecoration _auroraInputDecoration({
+    String? labelText,
+    String? hintText,
+    String? helperText,
+    String? errorText,
+    Widget? suffixIcon,
+    bool alignLabelWithHint = false,
+  }) {
+    const borderRadius = BorderRadius.all(Radius.circular(14));
+    const enabledBorderColor = Color(0xFFBDDBD1);
+    const focusedBorderColor = Color(0xFF3E8877);
+    final errorColor = Theme.of(context).colorScheme.error;
+
+    OutlineInputBorder outlineBorder(Color color, {double width = 1}) =>
+        OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: BorderSide(color: color, width: width),
+        );
+
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      helperText: helperText,
+      errorText: errorText,
+      errorMaxLines: 2,
+      suffixIcon: suffixIcon,
+      alignLabelWithHint: alignLabelWithHint,
+      filled: true,
+      fillColor: const Color(0xEEFFFFFF),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      labelStyle: const TextStyle(
+        color: Color(0xFF315F53),
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
       ),
+      // InputDecorator scales floating labels to 75%, so compensate to render at 16sp.
+      floatingLabelStyle: const TextStyle(
+        color: Color(0xFF315F53),
+        fontSize: 21.34,
+        fontWeight: FontWeight.w600,
+      ),
+      hintStyle: _inputPlaceholderStyle,
+      helperStyle: const TextStyle(color: Color(0xFF53665F), fontSize: 14),
+      errorStyle: TextStyle(color: errorColor, fontSize: 14),
+      counterStyle: const TextStyle(color: Color(0xFF53665F), fontSize: 14),
+      border: outlineBorder(enabledBorderColor),
+      enabledBorder: outlineBorder(enabledBorderColor),
+      focusedBorder: outlineBorder(focusedBorderColor, width: 1.6),
+      disabledBorder: outlineBorder(enabledBorderColor),
+      errorBorder: outlineBorder(errorColor),
+      focusedErrorBorder: outlineBorder(errorColor, width: 1.6),
     );
   }
-  @override
-  Widget build(BuildContext context) {
-    final requiresCategory =
-        transactionType == 'income' ||
-        transactionType == 'expense';
-    final isTransfer =
-        transactionType == 'transfer';
-    final isBorrowOrLend =
-        transactionType == 'borrowed' ||
-        transactionType == 'lent';
-    final hasLinkedRepayments =
-        linkedRepaymentTotal > 0;
-    final accountsAsync = ref.watch(
-      accountsProvider,
-    );
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.transaction == null
-              ? 'Add Transaction'
-              : 'Edit Transaction',
-          ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: formKey,
-            child: ListView(
-              children: [
-                DropdownButtonFormField<String>(
-                  initialValue: transactionType,
-                  decoration: InputDecoration(
-                    labelText: 'Transaction Type',
-                    border: const OutlineInputBorder(),
-                    helperText: hasLinkedRepayments
-                        ? 'Type cannot be changed because repayments exist.'
-                        : null,
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'income',
-                      child: Text(
-                        'Income',
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'expense',
-                      child: Text(
-                        'Expense',
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'transfer',
-                      child: Text(
-                        'Transfer',
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'borrowed',
-                      child: Text(
-                        'Borrowed',
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'lent',
-                      child: Text(
-                        'Lent',
-                      ),
-                    ),
-                  ],
-                  onChanged: saving ||
-                          loadingLinkedRepayments ||
-                          hasLinkedRepayments
-                      ? null
-                      : (value) {
-                          if (value == null || transactionType == value) {
-                            return;
-                          }
-                          setState(() {
-                            transactionType = value;
-                            selectedCategory = null;
-                            categoryError = null;
-                            selectedAccount = null;
-                            selectedToAccount = null;
-                            accountError = null;
-                            toAccountError = null;
-                            counterpartyController.clear();
-                            counterpartyError = null;
-                            selectedDueDate = null;
-                            dueDateError = null;
-                          });
-                        },
-                ),
-                const SizedBox(
-                  height: 16,
-                ),
-                TextFormField(
-                  controller: amountController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(
-                        r'^\d*\.?\d{0,2}',
-                      ),
-                    ),
-                  ],
-                  validator: (value) {
-                    final amount = double.tryParse(
-                      value?.trim() ?? '',
-                    );
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Amount is required';
-                    }
-                    if (amount == null) {
-                      return 'Enter valid amount';
-                    }
-                    if (amount <= 0) {
-                      return 'Amount must be greater than zero';
-                    }
-                    if (amount > 999999999) {
-                      return 'Amount is too large';
-                    }
 
-                    final amountInMinorUnits =
-                        (amount * 100).toInt();
-
-                    if (hasLinkedRepayments &&
-                        amountInMinorUnits <
-                            linkedRepaymentTotal) {
-                      return 'Amount cannot be less than total repayments';
-                    }
-
-                    return null;
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Amount',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(
-                  height: 16,
-                ),
-                if (requiresCategory) ...[
-                  ref.watch(
-                    categoriesProvider(
-                      transactionType,
-                    ),
-                  ).when(
-                    data: (categories) {
-                      return InkWell(
-                        onTap: saving
-                            ? null
-                            : () async {
-                                final result =
-                                    await showModalBottomSheet<CategoryModel>(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  builder: (_) {
-                                    return SafeArea(
-                                      child: SizedBox(
-                                        height: 400,
-                                        child: ListView.builder(
-                                          itemCount: categories.length,
-                                          itemBuilder: (
-                                            context,
-                                            index,
-                                          ) {
-                                            final category =
-                                                categories[index];
-                                            return ListTile(
-                                              title: Text(
-                                                category.name,
-                                              ),
-                                              onTap: () {
-                                                Navigator.pop(
-                                                  context,
-                                                  category,
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                );
-                                if (result != null) {
-                                  setState(() {
-                                    selectedCategory = result;
-                                    categoryError = null;
-                                  });
-                                }
-                              },
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: 'Category',
-                            border: const OutlineInputBorder(),
-                            errorText: categoryError,
-                          ),
-                          child: Text(
-                            selectedCategory?.name ??
-                                'Select Category',
-                            style: TextStyle(
-                              color: selectedCategory == null
-                                  ? Colors.grey
-                                  : Colors.black,
+  Widget _buildCategorySelector() {
+    return ref
+        .watch(categoriesProvider(transactionType))
+        .when(
+          data: (categories) {
+            return InkWell(
+              onTap: saving
+                  ? null
+                  : () async {
+                      final result = await showModalBottomSheet<CategoryModel>(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (_) {
+                          return SafeArea(
+                            child: SizedBox(
+                              height: 400,
+                              child: ListView.builder(
+                                itemCount: categories.length,
+                                itemBuilder: (context, index) {
+                                  final category = categories[index];
+                                  return ListTile(
+                                    title: Text(category.name),
+                                    onTap: () {
+                                      Navigator.pop(context, category);
+                                    },
+                                  );
+                                },
+                              ),
                             ),
+                          );
+                        },
+                      );
+                      if (result != null) {
+                        setState(() {
+                          selectedCategory = result;
+                          categoryError = null;
+                        });
+                      }
+                    },
+              child: InputDecorator(
+                decoration: _auroraInputDecoration(
+                  labelText: 'Category',
+                  errorText: categoryError,
+                ),
+                child: Text(
+                  selectedCategory?.name ?? 'Select Category',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: selectedCategory == null
+                      ? _inputPlaceholderStyle
+                      : _inputValueStyle,
+                ),
+              ),
+            );
+          },
+          error: (e, s) => const Text('Unable to load categories'),
+          loading: () => const Center(child: CircularProgressIndicator()),
+        );
+  }
+
+  Widget _buildAccountSelector({
+    required bool isTransfer,
+    required AsyncValue<List<AccountModel>> accountsAsync,
+  }) {
+    return accountsAsync.when(
+      data: (accounts) {
+        return InkWell(
+          onTap: saving
+              ? null
+              : () async {
+                  final result = await showModalBottomSheet<AccountModel>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) {
+                      return SafeArea(
+                        child: SizedBox(
+                          height: 400,
+                          child: ListView.builder(
+                            itemCount: accounts.length,
+                            itemBuilder: (context, index) {
+                              final account = accounts[index];
+                              return ListTile(
+                                title: Text(account.name),
+                                onTap: () {
+                                  Navigator.pop(context, account);
+                                },
+                              );
+                            },
                           ),
                         ),
                       );
                     },
-                    error: (e, s) => const Text(
-                      'Unable to load categories',
+                  );
+                  if (result != null) {
+                    setState(() {
+                      selectedAccount = result;
+                      accountError = null;
+                    });
+                  }
+                },
+          child: InputDecorator(
+            decoration: _auroraInputDecoration(
+              labelText: isTransfer ? 'From Account' : 'Account',
+              errorText: accountError,
+            ),
+            child: Text(
+              selectedAccount?.name ?? 'Select Account',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: selectedAccount == null
+                  ? _inputPlaceholderStyle
+                  : _inputValueStyle,
+            ),
+          ),
+        );
+      },
+      error: (e, s) => const Text('Unable to load accounts'),
+      loading: () => const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final requiresCategory =
+        transactionType == 'income' || transactionType == 'expense';
+    final isTransfer = transactionType == 'transfer';
+    final isBorrowOrLend =
+        transactionType == 'borrowed' || transactionType == 'lent';
+    final hasLinkedRepayments = linkedRepaymentTotal > 0;
+    final accountsAsync = ref.watch(accountsProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          widget.transaction == null ? 'Add Transaction' : 'Edit Transaction',
+        ),
+      ),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Color(0xFFB6D7CC), Color(0xFFDAEDE5), Color(0xFFF8FCFA)],
+            stops: [0.0, 0.52, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+
+            child: Form(
+              key: formKey,
+              child: ListView(
+                children: [
+                  const SizedBox(height: 22),
+                  DropdownButtonFormField<String>(
+                    initialValue: transactionType,
+                    style: _inputValueStyle,
+                    decoration: _auroraInputDecoration(
+                      labelText: 'Transaction Type',
+                      helperText: hasLinkedRepayments
+                          ? 'Type cannot be changed because repayments exist.'
+                          : null,
                     ),
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(),
+                    items: const [
+                      DropdownMenuItem(value: 'income', child: Text('Income')),
+                      DropdownMenuItem(
+                        value: 'expense',
+                        child: Text('Expense'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'transfer',
+                        child: Text('Transfer'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'borrowed',
+                        child: Text('Borrowed'),
+                      ),
+                      DropdownMenuItem(value: 'lent', child: Text('Lent')),
+                    ],
+                    onChanged:
+                        saving || loadingLinkedRepayments || hasLinkedRepayments
+                        ? null
+                        : (value) {
+                            if (value == null || transactionType == value) {
+                              return;
+                            }
+                            setState(() {
+                              transactionType = value;
+                              selectedCategory = null;
+                              categoryError = null;
+                              selectedAccount = null;
+                              selectedToAccount = null;
+                              accountError = null;
+                              toAccountError = null;
+                              counterpartyController.clear();
+                              counterpartyError = null;
+                              selectedDueDate = null;
+                              dueDateError = null;
+                            });
+                          },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: amountController,
+                    style: _inputValueStyle,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d{0,2}'),
+                      ),
+                    ],
+                    validator: (value) {
+                      final amount = double.tryParse(value?.trim() ?? '');
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Amount is required';
+                      }
+                      if (amount == null) {
+                        return 'Enter valid amount';
+                      }
+                      if (amount <= 0) {
+                        return 'Amount must be greater than zero';
+                      }
+                      if (amount > 999999999) {
+                        return 'Amount is too large';
+                      }
+
+                      final amountInMinorUnits = (amount * 100).round();
+
+                      if (hasLinkedRepayments &&
+                          amountInMinorUnits < linkedRepaymentTotal) {
+                        return 'Amount cannot be less than total repayments';
+                      }
+
+                      return null;
+                    },
+                    decoration: _auroraInputDecoration(labelText: 'Amount'),
                   ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                ],
-                accountsAsync.when(
-                  data: (accounts) {
-                    return InkWell(
+                  const SizedBox(height: 16),
+                  if (requiresCategory)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final categorySelector = _buildCategorySelector();
+                        final accountSelector = _buildAccountSelector(
+                          isTransfer: isTransfer,
+                          accountsAsync: accountsAsync,
+                        );
+
+                        final minimumFieldWidth = MediaQuery.textScalerOf(
+                          context,
+                        ).scale(140);
+                        if (constraints.maxWidth < 320 ||
+                            constraints.maxWidth < minimumFieldWidth * 2 + 8) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              categorySelector,
+                              const SizedBox(height: 16),
+                              accountSelector,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: categorySelector),
+                            const SizedBox(width: 8),
+                            Expanded(child: accountSelector),
+                          ],
+                        );
+                      },
+                    )
+                  else
+                    _buildAccountSelector(
+                      isTransfer: isTransfer,
+                      accountsAsync: accountsAsync,
+                    ),
+                  const SizedBox(height: 16),
+                  if (isTransfer) ...[
+                    accountsAsync.when(
+                      data: (accounts) {
+                        return InkWell(
+                          onTap: saving
+                              ? null
+                              : () async {
+                                  final result =
+                                      await showModalBottomSheet<AccountModel>(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        builder: (_) {
+                                          return SafeArea(
+                                            child: SizedBox(
+                                              height: 400,
+                                              child: ListView.builder(
+                                                itemCount: accounts.length,
+                                                itemBuilder: (context, index) {
+                                                  final account =
+                                                      accounts[index];
+                                                  return ListTile(
+                                                    title: Text(account.name),
+                                                    onTap: () {
+                                                      Navigator.pop(
+                                                        context,
+                                                        account,
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                  if (result != null) {
+                                    setState(() {
+                                      selectedToAccount = result;
+                                      toAccountError = null;
+                                    });
+                                  }
+                                },
+                          child: InputDecorator(
+                            decoration: _auroraInputDecoration(
+                              labelText: 'To Account',
+                              errorText: toAccountError,
+                            ),
+                            child: Text(
+                              selectedToAccount?.name ??
+                                  'Select Destination Account',
+                              style: selectedToAccount == null
+                                  ? _inputPlaceholderStyle
+                                  : _inputValueStyle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        );
+                      },
+                      error: (e, s) => const Text('Unable to load accounts'),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (isBorrowOrLend) ...[
+                    TextFormField(
+                      controller: counterpartyController,
+                      style: _inputValueStyle,
+                      maxLength: 100,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: _auroraInputDecoration(
+                        labelText: transactionType == 'borrowed'
+                            ? 'Borrowed From'
+                            : 'Lent To',
+                        hintText: 'Person, business, bank, etc.',
+                        errorText: counterpartyError,
+                      ),
+                      onChanged: (_) {
+                        if (counterpartyError != null) {
+                          setState(() {
+                            counterpartyError = null;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
                       onTap: saving
                           ? null
                           : () async {
-                              final result =
-                                  await showModalBottomSheet<AccountModel>(
+                              final now = DateTime.now();
+                              final initialDate =
+                                  selectedDueDate?.toLocal() ??
+                                  CalendarDate.addDays(now, 30);
+                              final picked = await showDatePicker(
                                 context: context,
-                                isScrollControlled: true,
-                                builder: (_) {
-                                  return SafeArea(
-                                    child: SizedBox(
-                                      height: 400,
-                                      child: ListView.builder(
-                                        itemCount: accounts.length,
-                                        itemBuilder: (
-                                          context,
-                                          index,
-                                        ) {
-                                          final account = accounts[index];
-                                          return ListTile(
-                                            title: Text(
-                                              account.name,
-                                            ),
-                                            onTap: () {
-                                              Navigator.pop(
-                                                context,
-                                                account,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  );
-                                },
+                                initialDate: initialDate,
+                                firstDate: DateTime(
+                                  selectedDate.year,
+                                  selectedDate.month,
+                                  selectedDate.day,
+                                ),
+                                lastDate: DateTime(2100),
                               );
-                              if (result != null) {
+                              if (picked != null) {
                                 setState(() {
-                                  selectedAccount = result;
-                                  accountError = null;
+                                  selectedDueDate = picked;
+                                  dueDateError = null;
                                 });
                               }
                             },
                       child: InputDecorator(
-                        decoration: InputDecoration(
-                          labelText: isTransfer
-                              ? 'From Account'
-                              : 'Account',
-                          border: const OutlineInputBorder(),
-                          errorText: accountError,
+                        decoration: _auroraInputDecoration(
+                          labelText: 'Due Date (Optional)',
+                          errorText: dueDateError,
+                          suffixIcon: selectedDueDate == null
+                              ? const Icon(Icons.calendar_today)
+                              : IconButton(
+                                  tooltip: 'Clear due date',
+                                  onPressed: saving
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            selectedDueDate = null;
+                                            dueDateError = null;
+                                          });
+                                        },
+                                  icon: const Icon(Icons.clear),
+                                ),
                         ),
                         child: Text(
-                          selectedAccount?.name ?? 'Select Account',
+                          selectedDueDate == null
+                              ? 'No due date'
+                              : DateFormat(
+                                  'dd MMM yyyy',
+                                ).format(selectedDueDate!.toLocal()),
                           style: TextStyle(
-                            color: selectedAccount == null
-                                ? Colors.grey
-                                : Colors.black,
+                            color: selectedDueDate == null
+                                ? _inputPlaceholderStyle.color
+                                : _inputValueStyle.color,
+                            fontSize: _inputValueStyle.fontSize,
+                            fontWeight: _inputValueStyle.fontWeight,
                           ),
                         ),
                       ),
-                    );
-                  },
-                  error: (e, s) => const Text(
-                    'Unable to load accounts',
-                  ),
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                ),
-                const SizedBox(
-                  height: 16,
-                ),
-                if (isTransfer) ...[
-                  accountsAsync.when(
-                    data: (accounts) {
-                      return InkWell(
-                        onTap: saving
-                            ? null
-                            : () async {
-                                final result =
-                                    await showModalBottomSheet<AccountModel>(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  builder: (_) {
-                                    return SafeArea(
-                                      child: SizedBox(
-                                        height: 400,
-                                        child: ListView.builder(
-                                          itemCount: accounts.length,
-                                          itemBuilder: (
-                                            context,
-                                            index,
-                                          ) {
-                                            final account =
-                                                accounts[index];
-                                            return ListTile(
-                                              title: Text(
-                                                account.name,
-                                              ),
-                                              onTap: () {
-                                                Navigator.pop(
-                                                  context,
-                                                  account,
-                                                );
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                );
-                                if (result != null) {
-                                  setState(() {
-                                    selectedToAccount = result;
-                                    toAccountError = null;
-                                  });
-                                }
-                              },
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: 'To Account',
-                            border: const OutlineInputBorder(),
-                            errorText: toAccountError,
-                          ),
-                          child: Text(
-                            selectedToAccount?.name ??
-                                'Select Destination Account',
-                            style: TextStyle(
-                              color: selectedToAccount == null
-                                  ? Colors.grey
-                                  : Colors.black,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    error: (e, s) => const Text(
-                      'Unable to load accounts',
                     ),
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                ],
-                if (isBorrowOrLend) ...[
-                  TextFormField(
-                    controller: counterpartyController,
-                    maxLength: 100,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: InputDecoration(
-                      labelText: transactionType == 'borrowed'
-                          ? 'Borrowed From'
-                          : 'Lent To',
-                      hintText: 'Person, business, bank, etc.',
-                      border: const OutlineInputBorder(),
-                      errorText: counterpartyError,
-                    ),
-                    onChanged: (_) {
-                      if (counterpartyError != null) {
-                        setState(() {
-                          counterpartyError = null;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
+                    const SizedBox(height: 16),
+                  ],
                   InkWell(
                     onTap: saving
                         ? null
                         : () async {
-                            final now = DateTime.now();
-                            final initialDate =
-                                selectedDueDate ??
-                                now.add(
-                                  const Duration(days: 30),
-                                );
-                            final picked =
-                                await showDatePicker(
+                            final picked = await showDatePicker(
                               context: context,
-                              initialDate: initialDate,
-                              firstDate: DateTime(
-                                selectedDate.year,
-                                selectedDate.month,
-                                selectedDate.day,
-                              ),
-                              lastDate: DateTime(2100),
+                              initialDate: selectedDate.toLocal(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
                             );
                             if (picked != null) {
                               setState(() {
-                                selectedDueDate = picked;
-                                dueDateError = null;
+                                selectedDate = picked;
+                                dateError = null;
                               });
                             }
                           },
                     child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: 'Due Date (Optional)',
-                        border: const OutlineInputBorder(),
-                        errorText: dueDateError,
-                        suffixIcon: selectedDueDate == null
-                            ? const Icon(
-                                Icons.calendar_today,
-                              )
-                            : IconButton(
-                                tooltip: 'Clear due date',
-                                onPressed: saving
-                                    ? null
-                                    : () {
-                                        setState(() {
-                                          selectedDueDate = null;
-                                          dueDateError = null;
-                                        });
-                                      },
-                                icon: const Icon(
-                                  Icons.clear,
-                                ),
-                              ),
+                      decoration: _auroraInputDecoration(
+                        labelText: 'Date',
+                        errorText: dateError,
                       ),
-                      child: Text(
-                        selectedDueDate == null
-                            ? 'No due date'
-                            : selectedDueDate!
-                                .toLocal()
-                                .toString()
-                                .split(' ')[0],
-                        style: TextStyle(
-                          color: selectedDueDate == null
-                              ? Colors.grey
-                              : Colors.black,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            DateFormat(
+                              'dd MMM yyyy',
+                            ).format(selectedDate.toLocal()),
+                            style: _inputValueStyle,
+                          ),
+                          const Icon(Icons.calendar_today),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                ],
-                InkWell(
-                  onTap: saving
-                      ? null
-                      : () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: selectedDate,
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime.now().toUtc(),
-                          );
-                          if (picked != null) {
-                            setState(() {
-                              selectedDate = picked;
-                              dateError = null;
-                            });
-                          }
-                        },
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'Date',
-                      border: const OutlineInputBorder(),
-                      errorText: dateError,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          selectedDate.toLocal().toString().split(' ')[0],
-                        ),
-                        const Icon(
-                          Icons.calendar_today,
-                        ),
-                      ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: notesController,
+                    style: _inputValueStyle,
+                    maxLines: 3,
+                    maxLength: 250,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: _auroraInputDecoration(
+                      labelText: 'Notes',
+                      hintText: 'Optional notes',
+                      alignLabelWithHint: true,
                     ),
                   ),
-                ),
-                const SizedBox(
-                  height: 16,
-                ),
-                TextFormField(
-                  controller: notesController,
-                  maxLines: 3,
-                  maxLength: 250,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    hintText: 'Optional notes',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(
-                  height: 24,
-                ),
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: saving ||
-                            loadingLinkedRepayments
-                        ? null
-                        : () async {
-                            FocusScope.of(context).unfocus();
-                            setState(() {
-                              categoryError =
-                                  requiresCategory &&
-                                          selectedCategory == null
-                                      ? 'Please select a category'
-                                      : null;
-                              accountError =
-                                  selectedAccount == null
-                                      ? 'Please select an account'
-                                      : null;
-                              toAccountError =
-                                  isTransfer &&
-                                          selectedToAccount == null
-                                      ? 'Please select a destination account'
-                                      : isTransfer &&
-                                              selectedAccount != null &&
-                                              selectedToAccount != null &&
-                                              selectedAccount!.uuid ==
-                                                  selectedToAccount!.uuid
-                                          ? 'From and To accounts must be different'
-                                          : null;
-                              counterpartyError =
-                                  isBorrowOrLend &&
-                                          counterpartyController
-                                              .text
-                                              .trim()
-                                              .isEmpty
-                                      ? transactionType == 'borrowed'
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF17664F),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: const Color(0xFF65877D),
+                        disabledForegroundColor: Colors.white,
+                        elevation: 0,
+                        textStyle: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      onPressed: saving || loadingLinkedRepayments
+                          ? null
+                          : () async {
+                              FocusScope.of(context).unfocus();
+                              setState(() {
+                                categoryError =
+                                    requiresCategory && selectedCategory == null
+                                    ? 'Please select a category'
+                                    : null;
+                                accountError = selectedAccount == null
+                                    ? 'Please select an account'
+                                    : null;
+                                toAccountError =
+                                    isTransfer && selectedToAccount == null
+                                    ? 'Please select a destination account'
+                                    : isTransfer &&
+                                          selectedAccount != null &&
+                                          selectedToAccount != null &&
+                                          selectedAccount!.uuid ==
+                                              selectedToAccount!.uuid
+                                    ? 'From and To accounts must be different'
+                                    : null;
+                                counterpartyError =
+                                    isBorrowOrLend &&
+                                        counterpartyController.text
+                                            .trim()
+                                            .isEmpty
+                                    ? transactionType == 'borrowed'
                                           ? 'Please enter who you borrowed from'
                                           : 'Please enter who you lent to'
-                                      : null;
-                              dateError =
-                                  selectedDate.isAfter(
-                                    DateTime.now().toUtc(),
-                                  )
-                                      ? 'Future dates are not allowed'
-                                      : null;
-                              dueDateError =
-                                  isBorrowOrLend &&
-                                          selectedDueDate != null &&
-                                          selectedDueDate!.isBefore(
-                                            DateTime(
-                                              selectedDate.year,
-                                              selectedDate.month,
-                                              selectedDate.day,
-                                            ),
-                                          )
-                                      ? 'Due date cannot be before transaction date'
-                                      : null;
-                            });
-                            final validForm =
-                                formKey.currentState!.validate();
-                            if (!validForm ||
-                                categoryError != null ||
-                                accountError != null ||
-                                toAccountError != null ||
-                                counterpartyError != null ||
-                                dateError != null ||
-                                dueDateError != null) {
-                              return;
-                            }
-                            final parsedAmount = double.tryParse(
-                              amountController.text.trim(),
-                            );
-                            if (parsedAmount == null) {
-                              showMessage(
-                                'Invalid amount',
-                              );
-                              return;
-                            }
-                            setState(() {
-                              saving = true;
-                            });
-                            try {
-                              final repository = await ref.read(
-                                transactionRepositoryProvider.future,
-                              );
-                              final amount = (parsedAmount * 100).toInt();
-                              final originalUuid =
-                                  widget.transaction?.uuid;
-
-                              final transaction =
-                                  widget.transaction ??
-                                  TransactionModel();
-
-                              if (originalUuid == null) {
-                                transaction.uuid =
-                                    const Uuid().v4();
+                                    : null;
+                                dateError =
+                                    selectedDate.isAfter(DateTime.now().toUtc())
+                                    ? 'Future dates are not allowed'
+                                    : null;
+                                dueDateError =
+                                    isBorrowOrLend &&
+                                        selectedDueDate != null &&
+                                        selectedDueDate!.isBefore(
+                                          DateTime(
+                                            selectedDate.year,
+                                            selectedDate.month,
+                                            selectedDate.day,
+                                          ),
+                                        )
+                                    ? 'Due date cannot be before transaction date'
+                                    : null;
+                              });
+                              final validForm = formKey.currentState!
+                                  .validate();
+                              if (!validForm ||
+                                  categoryError != null ||
+                                  accountError != null ||
+                                  toAccountError != null ||
+                                  counterpartyError != null ||
+                                  dateError != null ||
+                                  dueDateError != null) {
+                                return;
                               }
-                              transaction
-                                ..amount = amount
-                                ..type = transactionType
-                                ..transactionDate = selectedDate
-                                ..categoryId = requiresCategory
-                                    ? selectedCategory?.uuid
-                                    : null
-                                ..accountId = selectedAccount!.uuid
-                                ..toAccountId = isTransfer
-                                    ? selectedToAccount?.uuid
-                                    : null
-                                ..counterpartyName = isBorrowOrLend
-                                    ? counterpartyController.text.trim()
-                                    : null
-                                ..dueDate = isBorrowOrLend
-                                    ? selectedDueDate
-                                    : null
-                                ..notes = notesController.text.trim()
-                                ..updatedAt = DateTime.now().toUtc()
-                                ..isSynced = false;
-                              LoggerService.info(
-                                'IsarId=${transaction.id}, UUID=${transaction.uuid}',
+                              final parsedAmount = double.tryParse(
+                                amountController.text.trim(),
                               );
-                              if (widget.transaction == null) {
-                                await repository.addTransaction(
-                                  transaction,
-                                );
-                              } else {
-                                transaction.uuid = originalUuid!;
-                                await repository.updateTransaction(
-                                  transaction,
-                                );
+                              if (parsedAmount == null) {
+                                showMessage('Invalid amount');
+                                return;
                               }
-                              // =====================================================
-                              // BORROW / LEND REMINDERS
-                              // =====================================================
-
+                              setState(() {
+                                saving = true;
+                              });
                               try {
-                                final isBorrowOrLend =
-                                    transaction.type == 'borrowed' ||
-                                    transaction.type == 'lent';
+                                final repository = await ref.read(
+                                  transactionRepositoryProvider.future,
+                                );
+                                final amount = (parsedAmount * 100).round();
+                                final originalUuid = widget.transaction?.uuid;
 
-                                final outstandingAmount =
-                                    isBorrowOrLend
-                                        ? transaction.amount -
+                                final transaction =
+                                    widget.transaction ?? TransactionModel();
+
+                                if (originalUuid == null) {
+                                  transaction.uuid = const Uuid().v4();
+                                }
+                                transaction
+                                  ..amount = amount
+                                  ..type = transactionType
+                                  ..transactionDate = selectedDate
+                                  ..categoryId = requiresCategory
+                                      ? selectedCategory?.uuid
+                                      : null
+                                  ..accountId = selectedAccount!.uuid
+                                  ..toAccountId = isTransfer
+                                      ? selectedToAccount?.uuid
+                                      : null
+                                  ..counterpartyName = isBorrowOrLend
+                                      ? counterpartyController.text.trim()
+                                      : null
+                                  ..dueDate = isBorrowOrLend
+                                      ? selectedDueDate
+                                      : null
+                                  ..notes = notesController.text.trim()
+                                  ..updatedAt = DateTime.now().toUtc()
+                                  ..isSynced = false;
+                                LoggerService.info(
+                                  'IsarId=${transaction.id}, UUID=${transaction.uuid}',
+                                );
+                                if (widget.transaction == null) {
+                                  await repository.addTransaction(transaction);
+                                } else {
+                                  transaction.uuid = originalUuid!;
+                                  await repository.updateTransaction(
+                                    transaction,
+                                  );
+                                }
+                                // =====================================================
+                                // BORROW / LEND REMINDERS
+                                // =====================================================
+
+                                try {
+                                  final isBorrowOrLend =
+                                      transaction.type == 'borrowed' ||
+                                      transaction.type == 'lent';
+
+                                  final outstandingAmount = isBorrowOrLend
+                                      ? transaction.amount -
                                             linkedRepaymentTotal
-                                        : 0;
+                                      : 0;
 
-                                final safeOutstandingAmount =
-                                    outstandingAmount > 0
-                                        ? outstandingAmount
-                                        : 0;
+                                  final safeOutstandingAmount =
+                                      outstandingAmount > 0
+                                      ? outstandingAmount
+                                      : 0;
 
-                                final currency =
-                                    ref.read(
-                                  currencyProvider,
+                                  final currency = ref.read(currencyProvider);
+
+                                  await BorrowLendNotificationService.syncReminders(
+                                    transaction: transaction,
+                                    outstandingAmount: safeOutstandingAmount,
+                                    outstandingAmountText:
+                                        CurrencyFormatter.format(
+                                          amount: safeOutstandingAmount,
+                                          currency: currency,
+                                        ),
+                                  );
+                                } catch (e, stackTrace) {
+                                  LoggerService.exception(
+                                    'Unable to sync Borrow/Lend reminders',
+                                    e,
+                                    stackTrace,
+                                  );
+                                }
+
+                                await ProviderRefreshHelper.refreshAllFinancialData(
+                                  ref,
                                 );
 
-                                await BorrowLendNotificationService
-                                    .syncReminders(
-                                  transaction: transaction,
-                                  outstandingAmount:
-                                      safeOutstandingAmount,
-                                  outstandingAmountText:
-                                      CurrencyFormatter.format(
-                                    amount:
-                                        safeOutstandingAmount,
-                                    currency: currency,
-                                  ),
-                                );
-                              } catch (e, stackTrace) {
+                                // Commented Sync
+                                // final syncService = await ref.read(
+                                //   syncServiceProvider.future,
+                                // );
+                                // final connectivity = ref.read(
+                                //   connectivityProvider,
+                                // );
+                                // connectivity.whenData(
+                                //   (
+                                //     result,
+                                //   ) async {
+                                //     final connected = result.any(
+                                //       (
+                                //         e,
+                                //       ) =>
+                                //           e != ConnectivityResult.none,
+                                //     );
+                                //     if (connected) {
+                                //       await syncService.syncAll();
+                                //     }
+                                //   },
+                                // );
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                }
+                              } catch (e) {
                                 LoggerService.exception(
-                                  'Unable to sync Borrow/Lend reminders',
+                                  'Error saving transaction',
                                   e,
-                                  stackTrace,
+                                  StackTrace.current,
                                 );
-                              }
-
-                              await ProviderRefreshHelper
-                                .refreshAllFinancialData(ref);
-
-                              // Commented Sync
-                              // final syncService = await ref.read(
-                              //   syncServiceProvider.future,
-                              // );
-                              // final connectivity = ref.read(
-                              //   connectivityProvider,
-                              // );
-                              // connectivity.whenData(
-                              //   (
-                              //     result,
-                              //   ) async {
-                              //     final connected = result.any(
-                              //       (
-                              //         e,
-                              //       ) =>
-                              //           e != ConnectivityResult.none,
-                              //     );
-                              //     if (connected) {
-                              //       await syncService.syncAll();
-                              //     }
-                              //   },
-                              // );
-                              if (context.mounted) {
-                                Navigator.pop(
-                                  context,
+                                showMessage(
+                                  'Unable to save transaction. Please try again.',
                                 );
+                              } finally {
+                                if (mounted) {
+                                  setState(() {
+                                    saving = false;
+                                  });
+                                }
                               }
-                            } catch (e) {
-                              LoggerService.exception(
-                                'Error saving transaction',
-                                e,
-                                StackTrace.current,
-                              );
-                              showMessage(
-                                'Unable to save transaction. Please try again.',
-                              );
-                            } finally {
-                              if (mounted) {
-                                setState(() {
-                                  saving = false;
-                                });
-                              }
-                            }
-                          },
-                    child: saving
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                            },
+                      child: saving
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.check, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  widget.transaction == null
+                                      ? 'Save Transaction'
+                                      : 'Update Transaction',
+                                ),
+                              ],
                             ),
-                          )
-                        : const Text(
-                            'Save',
-                          ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

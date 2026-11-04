@@ -1,26 +1,20 @@
 import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:timezone/data/latest.dart'
-    as tz;
-import 'package:timezone/timezone.dart'
-    as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:finance_tracker/core/services/logger_service.dart';
 
 class NotificationService {
-
   static String? _pendingPayload;
 
-  static final FlutterLocalNotificationsPlugin
-      notifications =
-          FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin notifications =
+      FlutterLocalNotificationsPlugin();
 
-          
   static String? takePendingPayload() {
-    final payload =
-        _pendingPayload;
+    final payload = _pendingPayload;
 
-    _pendingPayload =
-        null;
+    _pendingPayload = null;
 
     return payload;
   }
@@ -28,71 +22,62 @@ class NotificationService {
   static Future<void> initialize() async {
     tz.initializeTimeZones();
 
-    final localTimezone =
-        await FlutterTimezone
-            .getLocalTimezone();
+    try {
+      final localTimezone = await FlutterTimezone.getLocalTimezone();
 
-    tz.setLocalLocation(
-      tz.getLocation(
-        localTimezone.identifier,
-      ),
-    );
+      final timezoneId = localTimezone.identifier == 'Asia/Calcutta'
+          ? 'Asia/Kolkata'
+          : localTimezone.identifier;
 
+      tz.setLocalLocation(tz.getLocation(timezoneId));
+    } catch (e, stackTrace) {
+      LoggerService.exception(
+        'Unable to initialize local timezone',
+        e,
+        stackTrace,
+      );
 
-    const android =
-        AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
+      // Keep the application operational if
+      // the device timezone cannot be resolved.
+      tz.setLocalLocation(tz.getLocation('UTC'));
+    }
 
-    const settings =
-        InitializationSettings(
-      android: android,
-    );
+    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const settings = InitializationSettings(android: android);
 
     await notifications.initialize(
       settings,
-      onDidReceiveNotificationResponse:
-          (response) {
-        final payload =
-            response.payload;
+      onDidReceiveNotificationResponse: (response) {
+        final payload = response.payload;
 
-        if (payload == null ||
-            payload.trim().isEmpty) {
+        if (payload == null || payload.trim().isEmpty) {
           return;
         }
 
-        _pendingPayload =
-            payload.trim();
+        _pendingPayload = payload.trim();
 
-        _pendingPayloadHandler
-            ?.call();
+        _pendingPayloadHandler?.call();
       },
     );
 
-    final launchDetails =
-        await notifications
-            .getNotificationAppLaunchDetails();
+    final launchDetails = await notifications.getNotificationAppLaunchDetails();
 
     final launchedFromNotification =
-        launchDetails
-                ?.didNotificationLaunchApp ??
-            false;
+        launchDetails?.didNotificationLaunchApp ?? false;
 
-    final launchPayload =
-        launchDetails
-            ?.notificationResponse
-            ?.payload;
+    final launchPayload = launchDetails?.notificationResponse?.payload;
 
     if (launchedFromNotification &&
         launchPayload != null &&
         launchPayload.trim().isNotEmpty) {
-      _pendingPayload =
-          launchPayload.trim();
+      _pendingPayload = launchPayload.trim();
     }
 
     await notifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestNotificationsPermission();
   }
 
@@ -103,28 +88,17 @@ class NotificationService {
     String? payload,
   }) async {
     final appName = AppConstants.appName;
-    final androidDetails =
-        AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'finance_tracker_channel',
       appName,
-      channelDescription:
-          'Finance reminders and alerts',
+      channelDescription: 'Finance reminders and alerts',
       importance: Importance.max,
       priority: Priority.high,
     );
 
-    final details =
-        NotificationDetails(
-      android: androidDetails,
-    );
+    final details = NotificationDetails(android: androidDetails);
 
-    await notifications.show(
-      id,
-      title,
-      body,
-      details,
-      payload: payload,
-    );
+    await notifications.show(id, title, body, details, payload: payload);
   }
 
   static Future<void> scheduleNotification({
@@ -134,46 +108,26 @@ class NotificationService {
     required DateTime scheduledAt,
     String? payload,
   }) async {
-    final localDate =
-        scheduledAt.toLocal();
+    // Convert the instant directly, including when timezone setup falls back to UTC.
+    final scheduledDate = tz.TZDateTime.from(scheduledAt, tz.local);
 
-    final scheduledDate =
-        tz.TZDateTime(
-      tz.local,
-      localDate.year,
-      localDate.month,
-      localDate.day,
-      localDate.hour,
-      localDate.minute,
-      localDate.second,
-    );
-
-    final now =
-        tz.TZDateTime.now(
-      tz.local,
-    );
+    final now = tz.TZDateTime.now(tz.local);
 
     if (!scheduledDate.isAfter(now)) {
       return;
     }
 
-    final appName =
-        AppConstants.appName;
+    final appName = AppConstants.appName;
 
-    final androidDetails =
-        AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'finance_tracker_channel',
       appName,
-      channelDescription:
-          'Finance reminders and alerts',
+      channelDescription: 'Finance reminders and alerts',
       importance: Importance.high,
       priority: Priority.high,
     );
 
-    final details =
-        NotificationDetails(
-      android: androidDetails,
-    );
+    final details = NotificationDetails(android: androidDetails);
 
     await notifications.zonedSchedule(
       id,
@@ -181,38 +135,25 @@ class NotificationService {
       body,
       scheduledDate,
       details,
-      androidScheduleMode:
-          AndroidScheduleMode
-              .inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation
-              .absoluteTime,
+          UILocalNotificationDateInterpretation.absoluteTime,
       payload: payload,
     );
   }
 
-  static Future<void> cancelNotification({
-    required int id,
-  }) async {
-    await notifications.cancel(
-      id,
-    );
+  static Future<void> cancelNotification({required int id}) async {
+    await notifications.cancel(id);
   }
 
-  static Future<
-      List<PendingNotificationRequest>>
-      getPendingNotifications() async {
-    return notifications
-        .pendingNotificationRequests();
+  static Future<List<PendingNotificationRequest>>
+  getPendingNotifications() async {
+    return notifications.pendingNotificationRequests();
   }
 
   static void Function()? _pendingPayloadHandler;
 
-  static void setPendingPayloadHandler(
-    void Function()? handler,
-  ) {
-    _pendingPayloadHandler =
-        handler;
+  static void setPendingPayloadHandler(void Function()? handler) {
+    _pendingPayloadHandler = handler;
   }
-
 }
