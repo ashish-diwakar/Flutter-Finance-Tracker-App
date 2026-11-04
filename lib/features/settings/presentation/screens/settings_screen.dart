@@ -28,455 +28,469 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: const AuroraAppBar(title: Text('Settings')),
 
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 40),
-
-        children: [
-          // =====================================================
-          // GENERAL SECTION
-          // =====================================================
-
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-
-            child: Text(
-              'General',
-
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Color(0xFFB6D7CC), Color(0xFFDAEDE5), Color(0xFFF8FCFA)],
+            stops: [0.0, 0.52, 1.0],
           ),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 40),
 
-          // =====================================================
-          // MANAGE CURRENCY
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          children: [
+            // =====================================================
+            // GENERAL SECTION
+            // =====================================================
 
-            child: ListTile(
-              leading: const Icon(Icons.currency_exchange),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
 
-              title: const Text('Default Currency'),
+              child: Text(
+                'General',
 
-              subtitle: Text(
-                '${ref.watch(currencyProvider).flag} '
-                '${ref.watch(currencyProvider).code}',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-
-              trailing: const Icon(Icons.chevron_right),
-
-              onTap: () {
-                Navigator.push(
-                  context,
-
-                  MaterialPageRoute(
-                    builder: (_) => const CurrencySettingsScreen(),
-                  ),
-                );
-              },
             ),
-          ),
 
-          // =====================================================
-          // MANAGE CATEGORIES
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // MANAGE CURRENCY
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-            child: ListTile(
-              leading: const Icon(Icons.category),
+              child: ListTile(
+                leading: const Icon(Icons.currency_exchange),
 
-              title: const Text('Manage Categories'),
+                title: const Text('Default Currency'),
 
-              subtitle: const Text('Add, edit and organize categories'),
+                subtitle: Text(
+                  '${ref.watch(currencyProvider).flag} '
+                  '${ref.watch(currencyProvider).code}',
+                ),
 
-              trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(Icons.chevron_right),
 
-              onTap: () {
-                Navigator.push(
-                  context,
+                onTap: () {
+                  Navigator.push(
+                    context,
 
-                  MaterialPageRoute(
-                    builder: (_) => const ManageCategoriesScreen(),
-                  ),
-                );
-              },
+                    MaterialPageRoute(
+                      builder: (_) => const CurrencySettingsScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // =====================================================
-          // MANAGE ACCOUNTS
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // MANAGE CATEGORIES
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-            child: ListTile(
-              leading: const Icon(Icons.account_balance_wallet),
+              child: ListTile(
+                leading: const Icon(Icons.category),
 
-              title: const Text('Manage Accounts'),
+                title: const Text('Manage Categories'),
 
-              subtitle: const Text('Manage wallets and bank accounts'),
+                subtitle: const Text('Add, edit and organize categories'),
 
-              trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(Icons.chevron_right),
 
-              onTap: () {
-                Navigator.push(
-                  context,
+                onTap: () {
+                  Navigator.push(
+                    context,
 
-                  MaterialPageRoute(
-                    builder: (_) => const ManageAccountsScreen(),
-                  ),
-                );
-              },
+                    MaterialPageRoute(
+                      builder: (_) => const ManageCategoriesScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // =====================================================
-          // AUTOMATION SECTION
-          // =====================================================
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+            // =====================================================
+            // MANAGE ACCOUNTS
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-            child: Text(
-              'Automation',
+              child: ListTile(
+                leading: const Icon(Icons.account_balance_wallet),
 
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                title: const Text('Manage Accounts'),
+
+                subtitle: const Text('Manage wallets and bank accounts'),
+
+                trailing: const Icon(Icons.chevron_right),
+
+                onTap: () {
+                  Navigator.push(
+                    context,
+
+                    MaterialPageRoute(
+                      builder: (_) => const ManageAccountsScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // =====================================================
-          // RECURRING TRANSACTIONS
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // AUTOMATION SECTION
+            // =====================================================
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
 
-            child: ListTile(
-              leading: const Icon(Icons.repeat),
+              child: Text(
+                'Automation',
 
-              title: const Text('Recurring Transactions'),
-
-              subtitle: const Text('Manage automated transactions'),
-
-              trailing: const Icon(Icons.chevron_right),
-
-              onTap: () {
-                Navigator.push(
-                  context,
-
-                  MaterialPageRoute(
-                    builder: (_) => const RecurringTransactionsScreen(),
-                  ),
-                );
-              },
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
 
-          // =====================================================
-          // WEALTH MANAGEMENT SECTION
-          // =====================================================
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+            // =====================================================
+            // RECURRING TRANSACTIONS
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-            child: Text(
-              'Wealth Management',
+              child: ListTile(
+                leading: const Icon(Icons.repeat),
 
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                title: const Text('Recurring Transactions'),
+
+                subtitle: const Text('Manage automated transactions'),
+
+                trailing: const Icon(Icons.chevron_right),
+
+                onTap: () {
+                  Navigator.push(
+                    context,
+
+                    MaterialPageRoute(
+                      builder: (_) => const RecurringTransactionsScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // =====================================================
-          // FINANCIAL GOALS
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // WEALTH MANAGEMENT SECTION
+            // =====================================================
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
 
-            child: ListTile(
-              leading: const Icon(Icons.flag),
+              child: Text(
+                'Wealth Management',
 
-              title: const Text('Financial Goals'),
-
-              subtitle: const Text('Track savings goals and progress'),
-
-              trailing: const Icon(Icons.chevron_right),
-
-              onTap: () {
-                Navigator.push(
-                  context,
-
-                  MaterialPageRoute(builder: (_) => const ManageGoalsScreen()),
-                );
-              },
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
 
-          // =====================================================
-          // INVESTMENTS
-          // =====================================================
-          /* Will work on it later*/
-          // Card(
+            // =====================================================
+            // FINANCIAL GOALS
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-          //   margin:
-          //       const EdgeInsets.symmetric(
-          //     horizontal: 12,
-          //     vertical: 4,
-          //   ),
+              child: ListTile(
+                leading: const Icon(Icons.flag),
 
-          //   child: ListTile(
+                title: const Text('Financial Goals'),
 
-          //     leading:
-          //         const Icon(
-          //       Icons.trending_up,
-          //     ),
+                subtitle: const Text('Track savings goals and progress'),
 
-          //     title:
-          //         const Text(
-          //       'Investments',
-          //     ),
+                trailing: const Icon(Icons.chevron_right),
 
-          //     subtitle:
-          //         const Text(
-          //       'Track portfolio performance and returns',
-          //     ),
+                onTap: () {
+                  Navigator.push(
+                    context,
 
-          //     trailing:
-          //         const Icon(
-          //       Icons.chevron_right,
-          //     ),
-
-          //     onTap: () {
-
-          //       Navigator.push(
-
-          //         context,
-
-          //         MaterialPageRoute(
-
-          //           builder: (_) =>
-          //               const PortfolioScreen(),
-          //         ),
-          //       );
-          //     },
-          //   ),
-          // ),
-
-          // =====================================================
-          // ALERTS & REPORTS SECTION
-          // =====================================================
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-
-            child: Text(
-              'Alerts & Reports',
-
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    MaterialPageRoute(
+                      builder: (_) => const ManageGoalsScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // =====================================================
-          // BUDGET ALERTS
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // INVESTMENTS
+            // =====================================================
+            /* Will work on it later*/
+            // Card(
 
-            child: ListTile(
-              leading: const Icon(Icons.warning_amber),
+            //   margin:
+            //       const EdgeInsets.symmetric(
+            //     horizontal: 12,
+            //     vertical: 4,
+            //   ),
 
-              title: const Text('Budget Alerts'),
+            //   child: ListTile(
 
-              subtitle: const Text('View overspending and warnings'),
+            //     leading:
+            //         const Icon(
+            //       Icons.trending_up,
+            //     ),
 
-              trailing: const Icon(Icons.chevron_right),
+            //     title:
+            //         const Text(
+            //       'Investments',
+            //     ),
 
-              onTap: () {
-                Navigator.push(
-                  context,
+            //     subtitle:
+            //         const Text(
+            //       'Track portfolio performance and returns',
+            //     ),
 
-                  MaterialPageRoute(builder: (_) => const BudgetAlertsScreen()),
-                );
-              },
+            //     trailing:
+            //         const Icon(
+            //       Icons.chevron_right,
+            //     ),
+
+            //     onTap: () {
+
+            //       Navigator.push(
+
+            //         context,
+
+            //         MaterialPageRoute(
+
+            //           builder: (_) =>
+            //               const PortfolioScreen(),
+            //         ),
+            //       );
+            //     },
+            //   ),
+            // ),
+
+            // =====================================================
+            // ALERTS & REPORTS SECTION
+            // =====================================================
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+
+              child: Text(
+                'Alerts & Reports',
+
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
 
-          // =====================================================
-          // EXPORT & BACKUP SECTION
-          // =====================================================
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+            // =====================================================
+            // BUDGET ALERTS
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-            child: Text(
-              'Data Management',
+              child: ListTile(
+                leading: const Icon(Icons.warning_amber),
 
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                title: const Text('Budget Alerts'),
+
+                subtitle: const Text('View overspending and warnings'),
+
+                trailing: const Icon(Icons.chevron_right),
+
+                onTap: () {
+                  Navigator.push(
+                    context,
+
+                    MaterialPageRoute(
+                      builder: (_) => const BudgetAlertsScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // =====================================================
-          // EXPORT SCREEN
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // EXPORT & BACKUP SECTION
+            // =====================================================
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
 
-            child: ListTile(
-              leading: const Icon(Icons.download),
+              child: Text(
+                'Data Management',
 
-              title: const Text('Export Data'),
-
-              subtitle: const Text('Export transactions as CSV or PDF'),
-
-              trailing: const Icon(Icons.chevron_right),
-
-              onTap: () {
-                Navigator.push(
-                  context,
-
-                  MaterialPageRoute(builder: (_) => const ExportScreen()),
-                );
-              },
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
 
-          // =====================================================
-          // BACKUP & RESTORE
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // EXPORT SCREEN
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-            child: ListTile(
-              leading: const Icon(Icons.backup),
+              child: ListTile(
+                leading: const Icon(Icons.download),
 
-              title: const Text('Backup & Restore'),
+                title: const Text('Export Data'),
 
-              subtitle: const Text('Import or export JSON backups'),
+                subtitle: const Text('Export transactions as CSV or PDF'),
 
-              trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(Icons.chevron_right),
 
-              onTap: () {
-                Navigator.push(
-                  context,
+                onTap: () {
+                  Navigator.push(
+                    context,
 
-                  MaterialPageRoute(builder: (_) => const BackupScreen()),
-                );
-              },
+                    MaterialPageRoute(builder: (_) => const ExportScreen()),
+                  );
+                },
+              ),
             ),
-          ),
 
-          const SizedBox(height: 24),
+            // =====================================================
+            // BACKUP & RESTORE
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-          // =====================================================
-          // INFORMATION & SUPPORT SECTION
-          // =====================================================
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text(
-              'Information & Support',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              child: ListTile(
+                leading: const Icon(Icons.backup),
+
+                title: const Text('Backup & Restore'),
+
+                subtitle: const Text('Import or export JSON backups'),
+
+                trailing: const Icon(Icons.chevron_right),
+
+                onTap: () {
+                  Navigator.push(
+                    context,
+
+                    MaterialPageRoute(builder: (_) => const BackupScreen()),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // =====================================================
-          // ABOUT
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            const SizedBox(height: 24),
 
-            child: ListTile(
-              leading: const Icon(Icons.info_outline),
-
-              title: const Text('About Finance Tracker'),
-
-              subtitle: const Text('App information and company details'),
-
-              trailing: const Icon(Icons.chevron_right),
-
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AboutScreen()),
-                );
-              },
+            // =====================================================
+            // INFORMATION & SUPPORT SECTION
+            // =====================================================
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+              child: Text(
+                'Information & Support',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
 
-          // =====================================================
-          // CONTACT & SUPPORT
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // ABOUT
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-            child: ListTile(
-              leading: const Icon(Icons.support_agent_outlined),
+              child: ListTile(
+                leading: const Icon(Icons.info_outline),
 
-              title: const Text('Contact & Support'),
+                title: const Text('About Finance Tracker'),
 
-              subtitle: const Text('Get help or report a problem'),
+                subtitle: const Text('App information and company details'),
 
-              trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(Icons.chevron_right),
 
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ContactSupportScreen(),
-                  ),
-                );
-              },
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AboutScreen()),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // =====================================================
-          // PRIVACY POLICY
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // CONTACT & SUPPORT
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-            child: ListTile(
-              leading: const Icon(Icons.privacy_tip_outlined),
+              child: ListTile(
+                leading: const Icon(Icons.support_agent_outlined),
 
-              title: const Text('Privacy Policy'),
+                title: const Text('Contact & Support'),
 
-              subtitle: const Text('How your information is handled'),
+                subtitle: const Text('Get help or report a problem'),
 
-              trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(Icons.chevron_right),
 
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PrivacyPolicyScreen(),
-                  ),
-                );
-              },
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ContactSupportScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          // =====================================================
-          // OPEN SOURCE LICENSES
-          // =====================================================
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            // =====================================================
+            // PRIVACY POLICY
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-            child: ListTile(
-              leading: const Icon(Icons.description_outlined),
+              child: ListTile(
+                leading: const Icon(Icons.privacy_tip_outlined),
 
-              title: const Text('Open Source Licenses'),
+                title: const Text('Privacy Policy'),
 
-              subtitle: const Text('Third-party software licenses'),
+                subtitle: const Text('How your information is handled'),
 
-              trailing: const Icon(Icons.chevron_right),
+                trailing: const Icon(Icons.chevron_right),
 
-              onTap: () {
-                showLicensePage(
-                  context: context,
-                  applicationName: appName,
-                  applicationVersion: appVersion,
-                );
-              },
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PrivacyPolicyScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
 
-          const SizedBox(height: 24),
+            // =====================================================
+            // OPEN SOURCE LICENSES
+            // =====================================================
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
 
-          const SizedBox(height: 24),
-        ],
+              child: ListTile(
+                leading: const Icon(Icons.description_outlined),
+
+                title: const Text('Open Source Licenses'),
+
+                subtitle: const Text('Third-party software licenses'),
+
+                trailing: const Icon(Icons.chevron_right),
+
+                onTap: () {
+                  showLicensePage(
+                    context: context,
+                    applicationName: appName,
+                    applicationVersion: appVersion,
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
