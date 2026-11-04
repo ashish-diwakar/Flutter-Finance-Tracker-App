@@ -14,6 +14,7 @@ Future<void> deleteTransaction({
   required BuildContext context,
   required WidgetRef ref,
   required TransactionModel transaction,
+  String? categoryName,
 }) async {
   final isBorrowOrLend =
       transaction.type == 'borrowed' ||
@@ -80,16 +81,98 @@ Future<void> deleteTransaction({
     return;
   }
 
+  final currency = ref.read(currencyProvider);
+  final amountPrefix = switch (transaction.type) {
+    'income' || 'borrowed' || 'repaymentReceived' => '+',
+    'expense' || 'lent' || 'repaymentPaid' => '-',
+    _ => '',
+  };
+  final transactionTypeLabel = switch (transaction.type) {
+    'income' => 'Income',
+    'expense' => 'Expense',
+    'transfer' => 'Transfer',
+    'borrowed' => 'Borrowed',
+    'lent' => 'Lent',
+    'repaymentPaid' => 'Repayment Paid',
+    'repaymentReceived' => 'Repayment Received',
+    _ => transaction.type,
+  };
+  final normalizedCategoryName = categoryName?.trim();
+  final counterpartyName = transaction.counterpartyName?.trim();
+  final amountText =
+      '$amountPrefix${CurrencyFormatter.format(
+        amount: transaction.amount,
+        currency: currency,
+        decimalDigits: transaction.amount % 100 == 0 ? 0 : 2,
+      )}';
+  final transactionDetails = [
+    transactionTypeLabel,
+    if (normalizedCategoryName != null && normalizedCategoryName.isNotEmpty)
+      'Category: $normalizedCategoryName',
+    if (counterpartyName != null && counterpartyName.isNotEmpty)
+      'Counterparty: $counterpartyName',
+    'Amount: $amountText',
+  ].join('\n');
+
   final confirmed =
       await showDialog<bool>(
     context: context,
     builder: (dialogContext) {
       return AlertDialog(
-        title: const Text(
-          'Delete Transaction',
+        backgroundColor: const Color(0xFFF3FAF5),
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
         ),
-        content: const Text(
-          'Are you sure you want to delete this transaction?',
+        constraints: const BoxConstraints(maxWidth: 440),
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 24,
+        ),
+        scrollable: true,
+        titlePadding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 12,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        actionsOverflowButtonSpacing: 8,
+        title: const Row(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFFFBE6E3),
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Icon(Icons.delete_outline, color: Color(0xFFB54C44)),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Delete Transaction?',
+                style: TextStyle(
+                  color: Color(0xFF315F53),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 440,
+          child: Text(
+            'Are you sure you want to delete this transaction?\n\n'
+            '$transactionDetails',
+            style: const TextStyle(
+              color: Color(0xFF244C40),
+              fontSize: 16,
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -99,18 +182,43 @@ Future<void> deleteTransaction({
                 false,
               );
             },
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF315F53),
+              minimumSize: const Size(88, 48),
+              side: const BorderSide(color: Color(0xFFB5D9CA)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             child: const Text(
               'Cancel',
             ),
           ),
-          FilledButton(
+          FilledButton.icon(
             onPressed: () {
               Navigator.pop(
                 dialogContext,
                 true,
               );
             },
-            child: const Text(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFB54C44),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(104, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text(
               'Delete',
             ),
           ),

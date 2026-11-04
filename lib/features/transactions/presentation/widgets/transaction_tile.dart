@@ -298,6 +298,8 @@ class TransactionTile extends ConsumerWidget {
               TransactionPopupMenu(
                 transaction:
                     transaction,
+                categoryName:
+                    categoryName,
               ),
             ],
           ),

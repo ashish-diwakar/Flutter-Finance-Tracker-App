@@ -9,9 +9,11 @@ class TransactionPopupMenu extends ConsumerWidget {
   const TransactionPopupMenu({
     super.key,
     required this.transaction,
+    this.categoryName,
   });
 
   final TransactionModel transaction;
+  final String? categoryName;
 
   @override
   Widget build(
@@ -49,6 +51,7 @@ class TransactionPopupMenu extends ConsumerWidget {
               context: context,
               ref: ref,
               transaction: transaction,
+              categoryName: categoryName,
             );
 
             break;
