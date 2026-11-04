@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../providers/recurring_provider.dart';
 import 'add_recurring_transaction_screen.dart';
@@ -17,7 +18,7 @@ class RecurringTransactionsScreen extends ConsumerWidget {
     final currency = ref.watch(currencyProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Recurring Transactions')),
+      appBar: const AuroraAppBar(title: Text('Recurring Transactions')),
 
       floatingActionButton: FloatingActionButton(
         heroTag: 'recurring_fab',
@@ -37,251 +38,283 @@ class RecurringTransactionsScreen extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
 
-      body: recurringAsync.when(
-        data: (items) {
-          if (items.isEmpty) {
-            return const Center(child: Text('No recurring transactions'));
-          }
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color(0xFFB6D7CC),
+                  Color(0xFFDAEDE5),
+                  Color(0xFFF8FCFA),
+                ],
+                stops: [0.0, 0.52, 1.0],
+              ),
+            ),
+          ),
+          recurringAsync.when(
+            data: (items) {
+              if (items.isEmpty) {
+                return const Center(child: Text('No recurring transactions'));
+              }
 
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 100),
+              return ListView.builder(
+                padding: const EdgeInsets.only(bottom: 100),
 
-            itemCount: items.length,
+                itemCount: items.length,
 
-            itemBuilder: (context, index) {
-              final item = items[index];
+                itemBuilder: (context, index) {
+                  final item = items[index];
 
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-
-                child: ListTile(
-                  leading: CircleAvatar(
-                    child: Icon(
-                      item.type == 'income'
-                          ? Icons.arrow_downward
-                          : Icons.arrow_upward,
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                  ),
 
-                  title: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-
-                    children: [
-                      Text(
-                        item.notes?.trim().isNotEmpty == true
-                            ? item.notes!
-                            : 'Recurring Transaction',
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      Text(
-                        CurrencyFormatter.format(
-                          amount: item.amount,
-                          currency: currency,
-                        ),
-
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-
-                    children: [
-                      Text(
-                        '${item.frequency.toUpperCase()} • Every ${item.interval}',
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      Text(
-                        'Next: ${item.nextRunDate.toLocal().day}/${item.nextRunDate.toLocal().month}/${item.nextRunDate.toLocal().year}',
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      Text(
-                        item.isActive ? 'Active' : 'Paused',
-
-                        style: TextStyle(
-                          color: item.isActive ? Colors.green : Colors.orange,
-
-                          fontWeight: FontWeight.w600,
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        child: Icon(
+                          item.type == 'income'
+                              ? Icons.arrow_downward
+                              : Icons.arrow_upward,
                         ),
                       ),
-                    ],
-                  ),
 
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (value) async {
-                      // =====================================
-                      // TOGGLE ACTIVE
-                      // =====================================
+                      title: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
 
-                      if (value == 'toggle') {
-                        final repository = await ref.read(
-                          recurringRepositoryProvider.future,
-                        );
-
-                        item.isActive = !item.isActive;
-
-                        item.updatedAt = DateTime.now().toUtc();
-
-                        item.isSynced = false;
-
-                        await repository.updateRecurring(item);
-
-                        await ProviderRefreshHelper.refreshRecurringTransactionData(
-                          ref,
-                        );
-                      }
-
-                      // =====================================
-                      // EDIT
-                      // =====================================
-
-                      if (value == 'edit') {
-                        if (!context.mounted) {
-                          return;
-                        }
-
-                        await Navigator.push(
-                          context,
-
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                AddRecurringTransactionScreen(recurring: item),
+                        children: [
+                          Text(
+                            item.notes?.trim().isNotEmpty == true
+                                ? item.notes!
+                                : 'Recurring Transaction',
                           ),
-                        );
 
-                        await ProviderRefreshHelper.refreshRecurringTransactionData(
-                          ref,
-                        );
-                      }
+                          const SizedBox(height: 4),
 
-                      // =====================================
-                      // DELETE
-                      // =====================================
+                          Text(
+                            CurrencyFormatter.format(
+                              amount: item.amount,
+                              currency: currency,
+                            ),
 
-                      if (value == 'delete') {
-                        if (!context.mounted) {
-                          return;
-                        }
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
 
-                        final confirm = await showDialog<bool>(
-                          context: context,
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
 
-                          builder: (dialogContext) {
-                            return AlertDialog(
-                              title: const Text('Delete Recurring Transaction'),
+                        children: [
+                          Text(
+                            '${item.frequency.toUpperCase()} • Every ${item.interval}',
+                          ),
 
-                              content: const Text(
-                                'Are you sure you want to delete this recurring transaction?',
-                              ),
+                          const SizedBox(height: 4),
 
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(dialogContext).pop(false);
-                                  },
+                          Text(
+                            'Next: ${item.nextRunDate.toLocal().day}/${item.nextRunDate.toLocal().month}/${item.nextRunDate.toLocal().year}',
+                          ),
 
-                                  child: const Text('Cancel'),
-                                ),
+                          const SizedBox(height: 4),
 
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.of(dialogContext).pop(true);
-                                  },
+                          Text(
+                            item.isActive ? 'Active' : 'Paused',
 
-                                  child: const Text('Delete'),
-                                ),
-                              ],
+                            style: TextStyle(
+                              color: item.isActive
+                                  ? Colors.green
+                                  : Colors.orange,
+
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) async {
+                          // =====================================
+                          // TOGGLE ACTIVE
+                          // =====================================
+
+                          if (value == 'toggle') {
+                            final repository = await ref.read(
+                              recurringRepositoryProvider.future,
                             );
-                          },
-                        );
 
-                        if (confirm != true) {
-                          return;
-                        }
+                            item.isActive = !item.isActive;
 
-                        final repository = await ref.read(
-                          recurringRepositoryProvider.future,
-                        );
+                            item.updatedAt = DateTime.now().toUtc();
 
-                        await repository.deleteRecurring(item);
+                            item.isSynced = false;
 
-                        await ProviderRefreshHelper.refreshRecurringTransactionData(
-                          ref,
-                        );
+                            await repository.updateRecurring(item);
 
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Recurring transaction deleted'),
+                            await ProviderRefreshHelper.refreshRecurringTransactionData(
+                              ref,
+                            );
+                          }
+
+                          // =====================================
+                          // EDIT
+                          // =====================================
+
+                          if (value == 'edit') {
+                            if (!context.mounted) {
+                              return;
+                            }
+
+                            await Navigator.push(
+                              context,
+
+                              MaterialPageRoute(
+                                builder: (_) => AddRecurringTransactionScreen(
+                                  recurring: item,
+                                ),
+                              ),
+                            );
+
+                            await ProviderRefreshHelper.refreshRecurringTransactionData(
+                              ref,
+                            );
+                          }
+
+                          // =====================================
+                          // DELETE
+                          // =====================================
+
+                          if (value == 'delete') {
+                            if (!context.mounted) {
+                              return;
+                            }
+
+                            final confirm = await showDialog<bool>(
+                              context: context,
+
+                              builder: (dialogContext) {
+                                return AlertDialog(
+                                  title: const Text(
+                                    'Delete Recurring Transaction',
+                                  ),
+
+                                  content: const Text(
+                                    'Are you sure you want to delete this recurring transaction?',
+                                  ),
+
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(dialogContext).pop(false);
+                                      },
+
+                                      child: const Text('Cancel'),
+                                    ),
+
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.of(dialogContext).pop(true);
+                                      },
+
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+
+                            if (confirm != true) {
+                              return;
+                            }
+
+                            final repository = await ref.read(
+                              recurringRepositoryProvider.future,
+                            );
+
+                            await repository.deleteRecurring(item);
+
+                            await ProviderRefreshHelper.refreshRecurringTransactionData(
+                              ref,
+                            );
+
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Recurring transaction deleted',
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'toggle',
+
+                            child: Row(
+                              children: [
+                                Icon(
+                                  item.isActive
+                                      ? Icons.pause
+                                      : Icons.play_arrow,
+                                ),
+
+                                const SizedBox(width: 12),
+
+                                Text(item.isActive ? 'Pause' : 'Activate'),
+                              ],
                             ),
-                          );
-                        }
-                      }
-                    },
+                          ),
 
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'toggle',
+                          const PopupMenuItem(
+                            value: 'edit',
 
-                        child: Row(
-                          children: [
-                            Icon(
-                              item.isActive ? Icons.pause : Icons.play_arrow,
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit),
+
+                                SizedBox(width: 12),
+
+                                Text('Edit'),
+                              ],
                             ),
+                          ),
 
-                            const SizedBox(width: 12),
+                          const PopupMenuItem(
+                            value: 'delete',
 
-                            Text(item.isActive ? 'Pause' : 'Activate'),
-                          ],
-                        ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete),
+
+                                SizedBox(width: 12),
+
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-
-                      const PopupMenuItem(
-                        value: 'edit',
-
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit),
-
-                            SizedBox(width: 12),
-
-                            Text('Edit'),
-                          ],
-                        ),
-                      ),
-
-                      const PopupMenuItem(
-                        value: 'delete',
-
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete),
-
-                            SizedBox(width: 12),
-
-                            Text('Delete'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
-          );
-        },
 
-        error: (_, _) =>
-            const Center(child: Text('Unable to load recurring transactions')),
+            error: (_, _) => const Center(
+              child: Text('Unable to load recurring transactions'),
+            ),
 
-        loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
+          ),
+        ],
       ),
     );
   }
