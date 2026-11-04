@@ -12,6 +12,8 @@ import '../providers/account_repository_provider.dart';
 
 import '../../../../core/utils/currency_formatter.dart';
 
+import '../../../../core/widgets/aurora_app_bar.dart';
+
 import '../../../../shared/providers/currency_provider.dart';
 
 import '../providers/account_balances_provider.dart';
@@ -351,7 +353,7 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
     final currency = ref.watch(currencyProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Accounts')),
+      appBar: const AuroraAppBar(title: Text('Manage Accounts')),
 
       floatingActionButton: FloatingActionButton(
         heroTag: 'manageaccounts_fab',
@@ -363,52 +365,62 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
         child: const Icon(Icons.add),
       ),
 
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: accounts.length,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Color(0xFFB6D7CC), Color(0xFFDAEDE5), Color(0xFFF8FCFA)],
+            stops: [0.0, 0.52, 1.0],
+          ),
+        ),
+        child: loading
+            ? const Center(child: CircularProgressIndicator())
+            : ListView.builder(
+                itemCount: accounts.length,
 
-              itemBuilder: (context, index) {
-                final account = accounts[index];
+                itemBuilder: (context, index) {
+                  final account = accounts[index];
 
-                final calculatedBalance =
-                    balances[account.uuid] ?? account.currentBalance;
+                  final calculatedBalance =
+                      balances[account.uuid] ?? account.currentBalance;
 
-                return ListTile(
-                  title: Text(account.name),
+                  return ListTile(
+                    title: Text(account.name),
 
-                  subtitle: Text(
-                    '${account.type} • '
-                    '${CurrencyFormatter.format(amount: calculatedBalance, currency: currency)}',
-                  ),
+                    subtitle: Text(
+                      '${account.type} • '
+                      '${CurrencyFormatter.format(amount: calculatedBalance, currency: currency)}',
+                    ),
 
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
 
-                    children: [
-                      if (!account.isDefault)
-                        IconButton(
-                          onPressed: () {
-                            showAccountDialog(account: account);
-                          },
+                      children: [
+                        if (!account.isDefault)
+                          IconButton(
+                            onPressed: () {
+                              showAccountDialog(account: account);
+                            },
 
-                          icon: const Icon(Icons.edit),
-                        ),
+                            icon: const Icon(Icons.edit),
+                          ),
 
-                      if (!account.isDefault)
-                        IconButton(
-                          tooltip: 'Delete Account',
-                          onPressed: () {
-                            confirmDeleteAccount(account);
-                          },
+                        if (!account.isDefault)
+                          IconButton(
+                            tooltip: 'Delete Account',
+                            onPressed: () {
+                              confirmDeleteAccount(account);
+                            },
 
-                          icon: const Icon(Icons.delete),
-                        ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                            icon: const Icon(Icons.delete),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }
