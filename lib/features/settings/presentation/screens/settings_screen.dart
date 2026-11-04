@@ -17,6 +17,116 @@ import '../../../about/presentation/screens/about_screen.dart';
 import '../../../support/presentation/screens/contact_support_screen.dart';
 import '../../../privacy/presentation/screens/privacy_policy_screen.dart';
 
+class _SettingsOption {
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
+
+  const _SettingsOption({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+}
+
+class _SettingsSection extends StatelessWidget {
+  final String title;
+  final List<_SettingsOption> options;
+
+  const _SettingsSection({required this.title, required this.options});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F8F2),
+        border: Border.all(color: const Color(0xFFA8CFC0)),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF17664F),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF315F53),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (var index = 0; index < options.length; index++) ...[
+            _SettingsOptionTile(option: options[index]),
+            if (index < options.length - 1)
+              const Divider(
+                height: 1,
+                thickness: 1,
+                indent: 56,
+                endIndent: 8,
+                color: Color(0xFFD8E8DF),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsOptionTile extends StatelessWidget {
+  final _SettingsOption option;
+
+  const _SettingsOptionTile({required this.option});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      minVerticalPadding: 8,
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: const Color(0xFFDDF0E5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: Icon(option.icon, color: const Color(0xFF315F53), size: 21),
+      ),
+      title: Text(
+        option.title,
+        style: const TextStyle(
+          color: Color(0xFF244C40),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        option.description,
+        style: const TextStyle(color: Color(0xFF536B61)),
+      ),
+      trailing: const Icon(Icons.chevron_right, color: Color(0xFF315F53)),
+      onTap: option.onTap,
+    );
+  }
+}
+
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -27,7 +137,6 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: const AuroraAppBar(title: Text('Settings')),
-
       body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -38,457 +147,194 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         child: ListView(
-          padding: const EdgeInsets.only(bottom: 40),
-
+          padding: const EdgeInsets.fromLTRB(12, 16, 12, 40),
           children: [
-            // =====================================================
-            // GENERAL SECTION
-            // =====================================================
-
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-
-              child: Text(
-                'General',
-
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            // =====================================================
-            // MANAGE CURRENCY
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.currency_exchange),
-
-                title: const Text('Default Currency'),
-
-                subtitle: Text(
-                  '${ref.watch(currencyProvider).flag} '
-                  '${ref.watch(currencyProvider).code}',
+            _SettingsSection(
+              title: 'General',
+              options: [
+                _SettingsOption(
+                  icon: Icons.currency_exchange,
+                  title: 'Default Currency',
+                  description:
+                      '${ref.watch(currencyProvider).flag} '
+                      '${ref.watch(currencyProvider).code}',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CurrencySettingsScreen(),
+                      ),
+                    );
+                  },
                 ),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (_) => const CurrencySettingsScreen(),
-                    ),
-                  );
-                },
-              ),
+                _SettingsOption(
+                  icon: Icons.category,
+                  title: 'Manage Categories',
+                  description: 'Add, edit and organize categories',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ManageCategoriesScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _SettingsOption(
+                  icon: Icons.account_balance_wallet,
+                  title: 'Manage Accounts',
+                  description: 'Manage wallets and bank accounts',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ManageAccountsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-
-            // =====================================================
-            // MANAGE CATEGORIES
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.category),
-
-                title: const Text('Manage Categories'),
-
-                subtitle: const Text('Add, edit and organize categories'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (_) => const ManageCategoriesScreen(),
-                    ),
-                  );
-                },
-              ),
+            const SizedBox(height: 20),
+            _SettingsSection(
+              title: 'Automation',
+              options: [
+                _SettingsOption(
+                  icon: Icons.repeat,
+                  title: 'Recurring Transactions',
+                  description: 'Manage automated transactions',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RecurringTransactionsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-
-            // =====================================================
-            // MANAGE ACCOUNTS
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.account_balance_wallet),
-
-                title: const Text('Manage Accounts'),
-
-                subtitle: const Text('Manage wallets and bank accounts'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (_) => const ManageAccountsScreen(),
-                    ),
-                  );
-                },
-              ),
+            const SizedBox(height: 20),
+            _SettingsSection(
+              title: 'Wealth Management',
+              options: [
+                _SettingsOption(
+                  icon: Icons.flag,
+                  title: 'Financial Goals',
+                  description: 'Track savings goals and progress',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ManageGoalsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-
-            // =====================================================
-            // AUTOMATION SECTION
-            // =====================================================
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-
-              child: Text(
-                'Automation',
-
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+            const SizedBox(height: 20),
+            _SettingsSection(
+              title: 'Alerts & Reports',
+              options: [
+                _SettingsOption(
+                  icon: Icons.warning_amber,
+                  title: 'Budget Alerts',
+                  description: 'View overspending and warnings',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const BudgetAlertsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
-
-            // =====================================================
-            // RECURRING TRANSACTIONS
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.repeat),
-
-                title: const Text('Recurring Transactions'),
-
-                subtitle: const Text('Manage automated transactions'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (_) => const RecurringTransactionsScreen(),
-                    ),
-                  );
-                },
-              ),
+            const SizedBox(height: 20),
+            _SettingsSection(
+              title: 'Data Management',
+              options: [
+                _SettingsOption(
+                  icon: Icons.download,
+                  title: 'Export Data',
+                  description: 'Export transactions as CSV or PDF',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ExportScreen()),
+                    );
+                  },
+                ),
+                _SettingsOption(
+                  icon: Icons.backup,
+                  title: 'Backup & Restore',
+                  description: 'Import or export JSON backups',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const BackupScreen()),
+                    );
+                  },
+                ),
+              ],
             ),
-
-            // =====================================================
-            // WEALTH MANAGEMENT SECTION
-            // =====================================================
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-
-              child: Text(
-                'Wealth Management',
-
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+            const SizedBox(height: 20),
+            _SettingsSection(
+              title: 'Information & Support',
+              options: [
+                _SettingsOption(
+                  icon: Icons.info_outline,
+                  title: 'About Finance Tracker',
+                  description: 'App information and company details',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AboutScreen()),
+                    );
+                  },
+                ),
+                _SettingsOption(
+                  icon: Icons.support_agent_outlined,
+                  title: 'Contact & Support',
+                  description: 'Get help or report a problem',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ContactSupportScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _SettingsOption(
+                  icon: Icons.privacy_tip_outlined,
+                  title: 'Privacy Policy',
+                  description: 'How your information is handled',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PrivacyPolicyScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _SettingsOption(
+                  icon: Icons.description_outlined,
+                  title: 'Open Source Licenses',
+                  description: 'Third-party software licenses',
+                  onTap: () {
+                    showLicensePage(
+                      context: context,
+                      applicationName: appName,
+                      applicationVersion: appVersion,
+                    );
+                  },
+                ),
+              ],
             ),
-
-            // =====================================================
-            // FINANCIAL GOALS
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.flag),
-
-                title: const Text('Financial Goals'),
-
-                subtitle: const Text('Track savings goals and progress'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (_) => const ManageGoalsScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // =====================================================
-            // INVESTMENTS
-            // =====================================================
-            /* Will work on it later*/
-            // Card(
-
-            //   margin:
-            //       const EdgeInsets.symmetric(
-            //     horizontal: 12,
-            //     vertical: 4,
-            //   ),
-
-            //   child: ListTile(
-
-            //     leading:
-            //         const Icon(
-            //       Icons.trending_up,
-            //     ),
-
-            //     title:
-            //         const Text(
-            //       'Investments',
-            //     ),
-
-            //     subtitle:
-            //         const Text(
-            //       'Track portfolio performance and returns',
-            //     ),
-
-            //     trailing:
-            //         const Icon(
-            //       Icons.chevron_right,
-            //     ),
-
-            //     onTap: () {
-
-            //       Navigator.push(
-
-            //         context,
-
-            //         MaterialPageRoute(
-
-            //           builder: (_) =>
-            //               const PortfolioScreen(),
-            //         ),
-            //       );
-            //     },
-            //   ),
-            // ),
-
-            // =====================================================
-            // ALERTS & REPORTS SECTION
-            // =====================================================
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-
-              child: Text(
-                'Alerts & Reports',
-
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            // =====================================================
-            // BUDGET ALERTS
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.warning_amber),
-
-                title: const Text('Budget Alerts'),
-
-                subtitle: const Text('View overspending and warnings'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(
-                      builder: (_) => const BudgetAlertsScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // =====================================================
-            // EXPORT & BACKUP SECTION
-            // =====================================================
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-
-              child: Text(
-                'Data Management',
-
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            // =====================================================
-            // EXPORT SCREEN
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.download),
-
-                title: const Text('Export Data'),
-
-                subtitle: const Text('Export transactions as CSV or PDF'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(builder: (_) => const ExportScreen()),
-                  );
-                },
-              ),
-            ),
-
-            // =====================================================
-            // BACKUP & RESTORE
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.backup),
-
-                title: const Text('Backup & Restore'),
-
-                subtitle: const Text('Import or export JSON backups'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-
-                    MaterialPageRoute(builder: (_) => const BackupScreen()),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // =====================================================
-            // INFORMATION & SUPPORT SECTION
-            // =====================================================
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-              child: Text(
-                'Information & Support',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            // =====================================================
-            // ABOUT
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.info_outline),
-
-                title: const Text('About Finance Tracker'),
-
-                subtitle: const Text('App information and company details'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AboutScreen()),
-                  );
-                },
-              ),
-            ),
-
-            // =====================================================
-            // CONTACT & SUPPORT
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.support_agent_outlined),
-
-                title: const Text('Contact & Support'),
-
-                subtitle: const Text('Get help or report a problem'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ContactSupportScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // =====================================================
-            // PRIVACY POLICY
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.privacy_tip_outlined),
-
-                title: const Text('Privacy Policy'),
-
-                subtitle: const Text('How your information is handled'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const PrivacyPolicyScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // =====================================================
-            // OPEN SOURCE LICENSES
-            // =====================================================
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-
-              child: ListTile(
-                leading: const Icon(Icons.description_outlined),
-
-                title: const Text('Open Source Licenses'),
-
-                subtitle: const Text('Third-party software licenses'),
-
-                trailing: const Icon(Icons.chevron_right),
-
-                onTap: () {
-                  showLicensePage(
-                    context: context,
-                    applicationName: appName,
-                    applicationVersion: appVersion,
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            const SizedBox(height: 24),
           ],
         ),
       ),
