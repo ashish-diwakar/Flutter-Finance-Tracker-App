@@ -67,10 +67,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Delete Account?'), findsOneWidget);
+    expect(find.text('Account'), findsOneWidget);
+    expect(find.text('Test wallet'), findsNWidgets(2));
+    expect(find.text('Type'), findsOneWidget);
+    expect(find.text('Cash'), findsNWidgets(2));
+    expect(find.text('Current Balance'), findsNWidgets(2));
+    expect(find.text('₹25.00'), findsNWidgets(2));
     expect(
       find.text(
-        'Account: Test wallet\n'
-        'Type: cash\n\n'
         'Deleting an account may affect financial records associated with it.',
       ),
       findsOneWidget,

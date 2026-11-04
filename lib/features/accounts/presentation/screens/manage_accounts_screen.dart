@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/config/currency_config.dart';
 import '../../../../shared/models/account_model.dart';
 
 import '../providers/account_repository_provider.dart';
@@ -97,7 +98,48 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
     );
   }
 
-  Future<void> confirmDeleteAccount(AccountModel account) async {
+  Widget _deleteAccountDetailRow({
+    required String label,
+    required String value,
+    Color valueColor = const Color(0xFF244D40),
+    double valueFontSize = 16,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 4,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF607C70),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 6,
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: valueFontSize,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> confirmDeleteAccount(
+    AccountModel account, {
+    required int currentBalance,
+    required CurrencyConfig currency,
+  }) async {
     if (_deletingAccount) {
       return;
     }
@@ -152,11 +194,49 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
           ),
           content: SizedBox(
             width: 440,
-            child: Text(
-              'Account: ${account.name}\n'
-              'Type: ${account.type}\n\n'
-              'Deleting an account may affect financial records associated with it.',
-              style: const TextStyle(color: Color(0xFF244C40), fontSize: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5F1E9),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    children: [
+                      _deleteAccountDetailRow(
+                        label: 'Account',
+                        value: account.name,
+                      ),
+                      const Divider(height: 20, color: Color(0xFFC9DBD0)),
+                      _deleteAccountDetailRow(
+                        label: 'Type',
+                        value: _accountTypeLabel(account.type),
+                      ),
+                      const Divider(height: 20, color: Color(0xFFC9DBD0)),
+                      _deleteAccountDetailRow(
+                        label: 'Current Balance',
+                        value: CurrencyFormatter.format(
+                          amount: currentBalance,
+                          currency: currency,
+                        ),
+                        valueColor: currentBalance > 0
+                            ? const Color(0xFF17664F)
+                            : currentBalance < 0
+                            ? const Color(0xFFB54C44)
+                            : const Color(0xFF315F53),
+                        valueFontSize: 18,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Deleting an account may affect financial records associated with it.',
+                  style: TextStyle(color: Color(0xFF244C40), fontSize: 16),
+                ),
+              ],
             ),
           ),
           actions: [
@@ -565,7 +645,11 @@ class _ManageAccountsScreenState extends ConsumerState<ManageAccountsScreen> {
                                     minHeight: 48,
                                   ),
                                   onPressed: () {
-                                    confirmDeleteAccount(account);
+                                    confirmDeleteAccount(
+                                      account,
+                                      currentBalance: calculatedBalance,
+                                      currency: currency,
+                                    );
                                   },
                                   icon: const Icon(Icons.delete),
                                 ),

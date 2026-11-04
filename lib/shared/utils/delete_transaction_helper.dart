@@ -99,20 +99,17 @@ Future<void> deleteTransaction({
   };
   final normalizedCategoryName = categoryName?.trim();
   final counterpartyName = transaction.counterpartyName?.trim();
+  final amountColor = switch (amountPrefix) {
+    '+' => const Color(0xFF17664F),
+    '-' => const Color(0xFFB54C44),
+    _ => const Color(0xFF244D40),
+  };
   final amountText =
       '$amountPrefix${CurrencyFormatter.format(
         amount: transaction.amount,
         currency: currency,
         decimalDigits: transaction.amount % 100 == 0 ? 0 : 2,
       )}';
-  final transactionDetails = [
-    transactionTypeLabel,
-    if (normalizedCategoryName != null && normalizedCategoryName.isNotEmpty)
-      'Category: $normalizedCategoryName',
-    if (counterpartyName != null && counterpartyName.isNotEmpty)
-      'Counterparty: $counterpartyName',
-    'Amount: $amountText',
-  ].join('\n');
 
   final confirmed =
       await showDialog<bool>(
@@ -165,13 +162,56 @@ Future<void> deleteTransaction({
         ),
         content: SizedBox(
           width: 440,
-          child: Text(
-            'Are you sure you want to delete this transaction?\n\n'
-            '$transactionDetails',
-            style: const TextStyle(
-              color: Color(0xFF244C40),
-              fontSize: 16,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5F1E9),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  children: [
+                    _TransactionDeleteDetailRow(
+                      label: 'Transaction Type',
+                      value: transactionTypeLabel,
+                    ),
+                    if (normalizedCategoryName != null &&
+                        normalizedCategoryName.isNotEmpty) ...[
+                      const Divider(height: 20, color: Color(0xFFC9DBD0)),
+                      _TransactionDeleteDetailRow(
+                        label: 'Category',
+                        value: normalizedCategoryName,
+                      ),
+                    ],
+                    if (counterpartyName != null &&
+                        counterpartyName.isNotEmpty) ...[
+                      const Divider(height: 20, color: Color(0xFFC9DBD0)),
+                      _TransactionDeleteDetailRow(
+                        label: 'Counterparty',
+                        value: counterpartyName,
+                      ),
+                    ],
+                    const Divider(height: 20, color: Color(0xFFC9DBD0)),
+                    _TransactionDeleteDetailRow(
+                      label: 'Amount',
+                      value: amountText,
+                      valueColor: amountColor,
+                      prominent: true,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Are you sure you want to delete this transaction?',
+                style: TextStyle(
+                  color: Color(0xFF244C40),
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ),
         ),
         actions: [
@@ -402,5 +442,52 @@ Future<void> deleteTransaction({
         ),
       );
     }
+  }
+}
+
+class _TransactionDeleteDetailRow extends StatelessWidget {
+  const _TransactionDeleteDetailRow({
+    required this.label,
+    required this.value,
+    this.valueColor = const Color(0xFF244D40),
+    this.prominent = false,
+  });
+
+  final String label;
+  final String value;
+  final Color valueColor;
+  final bool prominent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 4,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF607C70),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 6,
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: prominent ? 18 : 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
