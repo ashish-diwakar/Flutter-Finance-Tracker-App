@@ -17,6 +17,38 @@ class RecurringTransactionsScreen extends ConsumerWidget {
 
     final currency = ref.watch(currencyProvider);
 
+    Widget deleteDetailRow(String label, String value) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF607C70),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                color: Color(0xFF244D40),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Scaffold(
       appBar: const AuroraAppBar(title: Text('Recurring Transactions')),
 
@@ -184,12 +216,127 @@ class RecurringTransactionsScreen extends ConsumerWidget {
 
                                             builder: (dialogContext) {
                                               return AlertDialog(
+                                                backgroundColor: const Color(
+                                                  0xFFF3FAF5,
+                                                ),
+                                                elevation: 4,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(24),
+                                                ),
+                                                constraints:
+                                                    const BoxConstraints(
+                                                      maxWidth: 440,
+                                                    ),
+                                                insetPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 18,
+                                                      vertical: 24,
+                                                    ),
+                                                scrollable: true,
+                                                titlePadding:
+                                                    const EdgeInsets.fromLTRB(
+                                                      20,
+                                                      24,
+                                                      20,
+                                                      8,
+                                                    ),
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 12,
+                                                    ),
+                                                actionsPadding:
+                                                    const EdgeInsets.fromLTRB(
+                                                      16,
+                                                      8,
+                                                      16,
+                                                      16,
+                                                    ),
+                                                actionsOverflowButtonSpacing: 8,
                                                 title: const Text(
-                                                  'Delete Recurring Transaction',
+                                                  'Delete Recurring Transaction?',
+                                                  style: TextStyle(
+                                                    color: Color(0xFF315F53),
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
 
-                                                content: const Text(
-                                                  'Are you sure you want to delete this recurring transaction?',
+                                                content: SizedBox(
+                                                  width: 440,
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              14,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(
+                                                            0xFFE5F1E9,
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                14,
+                                                              ),
+                                                        ),
+                                                        child: Column(
+                                                          children: [
+                                                            deleteDetailRow(
+                                                              'Description',
+                                                              item.notes
+                                                                          ?.trim()
+                                                                          .isNotEmpty ==
+                                                                      true
+                                                                  ? item.notes!
+                                                                  : 'Recurring Transaction',
+                                                            ),
+                                                            const Divider(
+                                                              height: 20,
+                                                              color: Color(
+                                                                0xFFC9DBD0,
+                                                              ),
+                                                            ),
+                                                            deleteDetailRow(
+                                                              'Amount',
+                                                              CurrencyFormatter.format(
+                                                                amount:
+                                                                    item.amount,
+                                                                currency:
+                                                                    currency,
+                                                              ),
+                                                            ),
+                                                            const Divider(
+                                                              height: 20,
+                                                              color: Color(
+                                                                0xFFC9DBD0,
+                                                              ),
+                                                            ),
+                                                            deleteDetailRow(
+                                                              'Frequency',
+                                                              '${item.frequency.toUpperCase()} • Every ${item.interval}',
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 14,
+                                                      ),
+                                                      const Text(
+                                                        'Are you sure you want to delete this recurring transaction?',
+                                                        style: TextStyle(
+                                                          color: Color(
+                                                            0xFF244C40,
+                                                          ),
+                                                          fontSize: 16,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
 
                                                 actions: [
@@ -199,18 +346,72 @@ class RecurringTransactionsScreen extends ConsumerWidget {
                                                         dialogContext,
                                                       ).pop(false);
                                                     },
+                                                    style: TextButton.styleFrom(
+                                                      foregroundColor:
+                                                          const Color(
+                                                            0xFF315F53,
+                                                          ),
+                                                      minimumSize: const Size(
+                                                        88,
+                                                        48,
+                                                      ),
+                                                      side: const BorderSide(
+                                                        color: Color(
+                                                          0xFFB5D9CA,
+                                                        ),
+                                                      ),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              14,
+                                                            ),
+                                                      ),
+                                                      textStyle:
+                                                          const TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                    ),
 
                                                     child: const Text('Cancel'),
                                                   ),
 
-                                                  ElevatedButton(
+                                                  FilledButton.icon(
                                                     onPressed: () {
                                                       Navigator.of(
                                                         dialogContext,
                                                       ).pop(true);
                                                     },
+                                                    style: FilledButton.styleFrom(
+                                                      backgroundColor:
+                                                          const Color(
+                                                            0xFFB54C44,
+                                                          ),
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                      minimumSize: const Size(
+                                                        104,
+                                                        48,
+                                                      ),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              14,
+                                                            ),
+                                                      ),
+                                                      textStyle:
+                                                          const TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons.delete_outline,
+                                                    ),
 
-                                                    child: const Text('Delete'),
+                                                    label: const Text('Delete'),
                                                   ),
                                                 ],
                                               );
@@ -247,6 +448,14 @@ class RecurringTransactionsScreen extends ConsumerWidget {
                                         }
                                       },
 
+                                      color: const Color(0xFFF3FAF5),
+                                      elevation: 4,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      menuPadding: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
                                       itemBuilder: (_) => [
                                         PopupMenuItem(
                                           value: 'toggle',
@@ -257,6 +466,8 @@ class RecurringTransactionsScreen extends ConsumerWidget {
                                                 item.isActive
                                                     ? Icons.pause
                                                     : Icons.play_arrow,
+                                                size: 20,
+                                                color: const Color(0xFF315F53),
                                               ),
 
                                               const SizedBox(width: 12),
@@ -265,6 +476,10 @@ class RecurringTransactionsScreen extends ConsumerWidget {
                                                 item.isActive
                                                     ? 'Pause'
                                                     : 'Activate',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF315F53),
+                                                  fontSize: 16,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -275,11 +490,21 @@ class RecurringTransactionsScreen extends ConsumerWidget {
 
                                           child: Row(
                                             children: [
-                                              Icon(Icons.edit),
+                                              Icon(
+                                                Icons.edit,
+                                                size: 20,
+                                                color: Color(0xFF315F53),
+                                              ),
 
                                               SizedBox(width: 12),
 
-                                              Text('Edit'),
+                                              Text(
+                                                'Edit',
+                                                style: TextStyle(
+                                                  color: Color(0xFF315F53),
+                                                  fontSize: 16,
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -289,11 +514,21 @@ class RecurringTransactionsScreen extends ConsumerWidget {
 
                                           child: Row(
                                             children: [
-                                              Icon(Icons.delete),
+                                              Icon(
+                                                Icons.delete,
+                                                size: 20,
+                                                color: Color(0xFFB54C44),
+                                              ),
 
                                               SizedBox(width: 12),
 
-                                              Text('Delete'),
+                                              Text(
+                                                'Delete',
+                                                style: TextStyle(
+                                                  color: Color(0xFFB54C44),
+                                                  fontSize: 16,
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
