@@ -2,160 +2,85 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/supported_currencies.dart';
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../shared/providers/currency_provider.dart';
 
-class CurrencySettingsScreen
-    extends ConsumerWidget {
-
-  const CurrencySettingsScreen({
-    super.key,
-  });
+class CurrencySettingsScreen extends ConsumerWidget {
+  const CurrencySettingsScreen({super.key});
 
   @override
-  Widget build(
-    BuildContext context,
-    WidgetRef ref,
-  ) {
-
-    final selectedCurrency =
-        ref.watch(
-      currencyProvider,
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedCurrency = ref.watch(currencyProvider);
 
     return Scaffold(
-
-      appBar: AppBar(
-
-        title: const Text(
-          'Select Currency',
+      appBar: const AuroraAppBar(title: Text('Select Currency')),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [Color(0xFFB6D7CC), Color(0xFFDAEDE5), Color(0xFFF8FCFA)],
+            stops: [0.0, 0.52, 1.0],
+          ),
         ),
-      ),
+        child: ListView.separated(
+          padding: const EdgeInsets.all(16),
 
-      body: ListView.separated(
+          itemCount: supportedCurrencies.length,
 
-        padding:
-            const EdgeInsets.all(
-          16,
-        ),
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
 
-        itemCount:
-            supportedCurrencies.length,
+          itemBuilder: (context, index) {
+            final currency = supportedCurrencies[index];
 
-        separatorBuilder:
-            (_, _) =>
-                const SizedBox(
-          height: 12,
-        ),
+            final isSelected = currency.code == selectedCurrency.code;
 
-        itemBuilder:
-            (context, index) {
+            return Card(
+              elevation: isSelected ? 3 : 0,
 
-          final currency =
-              supportedCurrencies[
-                  index];
-
-          final isSelected =
-
-              currency.code ==
-                  selectedCurrency
-                      .code;
-
-          return Card(
-
-            elevation:
-                isSelected
-                    ? 3
-                    : 0,
-
-            child: ListTile(
-
-              contentPadding:
-                  const EdgeInsets.symmetric(
-
-                horizontal: 16,
-                vertical: 8,
-              ),
-
-              leading: Text(
-
-                currency.flag,
-
-                style:
-                    const TextStyle(
-
-                  fontSize: 28,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-              ),
 
-              title: Text(
+                leading: Text(
+                  currency.flag,
 
-                currency.code,
-
-                style:
-                    const TextStyle(
-
-                  fontWeight:
-                      FontWeight.bold,
+                  style: const TextStyle(fontSize: 28),
                 ),
-              ),
 
-              subtitle: Text(
-                currency.name,
-              ),
+                title: Text(
+                  currency.code,
 
-              trailing:
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
 
-                  isSelected
+                subtitle: Text(currency.name),
 
-                      ? const Icon(
+                trailing: isSelected
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : Text(
+                        currency.symbol,
 
-                          Icons.check_circle,
+                        style: const TextStyle(
+                          fontSize: 18,
 
-                          color:
-                              Colors.green,
-                        )
-
-                      : Text(
-
-                          currency.symbol,
-
-                          style:
-                              const TextStyle(
-
-                            fontSize: 18,
-
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
 
-              onTap: () {
+                onTap: () {
+                  ref.read(currencyProvider.notifier).updateCurrency(currency);
 
-                ref
-                    .read(
-                  currencyProvider
-                      .notifier,
-                )
-                    .updateCurrency(
-                  currency,
-                );
-
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(
-
-                  SnackBar(
-
-                    content: Text(
-
-                      '${currency.code} selected',
-                    ),
-                  ),
-                );
-              },
-            ),
-          );
-        },
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${currency.code} selected')),
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
