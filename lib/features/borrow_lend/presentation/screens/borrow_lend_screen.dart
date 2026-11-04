@@ -305,8 +305,15 @@ class BorrowLendScreen extends ConsumerWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
+      color: const Color(0xFFF0F7EF),
+      surfaceTintColor: Colors.transparent,
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFC0DCCF)),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         onTap: () {
           Navigator.push(
             context,
@@ -339,11 +346,21 @@ class BorrowLendScreen extends ConsumerWidget {
                       children: [
                         Text(
                           displayName,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Color(0xFF244C40),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          softWrap: true,
                         ),
 
-                        Text(isBorrowed ? 'Borrowed' : 'Lent'),
+                        Text(
+                          isBorrowed ? 'Borrowed' : 'Lent',
+                          style: const TextStyle(
+                            color: Color(0xFF536B61),
+                            fontSize: 14,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -378,13 +395,13 @@ class BorrowLendScreen extends ConsumerWidget {
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: _amountDetail(
-                      context: context,
                       label: 'Original',
                       amount: transaction.amount,
                       currency: currency,
@@ -393,7 +410,6 @@ class BorrowLendScreen extends ConsumerWidget {
 
                   Expanded(
                     child: _amountDetail(
-                      context: context,
                       label: isBorrowed ? 'Repaid' : 'Received',
                       amount: item.repaidAmount,
                       currency: currency,
@@ -402,11 +418,19 @@ class BorrowLendScreen extends ConsumerWidget {
                 ],
               ),
 
+              const SizedBox(height: 14),
+
+              const Divider(height: 1, color: Color(0xFFC0DCCF)),
+
               const SizedBox(height: 12),
 
               Text(
                 isBorrowed ? 'Outstanding' : 'Receivable',
-                style: Theme.of(context).textTheme.bodySmall,
+                style: const TextStyle(
+                  color: Color(0xFF536B61),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
 
               const SizedBox(height: 2),
@@ -416,9 +440,14 @@ class BorrowLendScreen extends ConsumerWidget {
                   amount: item.outstandingAmount,
                   currency: currency,
                 ),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: isBorrowed
+                      ? const Color(0xFF80552C)
+                      : const Color(0xFF256141),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+                softWrap: true,
               ),
 
               if (transaction.dueDate != null) ...[
@@ -433,7 +462,6 @@ class BorrowLendScreen extends ConsumerWidget {
   }
 
   Widget _amountDetail({
-    required BuildContext context,
     required String label,
     required int amount,
     required CurrencyConfig currency,
@@ -441,11 +469,23 @@ class BorrowLendScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF536B61),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         const SizedBox(height: 2),
         Text(
           CurrencyFormatter.format(amount: amount, currency: currency),
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Color(0xFF244C40),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+          softWrap: true,
         ),
       ],
     );
