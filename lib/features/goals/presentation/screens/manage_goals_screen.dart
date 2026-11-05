@@ -207,11 +207,16 @@ class _ManageGoalsScreenState extends ConsumerState<ManageGoalsScreen> {
       appBar: const AuroraAppBar(title: Text('Financial Goals')),
 
       floatingActionButton: FloatingActionButton(
+        tooltip: 'Add Goal',
+        backgroundColor: const Color(0xFF17664F),
+        foregroundColor: Colors.white,
+        elevation: 2,
+        shape: const CircleBorder(),
         onPressed: () {
           showGoalDialog();
         },
 
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, size: 24),
       ),
 
       body: DecoratedBox(
@@ -238,76 +243,148 @@ class _ManageGoalsScreenState extends ConsumerState<ManageGoalsScreen> {
                   final progress = calculateProgress(goal);
 
                   return Card(
-                    margin: const EdgeInsets.all(12),
-
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    color: const Color(0xFFF0F8F2),
+                    surfaceTintColor: Colors.transparent,
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: const BorderSide(color: Color(0xFFB8D8CA)),
+                    ),
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
-
+                      padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-
                         children: [
                           Text(
                             goal.name,
                             style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF244D3F),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-
                           if (goal.isCompleted)
-                            const Padding(
-                              padding: EdgeInsets.only(top: 4),
-                              child: Chip(label: Text('Completed')),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDFF1E5),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'Completed',
+                                  style: TextStyle(
+                                    color: Color(0xFF237F50),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                             ),
-
                           const SizedBox(height: 12),
-
-                          LinearProgressIndicator(value: progress),
-
+                          Text(
+                            CurrencyFormatter.format(
+                              amount: goal.currentAmount,
+                              currency: currency,
+                            ),
+                            style: const TextStyle(
+                              color: Color(0xFF17664F),
+                              fontSize: 23,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(height: 8),
-
-                          Column(
+                          Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
-
                             children: [
-                              Text(
-                                CurrencyFormatter.format(
-                                  amount: goal.currentAmount,
-
-                                  currency: currency,
-                                ),
-
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                              const Text(
+                                'Target:',
+                                style: TextStyle(
+                                  color: Color(0xFF536B61),
+                                  fontSize: 16,
                                 ),
                               ),
-
-                              Text(
-                                'Target: ${CurrencyFormatter.format(amount: goal.targetAmount, currency: currency)}',
-                              ),
-
-                              const SizedBox(height: 4),
-
-                              Text(
-                                '${(progress * 100).toStringAsFixed(0)}% Complete',
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  CurrencyFormatter.format(
+                                    amount: goal.targetAmount,
+                                    currency: currency,
+                                  ),
+                                  textAlign: TextAlign.end,
+                                  style: const TextStyle(
+                                    color: Color(0xFF244D3F),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-
+                          const SizedBox(height: 12),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(5),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 10,
+                              valueColor: goal.isCompleted
+                                  ? const AlwaysStoppedAnimation<Color>(
+                                      Color(0xFF17664F),
+                                    )
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${(progress * 100).toStringAsFixed(0)}% Complete',
+                            style: const TextStyle(
+                              color: Color(0xFF536B61),
+                              fontSize: 14,
+                            ),
+                          ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
-
                             children: [
-                              IconButton(
+                              IconButton.filledTonal(
+                                tooltip: 'Edit Goal',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0xFFDDEFE5),
+                                  foregroundColor: const Color(0xFF17664F),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 48,
+                                  minHeight: 48,
+                                ),
                                 onPressed: () {
                                   showGoalDialog(goal: goal);
                                 },
-
                                 icon: const Icon(Icons.edit),
                               ),
-
-                              IconButton(
+                              const SizedBox(width: 12),
+                              IconButton.filledTonal(
+                                tooltip: 'Delete Goal',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFBE8E3),
+                                  foregroundColor: const Color(0xFFB54C44),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 48,
+                                  minHeight: 48,
+                                ),
                                 onPressed: () async {
                                   final confirmed = await showDialog<bool>(
                                     context: context,
