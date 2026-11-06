@@ -6,11 +6,225 @@ import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../providers/backup_repository_provider.dart';
 
-class BackupScreen extends ConsumerWidget {
+class BackupScreen extends ConsumerStatefulWidget {
   const BackupScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BackupScreen> createState() => _BackupScreenState();
+}
+
+class _BackupScreenState extends ConsumerState<BackupScreen> {
+  bool _importing = false;
+
+  Future<void> _importBackup() async {
+    if (_importing) {
+      return;
+    }
+
+    setState(() {
+      _importing = true;
+    });
+
+    try {
+      final repository = await ref.read(backupRepositoryProvider.future);
+      if (!mounted) {
+        return;
+      }
+
+      final prepared = await repository.prepareBackupImport();
+      if (!mounted || prepared == null) {
+        return;
+      }
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFFF3FAF5),
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            constraints: const BoxConstraints(maxWidth: 440),
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 24,
+            ),
+            scrollable: true,
+            titlePadding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 12,
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            actionsOverflowButtonSpacing: 8,
+            title: const Row(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Color(0xFFFBE6E3),
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                  ),
+                  child: SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: Icon(
+                      Icons.warning_amber_rounded,
+                      color: Color(0xFFB54C44),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Restore Backup?',
+                    style: TextStyle(
+                      color: Color(0xFF315F53),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: 440,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5F1E9),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Selected backup',
+                          style: TextStyle(
+                            color: Color(0xFF536B61),
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          prepared.fileName,
+                          style: const TextStyle(
+                            color: Color(0xFF244C40),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Divider(height: 20, color: Color(0xFFC9DBD0)),
+                        const Text(
+                          'Operation',
+                          style: TextStyle(
+                            color: Color(0xFF536B61),
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Replace existing data',
+                          style: TextStyle(
+                            color: Color(0xFF244C40),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Importing this backup will replace your existing accounts, categories, and transactions with the records from the selected file.',
+                    style: TextStyle(color: Color(0xFF244C40), fontSize: 15),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Consider exporting your current accounts, categories, and transactions first.',
+                    style: TextStyle(color: Color(0xFF536B61), fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(false);
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF315F53),
+                  minimumSize: const Size(88, 48),
+                  side: const BorderSide(color: Color(0xFFB5D9CA)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(true);
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFB54C44),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(104, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: const Text('Restore'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed != true || !mounted) {
+        return;
+      }
+
+      await repository.restoreBackup(prepared);
+      await ProviderRefreshHelper.refreshAllFinancialData(ref);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Backup restored successfully')),
+        );
+      }
+    } catch (e, stack) {
+      LoggerService.error('Import Backup Error: $e');
+      LoggerService.error('Import Backup Error: $stack');
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Import failed: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _importing = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AuroraAppBar(title: Text('Backup & Restore')),
       body: Stack(
@@ -201,44 +415,7 @@ class BackupScreen extends ConsumerWidget {
                           SizedBox(
                             width: double.infinity,
                             child: OutlinedButton.icon(
-                              onPressed: () async {
-                                try {
-                                  final repository = await ref.read(
-                                    backupRepositoryProvider.future,
-                                  );
-
-                                  await repository.importBackup();
-
-                                  await ProviderRefreshHelper.refreshAllFinancialData(
-                                    ref,
-                                  );
-
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Backup restored successfully',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                } catch (e, stack) {
-                                  LoggerService.error(
-                                    'Import Backup Error: $e',
-                                  );
-                                  LoggerService.error(
-                                    'Import Backup Error: $stack',
-                                  );
-
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Import failed: $e'),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
+                              onPressed: _importing ? null : _importBackup,
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: const Color(0xFFF9FCF9),
                                 foregroundColor: const Color(0xFF17664F),
@@ -254,8 +431,20 @@ class BackupScreen extends ConsumerWidget {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              icon: const Icon(Icons.upload_file_outlined),
-                              label: const Text('Import Backup'),
+                              icon: _importing
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.upload_file_outlined),
+                              label: Text(
+                                _importing
+                                    ? 'Preparing backup…'
+                                    : 'Import Backup',
+                              ),
                             ),
                           ),
                         ],
