@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:isar_community/isar.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../../shared/providers/database_provider.dart';
@@ -342,283 +343,307 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     final dateFormatter = DateFormat('dd MMM yyyy');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Export & Reports')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      appBar: const AuroraAppBar(title: Text('Export & Reports')),
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          const Text(
-            'Financial Exports',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color(0xFFB6D7CC),
+                  Color(0xFFDAEDE5),
+                  Color(0xFFF8FCFA),
+                ],
+                stops: [0.0, 0.52, 1.0],
+              ),
+            ),
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'Generate professional reports and export financial data.',
-            style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 24),
+          ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const Text(
+                'Financial Exports',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Generate professional reports and export financial data.',
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
 
-          // ==========================================
-          // EXPORT PERIOD
-          // ==========================================
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
+              // ==========================================
+              // EXPORT PERIOD
+              // ==========================================
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.date_range),
-                      SizedBox(width: 8),
-                      Text(
-                        'Export Period',
+                      const Row(
+                        children: [
+                          Icon(Icons.date_range),
+                          SizedBox(width: 8),
+                          Text(
+                            'Export Period',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Choose the transaction period to include in both CSV and PDF exports.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: ExportPeriodPreset.values.map((period) {
+                          return ChoiceChip(
+                            label: Text(period.label),
+                            selected: selectedPeriod == period,
+                            onSelected: (_) => _selectPeriod(period),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_month, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                selectedPeriodLabel,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (selectedPeriod == ExportPeriodPreset.custom) ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _DateRangeButton(
+                                label: 'From Date',
+                                value: customFromDate == null
+                                    ? 'Select'
+                                    : dateFormatter.format(customFromDate!),
+                                onTap: () => _pickCustomDate(isFromDate: true),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _DateRangeButton(
+                                label: 'To Date',
+                                value: customToDate == null
+                                    ? 'Select'
+                                    : dateFormatter.format(customToDate!),
+                                onTap: () => _pickCustomDate(isFromDate: false),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ==========================================
+              // PDF SETTINGS
+              // ==========================================
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.picture_as_pdf),
+                          SizedBox(width: 8),
+                          Text(
+                            'PDF Report Settings',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: reportTitleController,
+                        decoration: const InputDecoration(
+                          labelText: 'PDF Report Title',
+                          hintText: 'Enter the heading for your PDF report',
+                          helperText:
+                              'Enter the heading that will appear at the top of the PDF. You can keep or change this title.',
+                          helperMaxLines: 2,
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.title),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ==========================================
+              // REPORT STYLE
+              // ==========================================
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Report Style',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      SegmentedButton<ExportReportStyle>(
+                        segments: const [
+                          ButtonSegment(
+                            value: ExportReportStyle.classic,
+                            label: Text('Classic'),
+                            icon: Icon(Icons.description),
+                          ),
+                          ButtonSegment(
+                            value: ExportReportStyle.modern,
+                            label: Text('Modern'),
+                            icon: Icon(Icons.auto_graph),
+                          ),
+                        ],
+                        selected: {selectedStyle},
+                        onSelectionChanged: (value) {
+                          setState(() {
+                            selectedStyle = value.first;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        selectedStyle == ExportReportStyle.classic
+                            ? 'Simple printable financial report with compact layout.'
+                            : 'Modern analytics-style report with summary cards and insights.',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Choose the transaction period to include in both CSV and PDF exports.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: ExportPeriodPreset.values.map((period) {
-                      return ChoiceChip(
-                        label: Text(period.label),
-                        selected: selectedPeriod == period,
-                        onSelected: (_) => _selectPeriod(period),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ==========================================
+              // EXPORT OPTIONS
+              // ==========================================
+              const Text(
+                'Export Options',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+
+              Card(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16),
+                  leading: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .surfaceContainerHighest
-                          .withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.green.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_month, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            selectedPeriodLabel,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
+                    child: const Icon(Icons.table_chart, color: Colors.green),
+                  ),
+                  title: const Text(
+                    'Export CSV',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Export transactions from the selected period in spreadsheet-compatible CSV format.',
                     ),
                   ),
-                  if (selectedPeriod == ExportPeriodPreset.custom) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _DateRangeButton(
-                            label: 'From Date',
-                            value: customFromDate == null
-                                ? 'Select'
-                                : dateFormatter.format(customFromDate!),
-                            onTap: () => _pickCustomDate(isFromDate: true),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _DateRangeButton(
-                            label: 'To Date',
-                            value: customToDate == null
-                                ? 'Select'
-                                : dateFormatter.format(customToDate!),
-                            onTap: () => _pickCustomDate(isFromDate: false),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
+                  trailing: exporting
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.chevron_right),
+                  onTap: exporting ? null : exportCsv,
+                ),
               ),
-            ),
-          ),
 
-          const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-          // ==========================================
-          // PDF SETTINGS
-          // ==========================================
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.picture_as_pdf),
-                      SizedBox(width: 8),
-                      Text(
-                        'PDF Report Settings',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+              Card(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16),
+                  leading: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.picture_as_pdf, color: Colors.red),
                   ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: reportTitleController,
-                    decoration: const InputDecoration(
-                      labelText: 'PDF Report Title',
-                      hintText: 'Enter the heading for your PDF report',
-                      helperText:
-                          'Enter the heading that will appear at the top of the PDF. You can keep or change this title.',
-                      helperMaxLines: 2,
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.title),
+                  title: const Text(
+                    'Export PDF Report',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Generate a professional PDF report for the selected period.',
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // ==========================================
-          // REPORT STYLE
-          // ==========================================
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Report Style',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  SegmentedButton<ExportReportStyle>(
-                    segments: const [
-                      ButtonSegment(
-                        value: ExportReportStyle.classic,
-                        label: Text('Classic'),
-                        icon: Icon(Icons.description),
-                      ),
-                      ButtonSegment(
-                        value: ExportReportStyle.modern,
-                        label: Text('Modern'),
-                        icon: Icon(Icons.auto_graph),
-                      ),
-                    ],
-                    selected: {selectedStyle},
-                    onSelectionChanged: (value) {
-                      setState(() {
-                        selectedStyle = value.first;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    selectedStyle == ExportReportStyle.classic
-                        ? 'Simple printable financial report with compact layout.'
-                        : 'Modern analytics-style report with summary cards and insights.',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // ==========================================
-          // EXPORT OPTIONS
-          // ==========================================
-          const Text(
-            'Export Options',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.table_chart, color: Colors.green),
-              ),
-              title: const Text(
-                'Export CSV',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Padding(
-                padding: EdgeInsets.only(top: 6),
-                child: Text(
-                  'Export transactions from the selected period in spreadsheet-compatible CSV format.',
+                  trailing: exporting
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.chevron_right),
+                  onTap: exporting ? null : exportPdf,
                 ),
               ),
-              trailing: exporting
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.chevron_right),
-              onTap: exporting ? null : exportCsv,
-            ),
+
+              const SizedBox(height: 64),
+            ],
           ),
-
-          const SizedBox(height: 16),
-
-          Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.picture_as_pdf, color: Colors.red),
-              ),
-              title: const Text(
-                'Export PDF Report',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Padding(
-                padding: EdgeInsets.only(top: 6),
-                child: Text(
-                  'Generate a professional PDF report for the selected period.',
-                ),
-              ),
-              trailing: exporting
-                  ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.chevron_right),
-              onTap: exporting ? null : exportPdf,
-            ),
-          ),
-
-          const SizedBox(height: 64),
         ],
       ),
     );
