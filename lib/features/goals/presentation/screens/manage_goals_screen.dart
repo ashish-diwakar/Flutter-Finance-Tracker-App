@@ -51,7 +51,47 @@ class _ManageGoalsScreenState extends ConsumerState<ManageGoalsScreen> {
     return (goal.currentAmount / goal.targetAmount).clamp(0, 1);
   }
 
+  InputDecoration _goalInputDecoration({required String labelText}) {
+    const enabledBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(14)),
+      borderSide: BorderSide(color: Color(0xFFB5D9CA)),
+    );
+
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: const TextStyle(
+        color: Color(0xFF536B61),
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      floatingLabelStyle: const TextStyle(
+        color: Color(0xFF315F53),
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      filled: true,
+      fillColor: const Color(0xFFFAFDFB),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      enabledBorder: enabledBorder,
+      border: enabledBorder,
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: Color(0xFF3E8877), width: 1.6),
+      ),
+      errorBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: Color(0xFFB3261E)),
+      ),
+      focusedErrorBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: Color(0xFFB3261E), width: 1.6),
+      ),
+      errorStyle: const TextStyle(color: Color(0xFFB3261E), fontSize: 13),
+    );
+  }
+
   Future<void> showGoalDialog({FinancialGoalModel? goal}) async {
+    final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: goal?.name ?? '');
 
     final descriptionController = TextEditingController(
@@ -77,43 +117,124 @@ class _ManageGoalsScreenState extends ConsumerState<ManageGoalsScreen> {
 
       builder: (_) {
         return AlertDialog(
-          title: Text(goal == null ? 'Add Goal' : 'Edit Goal'),
+          backgroundColor: const Color(0xFFF3FAF5),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          constraints: const BoxConstraints(maxWidth: 440),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 24,
+          ),
+          scrollable: true,
+          titlePadding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 12,
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          actionsOverflowButtonSpacing: 8,
+          title: Text(
+            goal == null ? 'Add Goal' : 'Edit Goal',
+            style: const TextStyle(
+              color: Color(0xFF315F53),
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: SizedBox(
+            width: 440,
+            child: Form(
+              key: formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    style: const TextStyle(
+                      color: Color(0xFF244C40),
+                      fontSize: 18,
+                    ),
+                    decoration: _goalInputDecoration(labelText: 'Goal Name'),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Goal name is required';
+                      }
 
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Goal Name'),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextField(
-                  controller: targetController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Target Amount'),
-                ),
-
-                const SizedBox(height: 16),
-
-                TextField(
-                  controller: currentController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Current Amount',
+                      return null;
+                    },
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: descriptionController,
+                    style: const TextStyle(
+                      color: Color(0xFF244C40),
+                      fontSize: 18,
+                    ),
+                    decoration: _goalInputDecoration(labelText: 'Description'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: targetController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(
+                      color: Color(0xFF244C40),
+                      fontSize: 18,
+                    ),
+                    decoration: _goalInputDecoration(
+                      labelText: 'Target Amount',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Target amount is required';
+                      }
+
+                      final parsedAmount = double.tryParse(value);
+                      if (parsedAmount == null) {
+                        return 'Enter a valid target amount';
+                      }
+
+                      final targetAmount = (parsedAmount * 100).round();
+                      if (targetAmount <= 0) {
+                        return 'Target amount must be greater than 0';
+                      }
+
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: currentController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(
+                      color: Color(0xFF244C40),
+                      fontSize: 18,
+                    ),
+                    decoration: _goalInputDecoration(
+                      labelText: 'Current Amount',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return null;
+                      }
+
+                      final parsedAmount = double.tryParse(value);
+                      if (parsedAmount == null) {
+                        return 'Enter a valid current amount';
+                      }
+
+                      final currentAmount = (parsedAmount * 100).round();
+                      if (currentAmount < 0) {
+                        return 'Current amount cannot be negative';
+                      }
+
+                      return null;
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -122,12 +243,27 @@ class _ManageGoalsScreenState extends ConsumerState<ManageGoalsScreen> {
               onPressed: () {
                 Navigator.pop(context);
               },
-
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF315F53),
+                minimumSize: const Size(88, 50),
+                side: const BorderSide(color: Color(0xFFB5D9CA)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               child: const Text('Cancel'),
             ),
 
             ElevatedButton(
               onPressed: () async {
+                if (!formKey.currentState!.validate()) {
+                  return;
+                }
+
                 if (nameController.text.trim().isEmpty) {
                   return;
                 }
@@ -190,7 +326,18 @@ class _ManageGoalsScreenState extends ConsumerState<ManageGoalsScreen> {
                 await loadGoals();
                 ref.invalidate(goalAnalyticsProvider);
               },
-
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF17664F),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(88, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               child: const Text('Save'),
             ),
           ],
