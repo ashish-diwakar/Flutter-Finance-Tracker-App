@@ -695,29 +695,54 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
               // ==========================================
               const Text(
                 'Export Options',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Color(0xFF315F53),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 16),
 
               Card(
+                margin: EdgeInsets.zero,
+                color: const Color(0xFFF1F8F2),
+                surfaceTintColor: Colors.transparent,
+                elevation: 1,
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: const BorderSide(color: Color(0xFFA8CFC0)),
+                ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
+                  contentPadding: const EdgeInsets.all(15),
+                  minVerticalPadding: 14,
                   leading: Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
+                      color: const Color(0xFFDFF1E5),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.table_chart, color: Colors.green),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.table_chart,
+                      color: Color(0xFF237F50),
+                      size: 24,
+                    ),
                   ),
                   title: const Text(
                     'Export CSV',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Color(0xFF244D40),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   subtitle: const Padding(
                     padding: EdgeInsets.only(top: 6),
                     child: Text(
                       'Export transactions from the selected period in spreadsheet-compatible CSV format.',
+                      style: TextStyle(color: Color(0xFF536B61), fontSize: 14),
                     ),
                   ),
                   trailing: exporting
@@ -726,7 +751,11 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                           width: 24,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.chevron_right),
+                      : const Icon(
+                          Icons.chevron_right,
+                          color: Color(0xFF17664F),
+                          size: 24,
+                        ),
                   onTap: exporting ? null : exportCsv,
                 ),
               ),
@@ -734,24 +763,45 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
               const SizedBox(height: 16),
 
               Card(
+                margin: EdgeInsets.zero,
+                color: const Color(0xFFF1F8F2),
+                surfaceTintColor: Colors.transparent,
+                elevation: 1,
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: const BorderSide(color: Color(0xFFA8CFC0)),
+                ),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
+                  contentPadding: const EdgeInsets.all(15),
+                  minVerticalPadding: 14,
                   leading: Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
+                      color: const Color(0xFFFBE8E3),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.picture_as_pdf, color: Colors.red),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.picture_as_pdf,
+                      color: Color(0xFFB54C44),
+                      size: 24,
+                    ),
                   ),
                   title: const Text(
                     'Export PDF Report',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Color(0xFF244D40),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   subtitle: const Padding(
                     padding: EdgeInsets.only(top: 6),
                     child: Text(
                       'Generate a professional PDF report for the selected period.',
+                      style: TextStyle(color: Color(0xFF536B61), fontSize: 14),
                     ),
                   ),
                   trailing: exporting
@@ -760,7 +810,11 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                           width: 24,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.chevron_right),
+                      : const Icon(
+                          Icons.chevron_right,
+                          color: Color(0xFF17664F),
+                          size: 24,
+                        ),
                   onTap: exporting ? null : exportPdf,
                 ),
               ),
