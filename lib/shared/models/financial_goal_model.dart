@@ -55,6 +55,23 @@ class FinancialGoalModel {
 
   bool isSynced = false;
 
+  // isSynced is device/sync state and is intentionally not portable.
+  Map<String, dynamic> toBackupJson() {
+    return {
+      'id': uuid,
+      'name': name,
+      'description': description,
+      'targetAmount': targetAmount,
+      'currentAmount': currentAmount,
+      'linkedAccountId': linkedAccountId,
+      'targetDate': targetDate?.toUtc().toIso8601String(),
+      'createdAt': createdAt.toUtc().toIso8601String(),
+      'updatedAt': updatedAt.toUtc().toIso8601String(),
+      'isCompleted': isCompleted,
+      'isDeleted': isDeleted,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': uuid,

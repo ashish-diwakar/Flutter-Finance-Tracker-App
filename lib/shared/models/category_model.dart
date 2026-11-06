@@ -29,6 +29,22 @@ class CategoryModel {
 
   int? monthlyBudget;
 
+  // isSynced is device/sync state and is intentionally not portable.
+  Map<String, dynamic> toBackupJson() {
+    return {
+      'id': uuid,
+      'name': name,
+      'type': type,
+      'icon': icon,
+      'colorValue': colorValue,
+      'isDefault': isDefault,
+      'createdAt': createdAt.toUtc().toIso8601String(),
+      'updatedAt': updatedAt?.toUtc().toIso8601String(),
+      'isDeleted': isDeleted,
+      'monthlyBudget': monthlyBudget,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': uuid,

@@ -27,6 +27,21 @@ class AccountModel {
 
   bool isDeleted = false;
 
+  // isSynced is device/sync state and is intentionally not portable.
+  Map<String, dynamic> toBackupJson() {
+    return {
+      'id': uuid,
+      'name': name,
+      'type': type,
+      'currentBalance': currentBalance,
+      'isArchived': isArchived,
+      'isDefault': isDefault,
+      'createdAt': createdAt.toUtc().toIso8601String(),
+      'updatedAt': updatedAt?.toUtc().toIso8601String(),
+      'isDeleted': isDeleted,
+    };
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': uuid,

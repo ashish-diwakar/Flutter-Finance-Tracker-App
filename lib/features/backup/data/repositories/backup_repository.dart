@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:finance_tracker/core/services/app_settings_service.dart';
 import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,6 +11,9 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../shared/models/account_model.dart';
 import '../../../../shared/models/category_model.dart';
+import '../../../../shared/models/financial_goal_model.dart';
+import '../../../../shared/models/investment_model.dart';
+import '../../../../shared/models/recurring_transaction_model.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../domain/models/backup_data_model.dart';
 
@@ -18,20 +22,36 @@ class BackupRepository {
 
   BackupRepository(this.isar);
 
-  Future<File> exportBackup() async {
+  Future<String> generateBackupJson() async {
     final transactions = await isar.transactionModels.where().findAll();
-
     final categories = await isar.categoryModels.where().findAll();
-
     final accounts = await isar.accountModels.where().findAll();
+    final recurringTransactions = await isar.recurringTransactionModels
+        .where()
+        .findAll();
+    final financialGoals = await isar.financialGoalModels.where().findAll();
+    final investments = await isar.investmentModels.where().findAll();
+    final currencyCode = await AppSettingsService.loadCurrencyCode();
 
     final backup = BackupDataModel(
-      transactions: transactions.map((e) => e.toJson()).toList(),
-      categories: categories.map((e) => e.toJson()).toList(),
-      accounts: accounts.map((e) => e.toJson()).toList(),
+      exportedAt: DateTime.now().toUtc(),
+      appVersion: null,
+      currencyCode: currencyCode,
+      transactions: transactions.map((e) => e.toBackupJson()).toList(),
+      categories: categories.map((e) => e.toBackupJson()).toList(),
+      accounts: accounts.map((e) => e.toBackupJson()).toList(),
+      recurringTransactions: recurringTransactions
+          .map((e) => e.toBackupJson())
+          .toList(),
+      financialGoals: financialGoals.map((e) => e.toBackupJson()).toList(),
+      investments: investments.map((e) => e.toBackupJson()).toList(),
     );
 
-    final jsonString = jsonEncode(backup.toJson());
+    return jsonEncode(backup.toJson());
+  }
+
+  Future<File> exportBackup() async {
+    final jsonString = await generateBackupJson();
 
     final directory = await getApplicationDocumentsDirectory();
 
@@ -93,8 +113,17 @@ class BackupRepository {
         throw Exception('Invalid backup file format.');
       }
 
+      if (decoded.containsKey('format') ||
+          decoded.containsKey('schemaVersion') ||
+          decoded.containsKey('collections')) {
+        throw const FormatException(
+          'Versioned backups are not supported for import yet. '
+          'Import a legacy version 1 backup instead.',
+        );
+      }
+
       return _prepareBackup(
-        BackupDataModel.fromJson(decoded),
+        LegacyBackupDataModel.fromJson(decoded),
         fileName: fileName,
       );
     } catch (e, stack) {
@@ -105,7 +134,7 @@ class BackupRepository {
   }
 
   PreparedBackupImport _prepareBackup(
-    BackupDataModel backup, {
+    LegacyBackupDataModel backup, {
     required String fileName,
   }) {
     const uuid = Uuid();
