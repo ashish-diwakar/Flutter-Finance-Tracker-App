@@ -56,7 +56,10 @@ Future<void> _pumpBackupScreen(
 }
 
 Future<void> tapImport(WidgetTester tester) async {
-  await tester.tap(find.widgetWithText(OutlinedButton, 'Import Backup'));
+  final importButton = find.widgetWithText(OutlinedButton, 'Import Backup');
+  await tester.ensureVisible(importButton);
+  await tester.pumpAndSettle();
+  await tester.tap(importButton);
   await tester.pump(const Duration(milliseconds: 500));
 }
 
@@ -172,7 +175,7 @@ void main() {
     await tester.pump();
 
     final importButton = tester.widget<OutlinedButton>(
-      find.byType(OutlinedButton),
+      find.widgetWithText(OutlinedButton, 'Preparing backup…'),
     );
     expect(importButton.onPressed, isNull);
     expect(repository.restoreCalls, 1);

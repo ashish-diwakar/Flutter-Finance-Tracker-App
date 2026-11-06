@@ -15,6 +15,59 @@ class BackupScreen extends ConsumerStatefulWidget {
 
 class _BackupScreenState extends ConsumerState<BackupScreen> {
   bool _importing = false;
+  bool _exporting = false;
+  bool _savingLocally = false;
+
+  Future<void> _exportBackup({required bool saveLocally}) async {
+    if (_exporting) {
+      return;
+    }
+
+    setState(() {
+      _exporting = true;
+      _savingLocally = saveLocally;
+    });
+
+    try {
+      final repository = await ref.read(backupRepositoryProvider.future);
+      final saved = saveLocally ? await repository.saveBackupLocally() : null;
+
+      if (!saveLocally) {
+        await repository.shareBackup();
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      if (saveLocally && saved == true) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Backup saved')));
+      } else if (!saveLocally) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Backup prepared for sharing')),
+        );
+      }
+    } catch (e, stack) {
+      LoggerService.error('Export Backup Error: $e');
+      LoggerService.error('Export Backup Error: $stack');
+
+      if (mounted) {
+        final action = saveLocally ? 'save' : 'prepare backup for sharing';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Unable to $action: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _exporting = false;
+          _savingLocally = false;
+        });
+      }
+    }
+  }
 
   Future<void> _importBackup() async {
     if (_importing) {
@@ -265,8 +318,13 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Export a JSON backup to share, or import data from a backup file.',
+                    'Save a complete JSON backup locally or share it, and choose a backup file to import.',
                     style: TextStyle(color: Color(0xFF536B61), fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Version 2 backups are plain JSON and can be exported, but importing them requires the upcoming restore update.',
+                    style: TextStyle(color: Color(0xFF536B61), fontSize: 13),
                   ),
                   const SizedBox(height: 20),
                   Card(
@@ -314,7 +372,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                           ),
                           const SizedBox(height: 12),
                           const Text(
-                            'Create and share a JSON backup of your accounts, categories, and transactions.',
+                            'Create a complete JSON backup of your accounts, categories, transactions, recurring transactions, goals, and investments.',
                             style: TextStyle(
                               color: Color(0xFF536B61),
                               fontSize: 14,
@@ -323,22 +381,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                           const SizedBox(height: 16),
                           SizedBox(
                             width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () async {
-                                final repository = await ref.read(
-                                  backupRepositoryProvider.future,
-                                );
-
-                                await repository.shareBackup();
-
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Backup exported'),
-                                    ),
-                                  );
-                                }
-                              },
+                            child: ElevatedButton(
+                              onPressed: _exporting
+                                  ? null
+                                  : () => _exportBackup(saveLocally: true),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF17664F),
                                 foregroundColor: Colors.white,
@@ -351,8 +397,80 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              icon: const Icon(Icons.download_outlined),
-                              label: const Text('Export Backup'),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (_exporting && _savingLocally)
+                                    const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  else
+                                    const Icon(Icons.save_alt_outlined),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      _exporting && _savingLocally
+                                          ? 'Saving backup...'
+                                          : 'Save Backup Locally',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: _exporting
+                                  ? null
+                                  : () => _exportBackup(saveLocally: false),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF9FCF9),
+                                foregroundColor: const Color(0xFF17664F),
+                                minimumSize: const Size.fromHeight(52),
+                                side: const BorderSide(
+                                  color: Color(0xFFA8CFC0),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (_exporting && !_savingLocally)
+                                    const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xFF17664F),
+                                      ),
+                                    )
+                                  else
+                                    const Icon(Icons.share_outlined),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      _exporting && !_savingLocally
+                                          ? 'Preparing share...'
+                                          : 'Share / Send Backup',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
