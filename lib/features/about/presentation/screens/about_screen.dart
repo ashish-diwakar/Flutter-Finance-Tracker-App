@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/aurora_app_bar.dart';
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
+
+  @override
+  State<AboutScreen> createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  late final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +26,7 @@ class AboutScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
 
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
 
           // =====================================================
           // APP ICON
@@ -34,7 +42,7 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // =====================================================
           // APP NAME
@@ -44,8 +52,10 @@ class AboutScreen extends StatelessWidget {
 
             textAlign: TextAlign.center,
 
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: const TextStyle(
+              color: Color(0xFF315F53),
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
             ),
           ),
 
@@ -54,22 +64,39 @@ class AboutScreen extends StatelessWidget {
           // =====================================================
           // VERSION
           // =====================================================
-          Text(
-            'Version ${AppConstants.appVersion}',
-
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          FutureBuilder<PackageInfo>(
+            future: _packageInfo,
+            builder: (context, snapshot) {
+              final version = snapshot.data?.version.trim() ?? '';
+              final build = snapshot.data?.buildNumber.trim() ?? '';
+              final label = version.isEmpty
+                  ? snapshot.connectionState == ConnectionState.waiting
+                        ? 'Checking version…'
+                        : 'Version unavailable'
+                  : 'Version $version${build.isEmpty ? '' : ' (Build $build)'}';
+              return Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF416157), fontSize: 14),
+              );
+            },
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
 
           // =====================================================
           // DESCRIPTION
           // =====================================================
           Card(
+            color: const Color(0xFFF1F8F2),
+            surfaceTintColor: Colors.transparent,
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: const BorderSide(color: Color(0xFFA8CFC0)),
+            ),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,19 +105,24 @@ class AboutScreen extends StatelessWidget {
                   Text(
                     'About ${AppConstants.appName}',
 
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    style: const TextStyle(
+                      color: Color(0xFF315F53),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   Text(
                     AppConstants.appDescription,
 
-                    style: theme.textTheme.bodyLarge,
-
-                    textAlign: TextAlign.justify,
+                    style: const TextStyle(
+                      color: Color(0xFF344B42),
+                      fontSize: 15,
+                      height: 1.45,
+                    ),
+                    textAlign: TextAlign.left,
                   ),
                 ],
               ),
