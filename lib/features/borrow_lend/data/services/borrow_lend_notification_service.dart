@@ -91,13 +91,14 @@ class BorrowLendNotificationService {
     }
   }
 
-  static Future<void> syncAllReminders({
+  static Future<bool> syncAllReminders({
     required List<TransactionModel> transactions,
     required CurrencyConfig currency,
   }) async {
     final activeTransactions = transactions
         .where((transaction) => !transaction.isDeleted)
         .toList();
+    var allSucceeded = true;
 
     for (final transaction in transactions) {
       if (transaction.type != 'borrowed' && transaction.type != 'lent') {
@@ -141,14 +142,14 @@ class BorrowLendNotificationService {
             currency: currency,
           ),
         );
-      } catch (e, stackTrace) {
-        LoggerService.exception(
-          'Unable to reconcile Borrow/Lend reminder for ${transaction.uuid}',
-          e,
-          stackTrace,
+      } on Object catch (error) {
+        allSucceeded = false;
+        LoggerService.error(
+          'Unable to reconcile Borrow/Lend reminder (${error.runtimeType}).',
         );
       }
     }
+    return allSucceeded;
   }
 
   static Future<void> cancelReminders(String transactionUuid) async {

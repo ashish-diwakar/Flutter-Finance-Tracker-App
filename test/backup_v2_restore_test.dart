@@ -1,18 +1,22 @@
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'package:finance_tracker/core/database/full_snapshot_restore_marker.dart';
+import 'dart:typed_data';
 
 import 'package:finance_tracker/core/database/database_initializer.dart';
 import 'package:finance_tracker/core/services/app_settings_service.dart';
 import 'package:finance_tracker/features/accounts/domain/services/account_balance_service.dart';
 import 'package:finance_tracker/features/backup/data/repositories/backup_repository.dart';
 import 'package:finance_tracker/features/backup/domain/services/backup_v2_preflight.dart';
+import 'package:finance_tracker/features/recurring/data/recurring_repository.dart';
 import 'package:finance_tracker/shared/models/account_model.dart';
 import 'package:finance_tracker/shared/models/category_model.dart';
 import 'package:finance_tracker/shared/models/financial_goal_model.dart';
 import 'package:finance_tracker/shared/models/investment_model.dart';
 import 'package:finance_tracker/shared/models/recurring_transaction_model.dart';
 import 'package:finance_tracker/shared/models/transaction_model.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar_community/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -259,10 +263,8 @@ void main() {
     await Isar.initializeIsarCore(libraries: {Abi.current(): library});
   });
 
-  setUp(() async {
-    SharedPreferences.setMockInitialValues({'selected_currency': 'JPY'});
-    directory = await Directory.systemTemp.createTemp('finance_v2_restore_');
-    isar = await Isar.open(
+  Future<Isar> openDatabase({bool includeMarker = true}) {
+    return Isar.open(
       [
         AccountModelSchema,
         CategoryModelSchema,
@@ -270,11 +272,18 @@ void main() {
         RecurringTransactionModelSchema,
         FinancialGoalModelSchema,
         InvestmentModelSchema,
+        if (includeMarker) FullSnapshotRestoreMarkerSchema,
       ],
       directory: directory.path,
       name: 'v2_restore_test',
       inspector: false,
     );
+  }
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({'selected_currency': 'JPY'});
+    directory = await Directory.systemTemp.createTemp('finance_v2_restore_');
+    isar = await openDatabase();
   });
 
   tearDown(() async {
@@ -288,18 +297,60 @@ void main() {
     expect(_collectionsFrom(await snapshot()), equals(expected));
   }
 
+  test(
+    'export and import preflight preserve a deleted zero-target goal',
+    () async {
+      final goal = FinancialGoalModel()
+        ..uuid = _uuid(41)
+        ..name = 'Synthetic historical goal'
+        ..description = 'Synthetic description'
+        ..targetAmount = 0
+        ..currentAmount = 0
+        ..targetDate = DateTime.utc(2026, 4, 1)
+        ..createdAt = DateTime.utc(2026, 1, 1)
+        ..updatedAt = DateTime.utc(2026, 3, 1)
+        ..isCompleted = true
+        ..isDeleted = true
+        ..isSynced = true;
+      await isar.writeTxn(() => isar.financialGoalModels.put(goal));
+      final before = _collectionsFrom(await snapshot());
+      Uint8List? savedBytes;
+      final repository = BackupRepository(
+        isar,
+        localFileSaver: ({required fileName, required bytes}) async {
+          expect(fileName, matches(r'^finance_backup_\d{8}_\d{6}\.json$'));
+          savedBytes = bytes;
+          return 'synthetic destination';
+        },
+        backupImportFilePicker: () async => PlatformFile(
+          name: 'synthetic.json',
+          size: savedBytes!.length,
+          bytes: savedBytes,
+        ),
+      );
+
+      expect(await repository.saveBackupLocally(), isTrue);
+      expect(_collectionsFrom(utf8.decode(savedBytes!)), before);
+      final prepared = await repository.prepareVersion2BackupImport();
+      expect(
+        prepared!.plan.financialGoals.single.toBackupJson(),
+        goal.toBackupJson(),
+      );
+      await expectCollections(before);
+      final stored = await isar.financialGoalModels.get(goal.id);
+      expect(stored!.toBackupJson(), goal.toBackupJson());
+      expect(stored.isSynced, isTrue);
+      expect(await isar.fullSnapshotRestoreMarkers.count(), 0);
+    },
+  );
+
   test('restores all six collections into an empty database', () async {
     final plan = _plan(1000);
     final result = await BackupRepository(isar).restoreVersion2Backup(plan);
 
     expect(result.succeeded, isTrue);
     expect(result.errorMessage, isNull);
-    expect(
-      result.warnings,
-      contains(
-        'Provider caches and device-local borrow/lend reminders require post-commit reconciliation.',
-      ),
-    );
+    expect(result.warnings, isEmpty);
     expect(result.restoredCounts, {
       'accounts': 2,
       'categories': 2,
@@ -417,6 +468,270 @@ void main() {
     expect(await AppSettingsService.loadCurrencyCode(), 'JPY');
   });
 
+  test(
+    'file preparation preflights V2 input without database writes',
+    () async {
+      final before = _collectionsFrom(await snapshot());
+      final bytes = Uint8List.fromList(
+        utf8.encode(jsonEncode(_document(base: 1200))),
+      );
+      final repository = BackupRepository(
+        isar,
+        backupImportFilePicker: () async => PlatformFile(
+          name: 'synthetic.json',
+          size: bytes.length,
+          bytes: bytes,
+        ),
+      );
+
+      final prepared = await repository.prepareVersion2BackupImport();
+
+      expect(prepared, isNotNull);
+      expect(prepared!.fileName, 'synthetic.json');
+      expect(prepared.plan.recordCounts, {
+        'accounts': 2,
+        'categories': 2,
+        'transactions': 7,
+        'recurringTransactions': 1,
+        'financialGoals': 1,
+        'investments': 1,
+      });
+      expect(prepared.plan.totalRecordCount, 14);
+      await expectCollections(before);
+    },
+  );
+
+  test(
+    'file preparation rejects malformed, partial, unsupported, and V1 files',
+    () async {
+      final before = _collectionsFrom(await snapshot());
+      final cancelledRepository = BackupRepository(
+        isar,
+        backupImportFilePicker: () async => null,
+      );
+      expect(await cancelledRepository.prepareVersion2BackupImport(), isNull);
+      await expectCollections(before);
+
+      final partial = _document(base: 1200);
+      (partial['collections'] as Map).remove('investments');
+      final unsupported = _document(base: 1200)..['schemaVersion'] = 999;
+      for (final content in [
+        '{',
+        jsonEncode(partial),
+        jsonEncode(unsupported),
+        jsonEncode({'transactions': [], 'categories': [], 'accounts': []}),
+      ]) {
+        final bytes = Uint8List.fromList(utf8.encode(content));
+        final repository = BackupRepository(
+          isar,
+          backupImportFilePicker: () async => PlatformFile(
+            name: 'invalid.json',
+            size: bytes.length,
+            bytes: bytes,
+          ),
+        );
+        await expectLater(
+          repository.prepareVersion2BackupImport(),
+          throwsFormatException,
+        );
+        await expectCollections(before);
+      }
+    },
+  );
+
+  test(
+    'preflight reports every dangling schedule reference without writes',
+    () async {
+      final account = AccountModel()
+        ..uuid = _uuid(42)
+        ..name = 'Existing synthetic account'
+        ..type = 'cash'
+        ..currentBalance = 123;
+      await isar.writeTxn(() => isar.accountModels.put(account));
+      final before = _collectionsFrom(await snapshot());
+      final document = _document(base: 1200, populated: false);
+      final template =
+          ((_document(base: 1200)['collections']
+                          as Map)['recurringTransactions']
+                      as List)
+                  .single
+              as Map<String, dynamic>;
+      (document['collections'] as Map)['recurringTransactions'] = [
+        {
+          ...template,
+          'id': _uuid(50),
+          'accountId': _uuid(51),
+          'categoryId': _uuid(52),
+        },
+        {
+          ...template,
+          'id': _uuid(60),
+          'accountId': _uuid(61),
+          'categoryId': _uuid(62),
+          'isDeleted': true,
+        },
+      ];
+      (document['manifest'] as Map)['recurringTransactions'] = {
+        'recordCount': 2,
+      };
+      final bytes = Uint8List.fromList(utf8.encode(jsonEncode(document)));
+      final repository = BackupRepository(
+        isar,
+        backupImportFilePicker: () async => PlatformFile(
+          name: 'synthetic.json',
+          size: bytes.length,
+          bytes: bytes,
+        ),
+      );
+      await expectLater(
+        repository.prepareVersion2BackupImport(),
+        throwsA(
+          isA<MissingRecurringReferencesException>()
+              .having(
+                (error) => error.message,
+                'message',
+                'Recurring schedules reference accounts or categories missing from the backup.',
+              )
+              .having((error) => error.paths, 'paths', [
+                r'$.collections.recurringTransactions[0].accountId',
+                r'$.collections.recurringTransactions[0].categoryId',
+                r'$.collections.recurringTransactions[1].accountId',
+                r'$.collections.recurringTransactions[1].categoryId',
+              ]),
+        ),
+      );
+      await expectCollections(before);
+      expect(await isar.fullSnapshotRestoreMarkers.count(), 0);
+    },
+  );
+
+  test(
+    'manual relink preserves schedule state and makes a fresh V2 export valid',
+    () async {
+      final account = AccountModel()
+        ..uuid = _uuid(70)
+        ..name = 'Synthetic archived account'
+        ..type = 'cash'
+        ..currentBalance = 1234
+        ..isArchived = true;
+      final category = CategoryModel()
+        ..uuid = _uuid(71)
+        ..name = 'Synthetic expense category'
+        ..type = 'expense';
+      final wrongType = CategoryModel()
+        ..uuid = _uuid(72)
+        ..name = 'Synthetic income category'
+        ..type = 'income';
+      final schedule = RecurringTransactionModel()
+        ..uuid = _uuid(80)
+        ..accountId = _uuid(81)
+        ..categoryId = _uuid(82)
+        ..type = 'expense'
+        ..amount = 9007199254740993
+        ..notes = '  Preserve synthetic notes verbatim  '
+        ..startDate = DateTime.utc(2024, 2, 1, 11)
+        ..endDate = DateTime.utc(2030, 3, 1, 17)
+        ..frequency = 'monthly'
+        ..interval = 3
+        ..nextRunDate = DateTime.utc(2024, 5, 1, 11)
+        ..updatedAt = DateTime.utc(2024, 4, 1)
+        ..isActive = true
+        ..isSynced = true;
+      await isar.writeTxn(() async {
+        await isar.accountModels.put(account);
+        await isar.categoryModels.putAll([category, wrongType]);
+        await isar.recurringTransactionModels.put(schedule);
+      });
+      final originalBackup = await snapshot();
+      expect(
+        () => BackupV2Preflight.parse(originalBackup),
+        throwsFormatException,
+      );
+      String? savedJson;
+      final exporter = BackupRepository(
+        isar,
+        localFileSaver: ({required fileName, required bytes}) async {
+          savedJson = utf8.decode(bytes);
+          return 'synthetic destination';
+        },
+      );
+      expect(
+        await exporter.saveBackupLocally(confirmUnverified: (_) async => false),
+        isFalse,
+      );
+      expect(savedJson, isNull);
+      await expectCollections(_collectionsFrom(originalBackup));
+      final original = (await isar.recurringTransactionModels.get(
+        schedule.id,
+      ))!;
+      final repository = RecurringRepository(isar);
+      Future<void> relink({String? accountId, String? categoryId}) =>
+          repository.relinkRecurring(
+            original,
+            accountId: accountId ?? account.uuid,
+            categoryId: categoryId ?? category.uuid,
+          );
+
+      await expectLater(
+        relink(categoryId: wrongType.uuid),
+        throwsA(isA<RecurringRelinkException>()),
+      );
+      await expectLater(
+        relink(accountId: _uuid(999)),
+        throwsA(isA<RecurringRelinkException>()),
+      );
+      account.isDeleted = true;
+      await isar.writeTxn(() => isar.accountModels.put(account));
+      await expectLater(relink(), throwsA(isA<RecurringRelinkException>()));
+      account.isDeleted = false;
+      category.isDeleted = true;
+      await isar.writeTxn(() async {
+        await isar.accountModels.put(account);
+        await isar.categoryModels.put(category);
+      });
+      await expectLater(relink(), throwsA(isA<RecurringRelinkException>()));
+      category.isDeleted = false;
+      await isar.writeTxn(() => isar.categoryModels.put(category));
+      expect(
+        (await isar.recurringTransactionModels.get(
+          schedule.id,
+        ))!.toBackupJson(),
+        original.toBackupJson(),
+      );
+
+      await relink();
+      final updated = (await isar.recurringTransactionModels.get(schedule.id))!;
+      expect(updated.toBackupJson(), {
+        ...original.toBackupJson(),
+        'accountId': account.uuid,
+        'categoryId': category.uuid,
+        'updatedAt': updated.toBackupJson()['updatedAt'],
+      });
+      expect(updated.updatedAt.isAfter(original.updatedAt), isTrue);
+      expect(updated.isSynced, original.isSynced);
+      expect(await isar.recurringTransactionModels.count(), 1);
+      expect(await isar.transactionModels.count(), 0);
+      expect((await isar.accountModels.get(account.id))!.currentBalance, 1234);
+      expect(
+        BackupV2Preflight.parse(
+          await snapshot(),
+        ).recurringTransactions.single.uuid,
+        schedule.uuid,
+      );
+      expect(await exporter.saveBackupLocally(), isTrue);
+      expect(
+        BackupV2Preflight.parse(
+          savedJson!,
+        ).recurringTransactions.single.accountId,
+        account.uuid,
+      );
+      expect(
+        () => BackupV2Preflight.parse(originalBackup),
+        throwsFormatException,
+      );
+    },
+  );
+
   test('replaces populated snapshot and repeating is idempotent', () async {
     final repository = BackupRepository(isar);
     final initial = _plan(2000);
@@ -450,11 +765,23 @@ void main() {
     expect(result.succeeded, isTrue);
     expect(result.restoredCounts.values, everyElement(0));
     expect(_collectionsFrom(await snapshot()).values, everyElement(isEmpty));
+    await isar.close();
+    SharedPreferences.setMockInitialValues({'selected_currency': 'JPY'});
+    isar = await openDatabase();
     await DatabaseInitializer.seedDatabase(isar);
     expect(await isar.accountModels.count(), 0);
     expect(await isar.categoryModels.count(), 0);
-    expect(await AppSettingsService.hasCompletedFullSnapshotRestore(), isTrue);
+    expect(await isar.fullSnapshotRestoreMarkers.count(), 1);
     expect(await AppSettingsService.loadCurrencyCode(), 'JPY');
+  });
+
+  test('startup still honors the legacy preference marker', () async {
+    SharedPreferences.setMockInitialValues({
+      'completed_full_snapshot_restore': true,
+    });
+    await DatabaseInitializer.seedDatabase(isar);
+    expect(await isar.accountModels.count(), 0);
+    expect(await isar.categoryModels.count(), 0);
   });
 
   test(
@@ -515,7 +842,10 @@ void main() {
       final result = await failingRepository.restoreVersion2Backup(_plan(9000));
 
       expect(result.succeeded, isFalse);
-      expect(result.errorMessage, contains('Existing data was left unchanged'));
+      expect(
+        result.errorMessage,
+        contains('Existing financial records were left unchanged'),
+      );
       await expectCollections(before);
       expect(await isar.accountModels.count(), 2);
       expect(await isar.categoryModels.count(), 2);
@@ -523,6 +853,40 @@ void main() {
       expect(await isar.recurringTransactionModels.count(), 1);
       expect(await isar.financialGoalModels.count(), 1);
       expect(await isar.investmentModels.count(), 1);
+      await DatabaseInitializer.seedDatabase(isar);
+      await expectCollections(before);
     },
   );
+
+  test('marker write failure prevents database mutation', () async {
+    // Omitting the schema makes the real marker write fail after all six
+    // collections have been replaced inside the transaction.
+    await isar.close();
+    isar = await openDatabase(includeMarker: false);
+    final existingAccount = AccountModel()
+      ..uuid = _uuid(7501)
+      ..name = 'Pre-existing synthetic account'
+      ..type = 'cash'
+      ..currentBalance = 4567;
+    await isar.writeTxn(() => isar.accountModels.put(existingAccount));
+    final before = _collectionsFrom(await snapshot());
+
+    final repository = BackupRepository(isar);
+    final result = await repository.restoreVersion2Backup(_plan(7600));
+
+    expect(result.succeeded, isFalse);
+    expect(
+      result.errorMessage,
+      contains('Existing financial records were left unchanged'),
+    );
+    await expectCollections(before);
+    expect(await isar.accountModels.count(), 1);
+    await isar.close();
+    isar = await openDatabase();
+    expect(await isar.fullSnapshotRestoreMarkers.count(), 0);
+    await DatabaseInitializer.seedDatabase(isar);
+    expect(await isar.accountModels.count(), 1);
+    expect(await isar.categoryModels.count(), greaterThan(0));
+    expect(await AppSettingsService.loadCurrencyCode(), 'JPY');
+  });
 }

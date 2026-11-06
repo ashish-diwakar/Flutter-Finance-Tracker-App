@@ -5,31 +5,30 @@ import 'package:isar_community/isar.dart';
 import '../../shared/models/account_model.dart';
 import '../../shared/models/category_model.dart';
 import 'default_data.dart';
+import 'full_snapshot_restore_marker.dart';
 
 class DatabaseInitializer {
   static Future<void> seedDatabase(Isar isar) async {
-    if (await AppSettingsService.hasCompletedFullSnapshotRestore()) {
+    if (await AppSettingsService.hasLegacyFullSnapshotRestoreMarker()) {
       return;
     }
 
-    final categoriesCount = await isar.categoryModels.count();
+    await isar.writeTxn(() async {
+      final marker = await isar.fullSnapshotRestoreMarkers.get(
+        FullSnapshotRestoreMarker.singletonId,
+      );
+      if (marker != null) return;
 
-    final accountsCount = await isar.accountModels.count();
-
-    if (categoriesCount == 0) {
-      final categories = fixUuidForCategoryList(DefaultData.categories);
-
-      await isar.writeTxn(() async {
-        await isar.categoryModels.putAll(categories);
-      });
-    }
-
-    if (accountsCount == 0) {
-      final accounts = fixUuidForAccountList(DefaultData.accounts);
-
-      await isar.writeTxn(() async {
-        await isar.accountModels.putAll(accounts);
-      });
-    }
+      if (await isar.categoryModels.count() == 0) {
+        await isar.categoryModels.putAll(
+          fixUuidForCategoryList(DefaultData.categories),
+        );
+      }
+      if (await isar.accountModels.count() == 0) {
+        await isar.accountModels.putAll(
+          fixUuidForAccountList(DefaultData.accounts),
+        );
+      }
+    });
   }
 }

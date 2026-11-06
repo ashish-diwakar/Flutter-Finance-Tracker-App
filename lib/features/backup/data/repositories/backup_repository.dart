@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:finance_tracker/core/database/full_snapshot_restore_marker.dart';
 import 'package:finance_tracker/core/services/app_settings_service.dart';
 import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:intl/intl.dart';
@@ -26,22 +27,35 @@ typedef BackupLocalFileSaver =
     });
 
 typedef BackupFileSharer = Future<void> Function(File file);
+typedef ConfirmUnverifiedBackup = Future<bool> Function(FormatException error);
 typedef BackupRestoreTransactionHook = Future<void> Function();
+typedef BackupImportFilePicker = Future<PlatformFile?> Function();
+
+class PreparedV2BackupImport {
+  final String fileName;
+  final ValidatedBackupRestorePlan plan;
+
+  const PreparedV2BackupImport({required this.fileName, required this.plan});
+}
 
 class BackupRepository {
   final Isar isar;
   final BackupLocalFileSaver _localFileSaver;
   final BackupFileSharer _fileSharer;
   final BackupRestoreTransactionHook? _restoreTransactionHook;
+  final BackupImportFilePicker _backupImportFilePicker;
 
   BackupRepository(
     this.isar, {
     BackupLocalFileSaver? localFileSaver,
     BackupFileSharer? fileSharer,
     BackupRestoreTransactionHook? restoreTransactionHook,
+    BackupImportFilePicker? backupImportFilePicker,
   }) : _localFileSaver = localFileSaver ?? _saveWithFilePicker,
        _fileSharer = fileSharer ?? _shareWithPlugin,
-       _restoreTransactionHook = restoreTransactionHook;
+       _restoreTransactionHook = restoreTransactionHook,
+       _backupImportFilePicker =
+           backupImportFilePicker ?? _pickVersion2BackupFile;
 
   Future<String> generateBackupJson() async {
     final currencyCode = await AppSettingsService.loadCurrencyCode();
@@ -79,6 +93,33 @@ class BackupRepository {
 
   ValidatedBackupRestorePlan preflightVersion2Backup(String content) {
     return BackupV2Preflight.parse(content);
+  }
+
+  Future<PreparedV2BackupImport?> prepareVersion2BackupImport() async {
+    late final PlatformFile selectedFile;
+    late final List<int> bytes;
+    try {
+      final picked = await _backupImportFilePicker();
+      if (picked == null) return null;
+      selectedFile = picked;
+      final content =
+          selectedFile.bytes ??
+          (selectedFile.path == null
+              ? null
+              : await File(selectedFile.path!).readAsBytes());
+      if (content == null) throw const FileSystemException('Missing file data');
+      bytes = content;
+    } on Object {
+      throw const FormatException(
+        'The selected backup could not be read. Choose an accessible JSON file.',
+      );
+    }
+    final plan = preflightVersion2Backup(utf8.decode(bytes));
+    return PreparedV2BackupImport(fileName: selectedFile.name, plan: plan);
+  }
+
+  Future<List<TransactionModel>> loadTransactionsForRestore() async {
+    return isar.transactionModels.where().findAll();
   }
 
   Future<BackupRestoreResult> restoreVersion2Backup(
@@ -155,68 +196,73 @@ class BackupRepository {
         if (investments.isNotEmpty) {
           await isar.investmentModels.putAll(investments);
         }
+        // A marker write failure rolls back the records too. There is no
+        // separate preference write after the transaction commits.
+        await isar.fullSnapshotRestoreMarkers.put(FullSnapshotRestoreMarker());
       });
     } on Object catch (error) {
       LoggerService.error(
         'V2 backup restore failed (${error.runtimeType}); transaction rolled back.',
       );
       return BackupRestoreResult.failure(
-        'The backup could not be restored. Existing data was left unchanged.',
+        'The backup could not be restored. Existing financial records were left unchanged.',
       );
     }
 
-    final warnings = <String>[
-      'Provider caches and device-local borrow/lend reminders require post-commit reconciliation.',
-    ];
-    try {
-      await AppSettingsService.markFullSnapshotRestored();
-    } on Object catch (error) {
-      LoggerService.error(
-        'V2 restore committed, but default-data suppression could not be saved '
-        '(${error.runtimeType}).',
-      );
-      warnings.add(
-        'The restored snapshot was committed, but default-data seeding may resume after an app restart.',
-      );
-    }
-
-    return BackupRestoreResult.success(
-      {
-        'accounts': accounts.length,
-        'categories': categories.length,
-        'transactions': transactions.length,
-        'recurringTransactions': recurringTransactions.length,
-        'financialGoals': financialGoals.length,
-        'investments': investments.length,
-      },
-      warnings: warnings,
-    );
+    return BackupRestoreResult.success({
+      'accounts': accounts.length,
+      'categories': categories.length,
+      'transactions': transactions.length,
+      'recurringTransactions': recurringTransactions.length,
+      'financialGoals': financialGoals.length,
+      'investments': investments.length,
+    });
   }
 
-  Future<bool> saveBackupLocally() async {
-    final jsonString = await generateBackupJson();
+  Future<bool> saveBackupLocally({
+    ConfirmUnverifiedBackup? confirmUnverified,
+  }) async {
+    final backup = await _prepareExport(confirmUnverified);
+    if (backup == null) return false;
     final result = await _localFileSaver(
-      fileName: _suggestedBackupFileName(),
-      bytes: Uint8List.fromList(utf8.encode(jsonString)),
+      fileName: backup.fileName,
+      bytes: backup.bytes,
     );
     return result != null;
   }
 
-  Future<void> shareBackup() async {
-    final jsonString = await generateBackupJson();
+  Future<void> shareBackup({ConfirmUnverifiedBackup? confirmUnverified}) async {
+    final backup = await _prepareExport(confirmUnverified);
+    if (backup == null) return;
     final temporaryDirectory = await Directory.systemTemp.createTemp(
       'finance_tracker_backup_',
     );
-    final file = File(
-      '${temporaryDirectory.path}/${_suggestedBackupFileName()}',
-    );
+    final file = File('${temporaryDirectory.path}/${backup.fileName}');
 
     try {
-      await file.writeAsBytes(utf8.encode(jsonString), flush: true);
+      await file.writeAsBytes(backup.bytes, flush: true);
       await _fileSharer(file);
     } finally {
       await temporaryDirectory.delete(recursive: true);
     }
+  }
+
+  Future<({String fileName, Uint8List bytes})?> _prepareExport(
+    ConfirmUnverifiedBackup? confirmUnverified,
+  ) async {
+    final json = await generateBackupJson();
+    var unverified = false;
+    try {
+      preflightVersion2Backup(json);
+    } on FormatException catch (error) {
+      if (confirmUnverified == null) rethrow;
+      if (!await confirmUnverified(error)) return null;
+      unverified = true;
+    }
+    return (
+      fileName: _suggestedBackupFileName(unverified: unverified),
+      bytes: Uint8List.fromList(utf8.encode(json)),
+    );
   }
 
   static Future<String?> _saveWithFilePicker({
@@ -232,15 +278,24 @@ class BackupRepository {
     );
   }
 
-  static Future<void> _shareWithPlugin(File file) async {
-    await Share.shareXFiles([XFile(file.path)]);
+  static Future<PlatformFile?> _pickVersion2BackupFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['json'],
+      withData: true,
+    );
+    return result?.files.single;
   }
 
-  static String _suggestedBackupFileName() {
+  static Future<void> _shareWithPlugin(File file) async {
+    await Share.shareXFiles([XFile(file.path, mimeType: 'application/json')]);
+  }
+
+  static String _suggestedBackupFileName({required bool unverified}) {
     final timestamp = DateFormat(
       'yyyyMMdd_HHmmss',
     ).format(DateTime.now().toUtc());
-    return 'finance_backup_$timestamp.json';
+    return 'finance_backup_${unverified ? 'unverified_' : ''}$timestamp.json';
   }
 
   Future<PreparedBackupImport?> prepareBackupImport() async {
@@ -503,13 +558,12 @@ class BackupRestoreResult {
   factory BackupRestoreResult.success(
     Map<String, int> restoredCounts, {
     List<String> warnings = const [],
-  }) =>
-      BackupRestoreResult._(
-        succeeded: true,
-        restoredCounts: restoredCounts,
-        errorMessage: null,
-        warnings: warnings,
-      );
+  }) => BackupRestoreResult._(
+    succeeded: true,
+    restoredCounts: restoredCounts,
+    errorMessage: null,
+    warnings: warnings,
+  );
 
   factory BackupRestoreResult.failure(String errorMessage) =>
       BackupRestoreResult._(

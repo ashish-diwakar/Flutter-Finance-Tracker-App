@@ -13,6 +13,7 @@ import '../../../../shared/utils/provider_refresh_helper.dart';
 import '../../../accounts/presentation/providers/accounts_provider.dart';
 import '../../../categories/presentation/providers/categories_provider.dart';
 
+import '../../data/recurring_repository.dart';
 import '../providers/recurring_provider.dart';
 
 class AddRecurringTransactionScreen extends ConsumerStatefulWidget {
@@ -50,6 +51,8 @@ class _AddRecurringTransactionScreenState
   bool active = true;
 
   bool saving = false;
+  bool? repairingReferences;
+  String? relinkError;
 
   InputDecoration _auroraInputDecoration({
     required String labelText,
@@ -130,14 +133,15 @@ class _AddRecurringTransactionScreenState
     super.dispose();
   }
 
-  Future<void> saveRecurring() async {
+  Future<void> saveRecurring(String? accountId, String? categoryId) async {
+    if (saving) return;
     FocusScope.of(context).unfocus();
 
     if (!formKey.currentState!.validate()) {
       return;
     }
 
-    if (selectedCategoryId == null) {
+    if (categoryId == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Select category')));
@@ -145,7 +149,7 @@ class _AddRecurringTransactionScreenState
       return;
     }
 
-    if (selectedAccountId == null) {
+    if (accountId == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Select account')));
@@ -155,48 +159,58 @@ class _AddRecurringTransactionScreenState
 
     setState(() {
       saving = true;
+      relinkError = null;
     });
 
     try {
       final repository = await ref.read(recurringRepositoryProvider.future);
+      if (!mounted) return;
 
-      final amount = ((double.parse(amountController.text.trim()) * 100)
-          .round());
+      if (repairingReferences == true) {
+        await repository.relinkRecurring(
+          widget.recurring!,
+          accountId: accountId,
+          categoryId: categoryId,
+        );
+      } else {
+        final amount = ((double.parse(amountController.text.trim()) * 100)
+            .round());
 
-      final recurring = widget.recurring ?? RecurringTransactionModel();
-      recurring.uuid = widget.recurring?.uuid ?? const Uuid().v4();
+        final recurring = widget.recurring ?? RecurringTransactionModel();
+        recurring.uuid = widget.recurring?.uuid ?? const Uuid().v4();
 
-      recurring.amount = amount;
+        recurring.amount = amount;
 
-      recurring.type = type;
+        recurring.type = type;
 
-      recurring.categoryId = selectedCategoryId!;
+        recurring.categoryId = categoryId;
 
-      recurring.accountId = selectedAccountId!;
+        recurring.accountId = accountId;
 
-      recurring.notes = notesController.text.trim();
+        recurring.notes = notesController.text.trim();
 
-      recurring.frequency = frequency;
+        recurring.frequency = frequency;
 
-      recurring.interval = interval;
+        recurring.interval = interval;
 
-      recurring.startDate = startDate;
+        recurring.startDate = startDate;
 
-      recurring.endDate = endDate;
+        recurring.endDate = endDate;
 
-      if (widget.recurring == null) {
-        recurring.nextRunDate = startDate;
+        if (widget.recurring == null) {
+          recurring.nextRunDate = startDate;
+        }
+
+        recurring.isActive = active;
+
+        recurring.updatedAt = DateTime.now().toUtc();
+
+        recurring.isDeleted = false;
+
+        recurring.isSynced = false;
+
+        await repository.updateRecurring(recurring);
       }
-
-      recurring.isActive = active;
-
-      recurring.updatedAt = DateTime.now().toUtc();
-
-      recurring.isDeleted = false;
-
-      recurring.isSynced = false;
-
-      await repository.updateRecurring(recurring);
 
       if (!mounted) {
         return;
@@ -217,10 +231,17 @@ class _AddRecurringTransactionScreenState
           content: Text(
             widget.recurring == null
                 ? 'Recurring transaction added'
+                : repairingReferences == true
+                ? 'Recurring references repaired'
                 : 'Recurring transaction updated',
           ),
         ),
       );
+    } on RecurringRelinkException catch (error) {
+      if (!mounted) return;
+      setState(() => relinkError = error.message);
+      ref.invalidate(accountsProvider);
+      ref.invalidate(categoriesProvider(type));
     } catch (_) {
       if (!mounted) {
         return;
@@ -244,7 +265,7 @@ class _AddRecurringTransactionScreenState
 
     final categoriesAsync = ref.watch(categoriesProvider(type));
 
-    return Scaffold(
+    final screen = Scaffold(
       appBar: AuroraAppBar(
         title: Text(
           widget.recurring == null ? 'Add Recurring' : 'Edit Recurring',
@@ -262,9 +283,35 @@ class _AddRecurringTransactionScreenState
         ),
         child: SafeArea(
           child: accountsAsync.when(
-            data: (accounts) {
+            data: (availableAccounts) {
               return categoriesAsync.when(
-                data: (categories) {
+                data: (availableCategories) {
+                  final accounts = availableAccounts.where(
+                    (account) => !account.isDeleted,
+                  );
+                  final categories = availableCategories.where(
+                    (category) => !category.isDeleted && category.type == type,
+                  );
+                  final accountId =
+                      accounts.any(
+                        (account) => account.uuid == selectedAccountId,
+                      )
+                      ? selectedAccountId
+                      : null;
+                  final categoryId =
+                      categories.any(
+                        (category) => category.uuid == selectedCategoryId,
+                      )
+                      ? selectedCategoryId
+                      : null;
+                  if (repairingReferences == null) {
+                    repairingReferences =
+                        widget.recurring != null &&
+                        (accountId == null || categoryId == null);
+                    selectedAccountId = accountId;
+                    selectedCategoryId = categoryId;
+                  }
+                  final repairing = repairingReferences!;
                   return Form(
                     key: formKey,
 
@@ -273,328 +320,383 @@ class _AddRecurringTransactionScreenState
 
                       child: Column(
                         children: [
-                          TextFormField(
-                            controller: amountController,
-                            style: const TextStyle(
-                              color: Color(0xFF244C40),
-                              fontSize: 18,
-                            ),
-
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d*\.?\d{0,2}'),
+                          if (repairing) ...[
+                            const Text(
+                              'Repair schedule references',
+                              style: TextStyle(
+                                color: Color(0xFF315F53),
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
                               ),
-                            ],
-
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Enter amount';
-                              }
-
-                              final amount = double.tryParse(value.trim());
-
-                              if (amount == null) {
-                                return 'Invalid amount';
-                              }
-
-                              if (amount <= 0) {
-                                return 'Amount must be greater than 0';
-                              }
-
-                              return null;
-                            },
-
-                            decoration: _auroraInputDecoration(
-                              labelText: 'Amount',
-                              prefixText: '₹ ',
                             ),
-                          ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Choose the account and category for this schedule. Saving updates its links and preserves its schedule details.',
+                            ),
+                          ] else ...[
+                            TextFormField(
+                              controller: amountController,
+                              style: const TextStyle(
+                                color: Color(0xFF244C40),
+                                fontSize: 18,
+                              ),
+
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d*\.?\d{0,2}'),
+                                ),
+                              ],
+
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Enter amount';
+                                }
+
+                                final amount = double.tryParse(value.trim());
+
+                                if (amount == null) {
+                                  return 'Invalid amount';
+                                }
+
+                                if (amount <= 0) {
+                                  return 'Amount must be greater than 0';
+                                }
+
+                                return null;
+                              },
+
+                              decoration: _auroraInputDecoration(
+                                labelText: 'Amount',
+                                prefixText: '₹ ',
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            DropdownButtonFormField<String>(
+                              initialValue: type,
+                              isExpanded: true,
+                              style: const TextStyle(
+                                color: Color(0xFF244C40),
+                                fontSize: 18,
+                              ),
+                              decoration: _auroraInputDecoration(
+                                labelText: 'Type',
+                              ),
+
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'expense',
+
+                                  child: Text('Expense'),
+                                ),
+
+                                DropdownMenuItem(
+                                  value: 'income',
+
+                                  child: Text('Income'),
+                                ),
+                              ],
+
+                              onChanged: (value) {
+                                if (value == null) {
+                                  return;
+                                }
+
+                                setState(() {
+                                  type = value;
+
+                                  selectedCategoryId = null;
+                                });
+                              },
+                            ),
+                          ],
 
                           const SizedBox(height: 16),
 
                           DropdownButtonFormField<String>(
-                            initialValue: type,
+                            key: ValueKey(('category', categoryId)),
+                            initialValue: categoryId,
                             isExpanded: true,
                             style: const TextStyle(
                               color: Color(0xFF244C40),
                               fontSize: 18,
                             ),
-                            decoration: _auroraInputDecoration(
-                              labelText: 'Type',
-                            ),
-
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'expense',
-
-                                child: Text('Expense'),
-                              ),
-
-                              DropdownMenuItem(
-                                value: 'income',
-
-                                child: Text('Income'),
-                              ),
-                            ],
-
-                            onChanged: (value) {
-                              if (value == null) {
-                                return;
-                              }
-
-                              setState(() {
-                                type = value;
-
-                                selectedCategoryId = null;
-                              });
-                            },
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          DropdownButtonFormField<String>(
-                            initialValue: selectedCategoryId,
-                            isExpanded: true,
-                            style: const TextStyle(
-                              color: Color(0xFF244C40),
-                              fontSize: 18,
-                            ),
-                            decoration: _auroraInputDecoration(
-                              labelText: 'Category',
-                            ),
+                            decoration:
+                                _auroraInputDecoration(
+                                  labelText: 'Category',
+                                ).copyWith(
+                                  helperText: repairing && categoryId == null
+                                      ? 'Previously selected category is unavailable. Choose a category.'
+                                      : null,
+                                  helperMaxLines: 3,
+                                ),
 
                             items: categories.map((CategoryModel category) {
                               return DropdownMenuItem(
                                 value: category.uuid,
 
-                                child: Text(category.name),
+                                child: Text(
+                                  category.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList(),
 
-                            onChanged: (value) {
-                              setState(() {
-                                selectedCategoryId = value;
-                              });
-                            },
+                            onChanged: saving
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      selectedCategoryId = value;
+                                    });
+                                  },
                           ),
 
                           const SizedBox(height: 16),
 
                           DropdownButtonFormField<String>(
-                            initialValue: selectedAccountId,
+                            key: ValueKey(('account', accountId)),
+                            initialValue: accountId,
                             isExpanded: true,
                             style: const TextStyle(
                               color: Color(0xFF244C40),
                               fontSize: 18,
                             ),
-                            decoration: _auroraInputDecoration(
-                              labelText: 'Account',
-                            ),
+                            decoration:
+                                _auroraInputDecoration(
+                                  labelText: 'Account',
+                                ).copyWith(
+                                  helperText: repairing && accountId == null
+                                      ? 'Previously selected account is unavailable. Choose an account.'
+                                      : null,
+                                  helperMaxLines: 3,
+                                ),
 
                             items: accounts.map((AccountModel account) {
                               return DropdownMenuItem(
                                 value: account.uuid,
 
-                                child: Text(account.name),
+                                child: Text(
+                                  account.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               );
                             }).toList(),
 
-                            onChanged: (value) {
-                              setState(() {
-                                selectedAccountId = value;
-                              });
-                            },
+                            onChanged: saving
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      selectedAccountId = value;
+                                    });
+                                  },
                           ),
 
                           const SizedBox(height: 16),
 
-                          TextFormField(
-                            controller: notesController,
-                            maxLines: 3,
-                            style: const TextStyle(
-                              color: Color(0xFF244C40),
-                              fontSize: 18,
-                            ),
-                            decoration: _auroraInputDecoration(
-                              labelText: 'Notes',
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          DropdownButtonFormField<String>(
-                            initialValue: frequency,
-                            isExpanded: true,
-                            style: const TextStyle(
-                              color: Color(0xFF244C40),
-                              fontSize: 18,
-                            ),
-                            decoration: _auroraInputDecoration(
-                              labelText: 'Frequency',
-                            ),
-
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'daily',
-
-                                child: Text('Daily'),
+                          if (!repairing) ...[
+                            TextFormField(
+                              controller: notesController,
+                              maxLines: 3,
+                              style: const TextStyle(
+                                color: Color(0xFF244C40),
+                                fontSize: 18,
                               ),
-
-                              DropdownMenuItem(
-                                value: 'weekly',
-
-                                child: Text('Weekly'),
-                              ),
-
-                              DropdownMenuItem(
-                                value: 'monthly',
-
-                                child: Text('Monthly'),
-                              ),
-
-                              DropdownMenuItem(
-                                value: 'yearly',
-
-                                child: Text('Yearly'),
-                              ),
-                            ],
-
-                            onChanged: (value) {
-                              if (value == null) {
-                                return;
-                              }
-
-                              setState(() {
-                                frequency = value;
-                              });
-                            },
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          DropdownButtonFormField<int>(
-                            initialValue: interval,
-                            isExpanded: true,
-                            style: const TextStyle(
-                              color: Color(0xFF244C40),
-                              fontSize: 18,
-                            ),
-                            decoration: _auroraInputDecoration(
-                              labelText: 'Interval',
-                            ),
-
-                            items: List.generate(12, (index) {
-                              final value = index + 1;
-
-                              return DropdownMenuItem(
-                                value: value,
-                                child: Text(
-                                  frequency == 'daily'
-                                      ? 'Every $value day(s)'
-                                      : frequency == 'weekly'
-                                      ? 'Every $value week(s)'
-                                      : frequency == 'monthly'
-                                      ? 'Every $value month(s)'
-                                      : 'Every $value year(s)',
-                                ),
-                              );
-                            }),
-
-                            onChanged: (value) {
-                              if (value == null) {
-                                return;
-                              }
-
-                              setState(() {
-                                interval = value;
-                              });
-                            },
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          InkWell(
-                            borderRadius: BorderRadius.circular(14),
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: startDate,
-                                firstDate: DateTime(2020),
-                                lastDate: DateTime(2100),
-                              );
-
-                              if (picked != null) {
-                                setState(() {
-                                  startDate = picked;
-                                });
-                              }
-                            },
-                            child: InputDecorator(
                               decoration: _auroraInputDecoration(
-                                labelText: 'Start Date',
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      DateFormat(
-                                        'dd MMM yyyy',
-                                      ).format(startDate),
-                                      style: const TextStyle(
-                                        color: Color(0xFF244C40),
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.calendar_today,
-                                    color: Color(0xFF315F53),
-                                  ),
-                                ],
+                                labelText: 'Notes',
                               ),
                             ),
-                          ),
 
-                          const SizedBox(height: 16),
+                            const SizedBox(height: 16),
 
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFCFEFC),
-                              border: Border.all(
-                                color: const Color(0xFFB5D9CA),
+                            DropdownButtonFormField<String>(
+                              initialValue: frequency,
+                              isExpanded: true,
+                              style: const TextStyle(
+                                color: Color(0xFF244C40),
+                                fontSize: 18,
                               ),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: SwitchListTile(
-                              value: active,
-                              title: const Text(
-                                'Active',
-                                style: TextStyle(
-                                  color: Color(0xFF315F53),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                              decoration: _auroraInputDecoration(
+                                labelText: 'Frequency',
+                              ),
+
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'daily',
+
+                                  child: Text('Daily'),
                                 ),
-                              ),
-                              activeTrackColor: const Color(0xFF17664F),
+
+                                DropdownMenuItem(
+                                  value: 'weekly',
+
+                                  child: Text('Weekly'),
+                                ),
+
+                                DropdownMenuItem(
+                                  value: 'monthly',
+
+                                  child: Text('Monthly'),
+                                ),
+
+                                DropdownMenuItem(
+                                  value: 'yearly',
+
+                                  child: Text('Yearly'),
+                                ),
+                              ],
+
                               onChanged: (value) {
+                                if (value == null) {
+                                  return;
+                                }
+
                                 setState(() {
-                                  active = value;
+                                  frequency = value;
                                 });
                               },
                             ),
-                          ),
+
+                            const SizedBox(height: 16),
+
+                            DropdownButtonFormField<int>(
+                              initialValue: interval,
+                              isExpanded: true,
+                              style: const TextStyle(
+                                color: Color(0xFF244C40),
+                                fontSize: 18,
+                              ),
+                              decoration: _auroraInputDecoration(
+                                labelText: 'Interval',
+                              ),
+
+                              items: List.generate(12, (index) {
+                                final value = index + 1;
+
+                                return DropdownMenuItem(
+                                  value: value,
+                                  child: Text(
+                                    frequency == 'daily'
+                                        ? 'Every $value day(s)'
+                                        : frequency == 'weekly'
+                                        ? 'Every $value week(s)'
+                                        : frequency == 'monthly'
+                                        ? 'Every $value month(s)'
+                                        : 'Every $value year(s)',
+                                  ),
+                                );
+                              }),
+
+                              onChanged: (value) {
+                                if (value == null) {
+                                  return;
+                                }
+
+                                setState(() {
+                                  interval = value;
+                                });
+                              },
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            InkWell(
+                              borderRadius: BorderRadius.circular(14),
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: startDate,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2100),
+                                );
+
+                                if (picked != null) {
+                                  setState(() {
+                                    startDate = picked;
+                                  });
+                                }
+                              },
+                              child: InputDecorator(
+                                decoration: _auroraInputDecoration(
+                                  labelText: 'Start Date',
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        DateFormat(
+                                          'dd MMM yyyy',
+                                        ).format(startDate),
+                                        style: const TextStyle(
+                                          color: Color(0xFF244C40),
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.calendar_today,
+                                      color: Color(0xFF315F53),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            Material(
+                              color: const Color(0xFFFCFEFC),
+                              shape: const RoundedRectangleBorder(
+                                side: BorderSide(color: Color(0xFFB5D9CA)),
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(14),
+                                ),
+                              ),
+                              child: SwitchListTile(
+                                value: active,
+                                title: const Text(
+                                  'Active',
+                                  style: TextStyle(
+                                    color: Color(0xFF315F53),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                activeTrackColor: const Color(0xFF17664F),
+                                onChanged: (value) {
+                                  setState(() {
+                                    active = value;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 24),
 
+                          if (relinkError case final error?) ...[
+                            Text(
+                              error,
+                              style: const TextStyle(color: Color(0xFF9E3F38)),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                           SizedBox(
                             width: double.infinity,
 
                             child: FilledButton(
-                              onPressed: saving ? null : saveRecurring,
+                              onPressed:
+                                  saving ||
+                                      (repairing &&
+                                          (accountId == null ||
+                                              categoryId == null))
+                                  ? null
+                                  : () => saveRecurring(accountId, categoryId),
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFF17664F),
                                 foregroundColor: Colors.white,
@@ -620,11 +722,20 @@ class _AddRecurringTransactionScreenState
                                   : Text(
                                       widget.recurring == null
                                           ? 'Add Recurring'
+                                          : repairing
+                                          ? 'Save Repair'
                                           : 'Update Recurring',
                                     ),
                             ),
                           ),
 
+                          if (repairing)
+                            OutlinedButton(
+                              onPressed: saving
+                                  ? null
+                                  : () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -647,5 +758,6 @@ class _AddRecurringTransactionScreenState
         ),
       ),
     );
+    return PopScope(canPop: !saving, child: screen);
   }
 }

@@ -169,6 +169,136 @@ Map<String, dynamic> _copyDocument(Map<String, dynamic> document) =>
     jsonDecode(jsonEncode(document)) as Map<String, dynamic>;
 
 void main() {
+  group('financial goal targets', () {
+    ValidatedBackupRestorePlan parseGoal(
+      void Function(Map<String, dynamic>) edit,
+    ) {
+      final document = _copyDocument(_document());
+      final goals = document['collections']['financialGoals'] as List;
+      edit(goals.single as Map<String, dynamic>);
+      return BackupV2Preflight.parse(jsonEncode(document));
+    }
+
+    const goalPath = r'$.collections.financialGoals[0]';
+    Matcher failsAt(String path, String issue) => throwsA(
+      isA<BackupValidationException>()
+          .having((error) => error.path, 'path', path)
+          .having((error) => error.issue, 'issue', issue),
+    );
+
+    test('deleted completed goals preserve zero and positive targets', () {
+      for (final target in [0, 10000]) {
+        final plan = parseGoal((goal) {
+          goal['targetAmount'] = target;
+          goal['currentAmount'] = 0;
+          goal['isCompleted'] = true;
+          goal['isDeleted'] = true;
+        });
+        expect(plan.financialGoals.single.toBackupJson(), {
+          ..._goal(40, _uuid(1)),
+          'targetAmount': target,
+          'currentAmount': 0,
+          'isCompleted': true,
+          'isDeleted': true,
+        });
+      }
+    });
+
+    test('active goals still reject zero and negative targets', () {
+      for (final target in [0, -1]) {
+        expect(
+          () => parseGoal((goal) => goal['targetAmount'] = target),
+          failsAt('$goalPath.targetAmount', 'Target amount must be positive.'),
+        );
+      }
+    });
+
+    test('deleted goals still reject negative targets', () {
+      expect(
+        () => parseGoal((goal) {
+          goal['isDeleted'] = true;
+          goal['targetAmount'] = -1;
+        }),
+        failsAt('$goalPath.targetAmount', 'Target amount cannot be negative.'),
+      );
+    });
+
+    test('all goals still require integer targets', () {
+      for (final isDeleted in [false, true]) {
+        for (final invalid in [null, '0', 0.0]) {
+          expect(
+            () => parseGoal((goal) {
+              goal['isDeleted'] = isDeleted;
+              goal['targetAmount'] = invalid;
+            }),
+            failsAt(
+              '$goalPath.targetAmount',
+              'Expected a signed 64-bit integer.',
+            ),
+          );
+        }
+        expect(
+          () => parseGoal((goal) {
+            goal['isDeleted'] = isDeleted;
+            goal.remove('targetAmount');
+          }),
+          failsAt(goalPath, 'Required fields are missing: targetAmount.'),
+        );
+      }
+    });
+
+    test('deleted zero-target goals still require valid UUIDs and links', () {
+      for (final (field, value, issue) in [
+        ('id', 'bad-id', 'Expected a canonical UUID.'),
+        ('linkedAccountId', _uuid(999), 'Referenced account is missing.'),
+      ]) {
+        expect(
+          () => parseGoal((goal) {
+            goal['isDeleted'] = true;
+            goal['targetAmount'] = 0;
+            goal[field] = value;
+          }),
+          failsAt('$goalPath.$field', issue),
+        );
+      }
+    });
+
+    test('deleted recurring records still require a positive amount', () {
+      final document = _copyDocument(_document());
+      final schedules =
+          document['collections']['recurringTransactions'] as List;
+      schedules.single['isDeleted'] = true;
+      schedules.single['amount'] = 0;
+      expect(
+        () => BackupV2Preflight.parse(jsonEncode(document)),
+        failsAt(
+          r'$.collections.recurringTransactions[0].amount',
+          'Amount must be positive.',
+        ),
+      );
+    });
+  });
+
+  for (final field in ['accountId', 'categoryId']) {
+    test('reports the JSON path for a missing recurring $field', () {
+      final document = _document();
+      final collections = document['collections'] as Map;
+      final recurring =
+          (collections['recurringTransactions'] as List).single as Map;
+      recurring[field] = _uuid(999);
+
+      expect(
+        () => BackupV2Preflight.parse(jsonEncode(document)),
+        throwsA(
+          isA<MissingRecurringReferencesException>().having(
+            (error) => error.paths,
+            'paths',
+            ['\$.collections.recurringTransactions[0].$field'],
+          ),
+        ),
+      );
+    });
+  }
   test('valid complete V2 snapshot preserves all six typed collections', () {
     final plan = BackupV2Preflight.parse(jsonEncode(_document()));
 

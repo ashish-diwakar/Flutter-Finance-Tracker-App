@@ -144,23 +144,22 @@ CategoryModel _copyCategory(CategoryModel source) => CategoryModel()
   ..isDeleted = source.isDeleted
   ..monthlyBudget = source.monthlyBudget;
 
-TransactionModel _copyTransaction(TransactionModel source) =>
-    TransactionModel()
-      ..uuid = source.uuid
-      ..amount = source.amount
-      ..type = source.type
-      ..transactionDate = source.transactionDate
-      ..notes = source.notes
-      ..categoryId = source.categoryId
-      ..accountId = source.accountId
-      ..toAccountId = source.toAccountId
-      ..counterpartyName = source.counterpartyName
-      ..relatedTransactionId = source.relatedTransactionId
-      ..dueDate = source.dueDate
-      ..createdAt = source.createdAt
-      ..updatedAt = source.updatedAt
-      ..isSynced = source.isSynced
-      ..isDeleted = source.isDeleted;
+TransactionModel _copyTransaction(TransactionModel source) => TransactionModel()
+  ..uuid = source.uuid
+  ..amount = source.amount
+  ..type = source.type
+  ..transactionDate = source.transactionDate
+  ..notes = source.notes
+  ..categoryId = source.categoryId
+  ..accountId = source.accountId
+  ..toAccountId = source.toAccountId
+  ..counterpartyName = source.counterpartyName
+  ..relatedTransactionId = source.relatedTransactionId
+  ..dueDate = source.dueDate
+  ..createdAt = source.createdAt
+  ..updatedAt = source.updatedAt
+  ..isSynced = source.isSynced
+  ..isDeleted = source.isDeleted;
 
 RecurringTransactionModel _copyRecurringTransaction(
   RecurringTransactionModel source,
@@ -221,7 +220,7 @@ class BackupV2Preflight {
     try {
       decoded = jsonDecode(jsonText);
     } on FormatException {
-      throw const FormatException('Backup is not valid JSON.');
+      _fail(r'$', 'Backup is not valid JSON.');
     }
 
     final root = _object(decoded, r'$');
@@ -591,8 +590,14 @@ class BackupV2Preflight {
         item['currentAmount'],
         '$path.currentAmount',
       );
-      if (targetAmount <= 0) {
-        _fail('$path.targetAmount', 'Target amount must be positive.');
+      final isDeleted = _boolean(item['isDeleted'], '$path.isDeleted');
+      if (targetAmount < 0 || (targetAmount == 0 && !isDeleted)) {
+        _fail(
+          '$path.targetAmount',
+          isDeleted
+              ? 'Target amount cannot be negative.'
+              : 'Target amount must be positive.',
+        );
       }
       if (currentAmount < 0) {
         _fail('$path.currentAmount', 'Current amount cannot be negative.');
@@ -615,7 +620,7 @@ class BackupV2Preflight {
           ..createdAt = _date(item['createdAt'], '$path.createdAt')
           ..updatedAt = _date(item['updatedAt'], '$path.updatedAt')
           ..isCompleted = _boolean(item['isCompleted'], '$path.isCompleted')
-          ..isDeleted = _boolean(item['isDeleted'], '$path.isDeleted'),
+          ..isDeleted = isDeleted,
       );
     }
     return output;
@@ -735,8 +740,8 @@ class BackupV2Preflight {
     final categoriesById = {for (final item in categories) item.uuid: item};
     final transactionsById = {for (final item in transactions) item.uuid: item};
 
-    for (final transaction in transactions) {
-      final path = 'transactions[${transaction.uuid}]';
+    for (final (index, transaction) in transactions.indexed) {
+      final path = '\$.collections.transactions[$index]';
       if (!accountsById.containsKey(transaction.accountId)) {
         _fail('$path.accountId', 'Referenced account is missing.');
       }
@@ -798,30 +803,56 @@ class BackupV2Preflight {
       }
     }
 
-    for (final recurring in recurringTransactions) {
-      final path = 'recurringTransactions[${recurring.uuid}]';
+    final missingRecurringReferences = <String>[];
+    String? mismatchedCategoryPath;
+    for (final (index, recurring) in recurringTransactions.indexed) {
+      final path = '\$.collections.recurringTransactions[$index]';
       if (!accountsById.containsKey(recurring.accountId)) {
-        _fail('$path.accountId', 'Referenced account is missing.');
+        missingRecurringReferences.add('$path.accountId');
       }
       final category = categoriesById[recurring.categoryId];
       if (category == null) {
-        _fail('$path.categoryId', 'Referenced category is missing.');
-      }
-      if (category.type != recurring.type) {
-        _fail('$path.categoryId', 'Category type does not match schedule.');
+        missingRecurringReferences.add('$path.categoryId');
+      } else if (category.type != recurring.type) {
+        mismatchedCategoryPath ??= '$path.categoryId';
       }
     }
+    if (missingRecurringReferences.isNotEmpty) {
+      throw MissingRecurringReferencesException(missingRecurringReferences);
+    }
+    if (mismatchedCategoryPath != null) {
+      _fail(mismatchedCategoryPath, 'Category type does not match schedule.');
+    }
 
-    for (final goal in financialGoals) {
+    for (final (index, goal) in financialGoals.indexed) {
       if (goal.linkedAccountId != null &&
           !accountsById.containsKey(goal.linkedAccountId)) {
         _fail(
-          'financialGoals[${goal.uuid}].linkedAccountId',
+          '\$.collections.financialGoals[$index].linkedAccountId',
           'Referenced account is missing.',
         );
       }
     }
   }
+}
+
+class MissingRecurringReferencesException extends FormatException {
+  static const code = 'missing_recurring_references';
+
+  final List<String> paths;
+
+  MissingRecurringReferencesException(List<String> paths)
+    : paths = List.unmodifiable(paths),
+      super(
+        'Recurring schedules reference accounts or categories missing from the backup.',
+      );
+}
+
+class BackupValidationException extends FormatException {
+  final String path;
+  final String issue;
+
+  BackupValidationException(this.path, this.issue) : super('$path: $issue');
 }
 
 Map<String, dynamic> _object(dynamic value, String path) {
@@ -851,7 +882,7 @@ void _allowedKeys(
 ) {
   final unknown = value.keys.toSet().difference(allowed);
   if (unknown.isNotEmpty) {
-    _fail(path, 'Unsupported fields are present: ${unknown.join(', ')}.');
+    _fail(path, 'Unsupported fields are present.');
   }
 }
 
@@ -929,5 +960,5 @@ void _unique(Set<String> ids, String id, String path) {
 }
 
 Never _fail(String path, String message) {
-  throw FormatException('$path: $message');
+  throw BackupValidationException(path, message);
 }

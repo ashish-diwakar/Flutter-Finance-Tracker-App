@@ -7,41 +7,32 @@ import '../../shared/models/category_model.dart';
 import '../../shared/models/financial_goal_model.dart';
 import '../../shared/models/investment_model.dart';
 import '../../shared/models/transaction_model.dart';
+import 'full_snapshot_restore_marker.dart';
 
 class IsarService {
-
   static Isar? _isar;
 
-  static const String _databaseName =
-      'finance_tracker';
+  static const String _databaseName = 'finance_tracker';
 
   static Future<Isar> openIsar() async {
-
     // Reuse already opened instance
     if (_isar != null) {
       return _isar!;
     }
 
     // Check if an instance is already open
-    final existingInstance =
-        Isar.getInstance(
-      _databaseName,
-    );
+    final existingInstance = Isar.getInstance(_databaseName);
 
     if (existingInstance != null) {
-
       _isar = existingInstance;
 
       return _isar!;
     }
 
-    final dir =
-        await getApplicationDocumentsDirectory();
+    final dir = await getApplicationDocumentsDirectory();
 
     _isar = await Isar.open(
-
       [
-
         TransactionModelSchema,
 
         CategoryModelSchema,
@@ -53,6 +44,7 @@ class IsarService {
         InvestmentModelSchema,
 
         FinancialGoalModelSchema,
+        FullSnapshotRestoreMarkerSchema,
       ],
 
       name: _databaseName,
@@ -66,9 +58,7 @@ class IsarService {
   }
 
   static Future<void> closeDatabase() async {
-
     if (_isar != null) {
-
       await _isar!.close();
 
       _isar = null;
