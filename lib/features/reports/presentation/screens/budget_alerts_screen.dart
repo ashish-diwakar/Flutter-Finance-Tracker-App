@@ -34,52 +34,61 @@ class BudgetAlertsScreen extends ConsumerWidget {
       appBar: AuroraAppBar(
         title: Text(isExpenseBudget ? 'Budget Alerts' : 'Income Targets'),
       ),
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Color(0xFFB6D7CC), Color(0xFFDAEDE5), Color(0xFFF8FCFA)],
-            stops: [0.0, 0.52, 1.0],
-          ),
-        ),
-        child: alertsAsync.when(
-          data: (alerts) {
-            if (alerts.isEmpty) {
-              return Center(
-                child: Text(
-                  isExpenseBudget
-                      ? 'No budget alerts for selected month'
-                      : 'No income targets for selected month',
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(financialTargetAlertsProvider(params));
-
-                await ref.read(financialTargetAlertsProvider(params).future);
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-                child: BudgetAlertsSection(
-                  alerts: alerts,
-                  targetType: targetType,
-                ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color(0xFFB6D7CC),
+                  Color(0xFFDAEDE5),
+                  Color(0xFFF8FCFA),
+                ],
+                stops: [0.0, 0.52, 1.0],
               ),
-            );
-          },
-          error: (_, _) => Center(
-            child: Text(
-              isExpenseBudget
-                  ? 'Unable to load budget alerts'
-                  : 'Unable to load income targets',
             ),
           ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-        ),
+          alertsAsync.when(
+            data: (alerts) {
+              if (alerts.isEmpty) {
+                return Center(
+                  child: Text(
+                    isExpenseBudget
+                        ? 'No budget alerts for selected month'
+                        : 'No income targets for selected month',
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(financialTargetAlertsProvider(params));
+
+                  await ref.read(financialTargetAlertsProvider(params).future);
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                  child: BudgetAlertsSection(
+                    alerts: alerts,
+                    targetType: targetType,
+                  ),
+                ),
+              );
+            },
+            error: (_, _) => Center(
+              child: Text(
+                isExpenseBudget
+                    ? 'Unable to load budget alerts'
+                    : 'Unable to load income targets',
+              ),
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+          ),
+        ],
       ),
     );
   }
