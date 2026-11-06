@@ -241,11 +241,47 @@ void main() {
     },
   );
 
+  test('version 2 preflight is read-only for existing collections', () async {
+    final existing = await seedExistingData();
+    final document = {
+      'format': 'finance-tracker-backup',
+      'schemaVersion': 2,
+      'metadata': {
+        'exportedAt': '2026-11-06T00:00:00.000Z',
+        'appVersion': null,
+        'currencyCode': 'USD',
+      },
+      'manifest': {
+        'accounts': {'recordCount': 0},
+        'categories': {'recordCount': 0},
+        'transactions': {'recordCount': 0},
+        'recurringTransactions': {'recordCount': 0},
+        'financialGoals': {'recordCount': 0},
+        'investments': {'recordCount': 0},
+      },
+      'collections': {
+        'accounts': [],
+        'categories': [],
+        'transactions': [],
+        'recurringTransactions': [],
+        'financialGoals': [],
+        'investments': [],
+      },
+    };
+
+    final plan = BackupRepository(
+      isar,
+    ).preflightVersion2Backup(jsonEncode(document));
+
+    expect(plan.totalRecordCount, 0);
+    await expectExistingData(existing);
+  });
+
   test('version 2 export contains all portable records and metadata', () async {
     SharedPreferences.setMockInitialValues({'selected_currency': 'JPY'});
 
     final account = AccountModel()
-      ..uuid = 'account-stable-uuid'
+      ..uuid = '10000000-0000-4000-8000-000000000001'
       ..name = 'Archived cash'
       ..type = 'cash'
       ..currentBalance = 9007199254740991
@@ -255,7 +291,7 @@ void main() {
       ..updatedAt = DateTime.utc(2026, 2, 3)
       ..isDeleted = true;
     final category = CategoryModel()
-      ..uuid = 'category-stable-uuid'
+      ..uuid = '10000000-0000-4000-8000-000000000002'
       ..name = 'Portable category'
       ..type = 'expense'
       ..icon = 'shopping_bag'
@@ -266,13 +302,13 @@ void main() {
       ..monthlyBudget = 12875
       ..isDeleted = true;
     final transfer = TransactionModel()
-      ..uuid = 'transaction-stable-uuid'
+      ..uuid = '10000000-0000-4000-8000-000000000003'
       ..amount = 9007199254740991
-      ..type = 'transfer'
+      ..type = 'borrowed'
       ..accountId = account.uuid
-      ..toAccountId = 'destination-account-uuid'
-      ..categoryId = category.uuid
-      ..relatedTransactionId = 'parent-transaction-uuid'
+      ..toAccountId = null
+      ..categoryId = null
+      ..relatedTransactionId = null
       ..counterpartyName = 'Counterparty'
       ..dueDate = DateTime.utc(2026, 12, 1)
       ..notes = 'Transfer note'
@@ -281,7 +317,7 @@ void main() {
       ..updatedAt = DateTime.utc(2026, 6, 7)
       ..isDeleted = true;
     final recurring = RecurringTransactionModel()
-      ..uuid = 'recurring-stable-uuid'
+      ..uuid = '10000000-0000-4000-8000-000000000004'
       ..amount = 1337
       ..type = 'expense'
       ..categoryId = category.uuid
@@ -296,7 +332,7 @@ void main() {
       ..updatedAt = DateTime.utc(2026, 10, 1)
       ..isDeleted = true;
     final goal = FinancialGoalModel()
-      ..uuid = 'goal-stable-uuid'
+      ..uuid = '10000000-0000-4000-8000-000000000005'
       ..name = 'Emergency fund'
       ..description = 'Keep the goal description'
       ..targetAmount = 1000000
@@ -308,12 +344,12 @@ void main() {
       ..isCompleted = false
       ..isDeleted = true;
     final investment = InvestmentModel()
-      ..uuid = 'investment-stable-uuid'
+      ..uuid = '10000000-0000-4000-8000-000000000006'
       ..name = 'Fixed deposit'
-      ..type = 'fixed'
+      ..type = 'FD'
       ..symbol = 'FD-1'
       ..notes = 'Investment note'
-      ..quantity = 3
+      ..quantity = 1
       ..purchasePrice = 1234567890123
       ..currentPrice = 1234567890456
       ..purchaseDate = DateTime.utc(2026, 1, 15)
@@ -322,7 +358,7 @@ void main() {
       ..interestRate = 7.123456789012345
       ..maturityDate = DateTime.utc(2029, 1, 15)
       ..maturityValue = 1500000000000
-      ..investmentClass = 'fixed_income'
+      ..investmentClass = 'fixed'
       ..isDeleted = true;
 
     await isar.writeTxn(() async {
@@ -334,9 +370,11 @@ void main() {
       await isar.investmentModels.put(investment);
     });
 
-    final json =
-        jsonDecode(await BackupRepository(isar).generateBackupJson())
+    final repository = BackupRepository(isar);
+    final jsonText = await repository.generateBackupJson();
+    final json = jsonDecode(jsonText)
             as Map<String, dynamic>;
+    final restorePlan = repository.preflightVersion2Backup(jsonText);
     final collections = json['collections'] as Map<String, dynamic>;
     final manifest = json['manifest'] as Map<String, dynamic>;
     final metadata = json['metadata'] as Map<String, dynamic>;
@@ -406,7 +444,7 @@ void main() {
     expect(exportedTransaction['id'], transfer.uuid);
     expect(exportedTransaction['amount'], transfer.amount);
     expect(exportedTransaction['accountId'], account.uuid);
-    expect(exportedTransaction['categoryId'], category.uuid);
+    expect(exportedTransaction['categoryId'], isNull);
     expect(exportedTransaction['toAccountId'], transfer.toAccountId);
     expect(
       exportedTransaction['relatedTransactionId'],
@@ -530,6 +568,23 @@ void main() {
       'investmentClass',
       'isDeleted',
     });
+    expect(restorePlan.accounts.single.uuid, account.uuid);
+    expect(restorePlan.accounts.single.currentBalance, account.currentBalance);
+    expect(restorePlan.categories.single.uuid, category.uuid);
+    expect(restorePlan.transactions.single.uuid, transfer.uuid);
+    expect(restorePlan.transactions.single.amount, transfer.amount);
+    expect(restorePlan.transactions.single.dueDate, transfer.dueDate);
+    expect(
+      restorePlan.recurringTransactions.single.uuid,
+      recurring.uuid,
+    );
+    expect(restorePlan.recurringTransactions.single.nextRunDate, recurring.nextRunDate);
+    expect(restorePlan.financialGoals.single.currentAmount, goal.currentAmount);
+    expect(restorePlan.investments.single.uuid, investment.uuid);
+    expect(
+      restorePlan.investments.single.interestRate,
+      investment.interestRate,
+    );
   });
 
   test(

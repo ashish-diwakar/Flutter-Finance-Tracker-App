@@ -17,6 +17,7 @@ import '../../../../shared/models/investment_model.dart';
 import '../../../../shared/models/recurring_transaction_model.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../domain/models/backup_data_model.dart';
+import '../../domain/services/backup_v2_preflight.dart';
 
 typedef BackupLocalFileSaver =
     Future<String?> Function({
@@ -70,6 +71,10 @@ class BackupRepository {
     );
 
     return jsonEncode(backup.toJson());
+  }
+
+  ValidatedBackupRestorePlan preflightVersion2Backup(String content) {
+    return BackupV2Preflight.parse(content);
   }
 
   Future<bool> saveBackupLocally() async {
