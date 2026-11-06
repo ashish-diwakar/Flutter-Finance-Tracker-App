@@ -379,8 +379,16 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
               // EXPORT PERIOD
               // ==========================================
               Card(
+                margin: EdgeInsets.zero,
+                color: const Color(0xFFF0F8F2),
+                surfaceTintColor: Colors.transparent,
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: const BorderSide(color: Color(0xFFB8D8CA)),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(15),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -391,8 +399,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                           Text(
                             'Export Period',
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF315F53),
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -400,7 +409,10 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                       const SizedBox(height: 8),
                       const Text(
                         'Choose the transaction period to include in both CSV and PDF exports.',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(
+                          color: Color(0xFF536B61),
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Wrap(
@@ -410,6 +422,27 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                           return ChoiceChip(
                             label: Text(period.label),
                             selected: selectedPeriod == period,
+                            showCheckmark: true,
+                            selectedColor: const Color(0xFFDDEFE5),
+                            backgroundColor: const Color(0xFFFAFDFB),
+                            side: BorderSide(
+                              color: selectedPeriod == period
+                                  ? const Color(0xFF3E8877)
+                                  : const Color(0xFFB5D9CA),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            labelStyle: TextStyle(
+                              color: const Color(0xFF315F53),
+                              fontWeight: selectedPeriod == period
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                            ),
                             onSelected: (_) => _selectPeriod(period),
                           );
                         }).toList(),
@@ -419,20 +452,23 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest
-                              .withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(10),
+                          color: const Color(0xFFE5F1E9),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_month, size: 20),
+                            const Icon(
+                              Icons.calendar_month,
+                              size: 20,
+                              color: Color(0xFF315F53),
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 selectedPeriodLabel,
                                 style: const TextStyle(
+                                  color: Color(0xFF244C40),
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -471,14 +507,22 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // ==========================================
               // PDF SETTINGS
               // ==========================================
               Card(
+                margin: EdgeInsets.zero,
+                color: const Color(0xFFF0F8F2),
+                surfaceTintColor: Colors.transparent,
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: const BorderSide(color: Color(0xFFB8D8CA)),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(15),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -489,8 +533,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                           Text(
                             'PDF Report Settings',
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF315F53),
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -498,14 +543,49 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                       const SizedBox(height: 20),
                       TextField(
                         controller: reportTitleController,
-                        decoration: const InputDecoration(
+                        style: const TextStyle(
+                          color: Color(0xFF244C40),
+                          fontSize: 18,
+                        ),
+                        decoration: InputDecoration(
                           labelText: 'PDF Report Title',
+                          labelStyle: const TextStyle(
+                            color: Color(0xFF536B61),
+                            fontWeight: FontWeight.w600,
+                          ),
+                          floatingLabelStyle: const TextStyle(
+                            color: Color(0xFF315F53),
+                            fontWeight: FontWeight.w600,
+                          ),
                           hintText: 'Enter the heading for your PDF report',
+                          hintStyle: const TextStyle(color: Color(0xFF6B7F76)),
                           helperText:
                               'Enter the heading that will appear at the top of the PDF. You can keep or change this title.',
                           helperMaxLines: 2,
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.title),
+                          helperStyle: const TextStyle(
+                            color: Color(0xFF536B61),
+                            fontSize: 13,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFAFDFB),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 15,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFB5D9CA),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF3E8877),
+                              width: 1.6,
+                            ),
+                          ),
+                          prefixIcon: const Icon(Icons.title),
                         ),
                       ),
                     ],
@@ -513,26 +593,36 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // ==========================================
               // REPORT STYLE
               // ==========================================
               Card(
+                margin: EdgeInsets.zero,
+                color: const Color(0xFFF0F8F2),
+                surfaceTintColor: Colors.transparent,
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: const BorderSide(color: Color(0xFFB8D8CA)),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(15),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'Report Style',
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF315F53),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 16),
                       SegmentedButton<ExportReportStyle>(
+                        showSelectedIcon: true,
                         segments: const [
                           ButtonSegment(
                             value: ExportReportStyle.classic,
@@ -546,6 +636,37 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                           ),
                         ],
                         selected: {selectedStyle},
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStateProperty.resolveWith((
+                            states,
+                          ) {
+                            if (states.contains(WidgetState.selected)) {
+                              return const Color(0xFFDDEFE5);
+                            }
+                            return const Color(0xFFFAFDFB);
+                          }),
+                          foregroundColor: WidgetStateProperty.all(
+                            const Color(0xFF315F53),
+                          ),
+                          side: WidgetStateProperty.resolveWith((states) {
+                            return BorderSide(
+                              color: states.contains(WidgetState.selected)
+                                  ? const Color(0xFF3E8877)
+                                  : const Color(0xFFB5D9CA),
+                            );
+                          }),
+                          shape: WidgetStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          textStyle: WidgetStateProperty.all(
+                            const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          minimumSize: WidgetStateProperty.all(
+                            const Size(0, 48),
+                          ),
+                        ),
                         onSelectionChanged: (value) {
                           setState(() {
                             selectedStyle = value.first;
@@ -557,7 +678,10 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                         selectedStyle == ExportReportStyle.classic
                             ? 'Simple printable financial report with compact layout.'
                             : 'Modern analytics-style report with summary cards and insights.',
-                        style: const TextStyle(color: Colors.grey),
+                        style: const TextStyle(
+                          color: Color(0xFF536B61),
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -676,10 +800,35 @@ class _DateRangeButton extends StatelessWidget {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(),
-          suffixIcon: const Icon(Icons.calendar_today, size: 18),
+          labelStyle: const TextStyle(color: Color(0xFF536B61)),
+          filled: true,
+          fillColor: const Color(0xFFFAFDFB),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 14,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFB5D9CA)),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFB5D9CA)),
+          ),
+          suffixIcon: const Icon(
+            Icons.calendar_today,
+            size: 18,
+            color: Color(0xFF315F53),
+          ),
         ),
-        child: Text(value),
+        child: Text(
+          value,
+          style: const TextStyle(
+            color: Color(0xFF244C40),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
