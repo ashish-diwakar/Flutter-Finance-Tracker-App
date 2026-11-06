@@ -90,6 +90,32 @@ class _ManageGoalsScreenState extends ConsumerState<ManageGoalsScreen> {
     );
   }
 
+  Widget _goalDeleteDetailRow({required String label, required String value}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(color: Color(0xFF536B61), fontSize: 14),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              color: Color(0xFF244C40),
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> showGoalDialog({FinancialGoalModel? goal}) async {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController(text: goal?.name ?? '');
@@ -537,9 +563,146 @@ class _ManageGoalsScreenState extends ConsumerState<ManageGoalsScreen> {
                                     context: context,
                                     builder: (dialogContext) {
                                       return AlertDialog(
-                                        title: const Text('Delete Goal?'),
-                                        content: Text(
-                                          'Are you sure you want to delete "${goal.name}"?',
+                                        backgroundColor: const Color(
+                                          0xFFF3FAF5,
+                                        ),
+                                        elevation: 4,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            24,
+                                          ),
+                                        ),
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 440,
+                                        ),
+                                        insetPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 18,
+                                              vertical: 24,
+                                            ),
+                                        scrollable: true,
+                                        titlePadding: const EdgeInsets.fromLTRB(
+                                          20,
+                                          24,
+                                          20,
+                                          8,
+                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                              vertical: 12,
+                                            ),
+                                        actionsPadding:
+                                            const EdgeInsets.fromLTRB(
+                                              16,
+                                              8,
+                                              16,
+                                              16,
+                                            ),
+                                        actionsOverflowButtonSpacing: 8,
+                                        title: const Row(
+                                          children: [
+                                            DecoratedBox(
+                                              decoration: BoxDecoration(
+                                                color: Color(0xFFFBE6E3),
+                                                borderRadius: BorderRadius.all(
+                                                  Radius.circular(12),
+                                                ),
+                                              ),
+                                              child: SizedBox(
+                                                width: 44,
+                                                height: 44,
+                                                child: Icon(
+                                                  Icons.delete_outline,
+                                                  color: Color(0xFFB54C44),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                'Delete Goal?',
+                                                style: TextStyle(
+                                                  color: Color(0xFF315F53),
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        content: SizedBox(
+                                          width: 440,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(
+                                                  14,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(
+                                                    0xFFE5F1E9,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                ),
+                                                child: Column(
+                                                  children: [
+                                                    _goalDeleteDetailRow(
+                                                      label: 'Goal',
+                                                      value: goal.name,
+                                                    ),
+                                                    const Divider(
+                                                      height: 20,
+                                                      color: Color(0xFFC9DBD0),
+                                                    ),
+                                                    _goalDeleteDetailRow(
+                                                      label: 'Current Savings',
+                                                      value:
+                                                          CurrencyFormatter.format(
+                                                            amount: goal
+                                                                .currentAmount,
+                                                            currency: currency,
+                                                          ),
+                                                    ),
+                                                    const Divider(
+                                                      height: 20,
+                                                      color: Color(0xFFC9DBD0),
+                                                    ),
+                                                    _goalDeleteDetailRow(
+                                                      label: 'Target Amount',
+                                                      value:
+                                                          CurrencyFormatter.format(
+                                                            amount: goal
+                                                                .targetAmount,
+                                                            currency: currency,
+                                                          ),
+                                                    ),
+                                                    const Divider(
+                                                      height: 20,
+                                                      color: Color(0xFFC9DBD0),
+                                                    ),
+                                                    _goalDeleteDetailRow(
+                                                      label: 'Status',
+                                                      value: goal.isCompleted
+                                                          ? 'Completed'
+                                                          : 'Active',
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(height: 14),
+                                              Text(
+                                                'Are you sure you want to delete "${goal.name}"?',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF244C40),
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                         actions: [
                                           TextButton(
@@ -548,15 +711,50 @@ class _ManageGoalsScreenState extends ConsumerState<ManageGoalsScreen> {
                                                 dialogContext,
                                               ).pop(false);
                                             },
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: const Color(
+                                                0xFF315F53,
+                                              ),
+                                              minimumSize: const Size(88, 48),
+                                              side: const BorderSide(
+                                                color: Color(0xFFB5D9CA),
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                              textStyle: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                             child: const Text('Cancel'),
                                           ),
-                                          ElevatedButton(
+                                          FilledButton.icon(
                                             onPressed: () {
                                               Navigator.of(
                                                 dialogContext,
                                               ).pop(true);
                                             },
-                                            child: const Text('Delete'),
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                0xFFB54C44,
+                                              ),
+                                              foregroundColor: Colors.white,
+                                              minimumSize: const Size(104, 48),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                              textStyle: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            icon: const Icon(
+                                              Icons.delete_outline,
+                                            ),
+                                            label: const Text('Delete'),
                                           ),
                                         ],
                                       );

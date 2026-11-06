@@ -11,6 +11,7 @@ class _FakeGoalRepository implements GoalRepository {
   final List<FinancialGoalModel> goals = [];
   int addCalls = 0;
   int updateCalls = 0;
+  int deleteCalls = 0;
 
   @override
   Isar get isar => throw UnimplementedError();
@@ -31,6 +32,7 @@ class _FakeGoalRepository implements GoalRepository {
 
   @override
   Future<void> deleteGoal(FinancialGoalModel goal) async {
+    deleteCalls++;
     goals.remove(goal);
   }
 }
@@ -153,5 +155,51 @@ void main() {
     expect(repository.updateCalls, 1);
     expect(goal.targetAmount, 15000000);
     expect(goal.currentAmount, 15500000);
+  });
+
+  testWidgets('canceling goal deletion does not delete the goal', (
+    tester,
+  ) async {
+    final goal = FinancialGoalModel()
+      ..name = 'Bike'
+      ..description = 'New bicycle'
+      ..targetAmount = 15000000
+      ..currentAmount = 15500000
+      ..isCompleted = true;
+    final repository = await pumpGoalScreen(tester, goal: goal);
+
+    await tester.tap(find.byTooltip('Delete Goal'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete Goal?'), findsOneWidget);
+    expect(find.text('Bike'), findsNWidgets(2));
+    expect(find.text('Current Savings'), findsOneWidget);
+    expect(find.text('Target Amount'), findsOneWidget);
+    expect(find.text('Completed'), findsWidgets);
+
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(repository.deleteCalls, 0);
+    expect(repository.goals, contains(same(goal)));
+  });
+
+  testWidgets('explicit delete confirmation invokes the existing delete path', (
+    tester,
+  ) async {
+    final goal = FinancialGoalModel()
+      ..name = 'Bike'
+      ..targetAmount = 15000000
+      ..currentAmount = 15500000
+      ..isCompleted = true;
+    final repository = await pumpGoalScreen(tester, goal: goal);
+
+    await tester.tap(find.byTooltip('Delete Goal'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+
+    expect(repository.deleteCalls, 1);
+    expect(repository.goals, isNot(contains(same(goal))));
   });
 }
