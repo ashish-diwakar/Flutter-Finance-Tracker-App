@@ -26,18 +26,22 @@ typedef BackupLocalFileSaver =
     });
 
 typedef BackupFileSharer = Future<void> Function(File file);
+typedef BackupRestoreTransactionHook = Future<void> Function();
 
 class BackupRepository {
   final Isar isar;
   final BackupLocalFileSaver _localFileSaver;
   final BackupFileSharer _fileSharer;
+  final BackupRestoreTransactionHook? _restoreTransactionHook;
 
   BackupRepository(
     this.isar, {
     BackupLocalFileSaver? localFileSaver,
     BackupFileSharer? fileSharer,
+    BackupRestoreTransactionHook? restoreTransactionHook,
   }) : _localFileSaver = localFileSaver ?? _saveWithFilePicker,
-       _fileSharer = fileSharer ?? _shareWithPlugin;
+       _fileSharer = fileSharer ?? _shareWithPlugin,
+       _restoreTransactionHook = restoreTransactionHook;
 
   Future<String> generateBackupJson() async {
     final currencyCode = await AppSettingsService.loadCurrencyCode();
@@ -75,6 +79,118 @@ class BackupRepository {
 
   ValidatedBackupRestorePlan preflightVersion2Backup(String content) {
     return BackupV2Preflight.parse(content);
+  }
+
+  Future<BackupRestoreResult> restoreVersion2Backup(
+    ValidatedBackupRestorePlan? plan,
+  ) async {
+    if (plan == null) {
+      return BackupRestoreResult.failure(
+        'No validated V2 backup was provided.',
+      );
+    }
+
+    late final ValidatedBackupRestorePlan snapshot;
+    try {
+      snapshot = BackupV2Preflight.parse(jsonEncode(plan.toBackupJson()));
+    } on Object {
+      return BackupRestoreResult.failure(
+        'The validated backup plan is invalid or has been modified.',
+      );
+    }
+
+    final accounts = snapshot.accounts
+      ..forEach((item) {
+        item.id = Isar.autoIncrement;
+        // Sync state is device-local and is not part of portable V2 data.
+        item.isSynced = false;
+      });
+    final categories = snapshot.categories
+      ..forEach((item) {
+        item.id = Isar.autoIncrement;
+        item.isSynced = false;
+      });
+    final transactions = snapshot.transactions
+      ..forEach((item) {
+        item.id = Isar.autoIncrement;
+        item.isSynced = false;
+      });
+    final recurringTransactions = snapshot.recurringTransactions
+      ..forEach((item) {
+        item.id = Isar.autoIncrement;
+        item.isSynced = false;
+      });
+    final financialGoals = snapshot.financialGoals
+      ..forEach((item) {
+        item.id = Isar.autoIncrement;
+        item.isSynced = false;
+      });
+    final investments = snapshot.investments
+      ..forEach((item) {
+        item.id = Isar.autoIncrement;
+        item.isSynced = false;
+      });
+
+    try {
+      await isar.writeTxn(() async {
+        await isar.accountModels.clear();
+        await isar.categoryModels.clear();
+        await isar.transactionModels.clear();
+        await isar.recurringTransactionModels.clear();
+        await isar.financialGoalModels.clear();
+        await isar.investmentModels.clear();
+
+        if (accounts.isNotEmpty) await isar.accountModels.putAll(accounts);
+        await _restoreTransactionHook?.call();
+        if (categories.isNotEmpty) await isar.categoryModels.putAll(categories);
+        if (transactions.isNotEmpty) {
+          await isar.transactionModels.putAll(transactions);
+        }
+        if (recurringTransactions.isNotEmpty) {
+          await isar.recurringTransactionModels.putAll(recurringTransactions);
+        }
+        if (financialGoals.isNotEmpty) {
+          await isar.financialGoalModels.putAll(financialGoals);
+        }
+        if (investments.isNotEmpty) {
+          await isar.investmentModels.putAll(investments);
+        }
+      });
+    } on Object catch (error) {
+      LoggerService.error(
+        'V2 backup restore failed (${error.runtimeType}); transaction rolled back.',
+      );
+      return BackupRestoreResult.failure(
+        'The backup could not be restored. Existing data was left unchanged.',
+      );
+    }
+
+    final warnings = <String>[
+      'Provider caches and device-local borrow/lend reminders require post-commit reconciliation.',
+    ];
+    try {
+      await AppSettingsService.markFullSnapshotRestored();
+    } on Object catch (error) {
+      LoggerService.error(
+        'V2 restore committed, but default-data suppression could not be saved '
+        '(${error.runtimeType}).',
+      );
+      warnings.add(
+        'The restored snapshot was committed, but default-data seeding may resume after an app restart.',
+      );
+    }
+
+    return BackupRestoreResult.success(
+      {
+        'accounts': accounts.length,
+        'categories': categories.length,
+        'transactions': transactions.length,
+        'recurringTransactions': recurringTransactions.length,
+        'financialGoals': financialGoals.length,
+        'investments': investments.length,
+      },
+      warnings: warnings,
+    );
   }
 
   Future<bool> saveBackupLocally() async {
@@ -368,4 +484,38 @@ class PreparedBackupImport {
   }) : transactions = List.unmodifiable(transactions),
        categories = List.unmodifiable(categories),
        accounts = List.unmodifiable(accounts);
+}
+
+class BackupRestoreResult {
+  final bool succeeded;
+  final Map<String, int> restoredCounts;
+  final String? errorMessage;
+  final List<String> warnings;
+
+  BackupRestoreResult._({
+    required this.succeeded,
+    required Map<String, int> restoredCounts,
+    required this.errorMessage,
+    required List<String> warnings,
+  }) : restoredCounts = Map.unmodifiable(restoredCounts),
+       warnings = List.unmodifiable(warnings);
+
+  factory BackupRestoreResult.success(
+    Map<String, int> restoredCounts, {
+    List<String> warnings = const [],
+  }) =>
+      BackupRestoreResult._(
+        succeeded: true,
+        restoredCounts: restoredCounts,
+        errorMessage: null,
+        warnings: warnings,
+      );
+
+  factory BackupRestoreResult.failure(String errorMessage) =>
+      BackupRestoreResult._(
+        succeeded: false,
+        restoredCounts: const {},
+        errorMessage: errorMessage,
+        warnings: const [],
+      );
 }

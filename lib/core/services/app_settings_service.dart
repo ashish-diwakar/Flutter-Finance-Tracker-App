@@ -4,6 +4,21 @@ class AppSettingsService {
 
   static const _currencyKey =
       'selected_currency';
+  static const _fullSnapshotRestoreKey =
+      'completed_full_snapshot_restore';
+
+  static Future<bool> hasCompletedFullSnapshotRestore() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_fullSnapshotRestoreKey) ?? false;
+  }
+
+  static Future<void> markFullSnapshotRestored() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = await prefs.setBool(_fullSnapshotRestoreKey, true);
+    if (!saved) {
+      throw StateError('Unable to persist full-snapshot restore state.');
+    }
+  }
 
   // ===========================================
   // SAVE CURRENCY

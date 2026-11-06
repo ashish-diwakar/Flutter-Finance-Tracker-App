@@ -18,19 +18,21 @@ const _collectionNames = [
 ];
 
 class ValidatedBackupRestorePlan {
+  final int schemaVersion;
   final String? appVersion;
   final String? currencyCode;
   final DateTime exportedAt;
-  final List<AccountModel> accounts;
-  final List<CategoryModel> categories;
-  final List<TransactionModel> transactions;
-  final List<RecurringTransactionModel> recurringTransactions;
-  final List<FinancialGoalModel> financialGoals;
-  final List<InvestmentModel> investments;
+  final List<AccountModel> _accounts;
+  final List<CategoryModel> _categories;
+  final List<TransactionModel> _transactions;
+  final List<RecurringTransactionModel> _recurringTransactions;
+  final List<FinancialGoalModel> _financialGoals;
+  final List<InvestmentModel> _investments;
   final Map<String, int> recordCounts;
   final List<String> warnings;
 
-  ValidatedBackupRestorePlan({
+  ValidatedBackupRestorePlan._({
+    required this.schemaVersion,
     required this.appVersion,
     required this.currencyCode,
     required this.exportedAt,
@@ -42,18 +44,176 @@ class ValidatedBackupRestorePlan {
     required List<InvestmentModel> investments,
     required Map<String, int> recordCounts,
     List<String> warnings = const [],
-  }) : accounts = List.unmodifiable(accounts),
-       categories = List.unmodifiable(categories),
-       transactions = List.unmodifiable(transactions),
-       recurringTransactions = List.unmodifiable(recurringTransactions),
-       financialGoals = List.unmodifiable(financialGoals),
-       investments = List.unmodifiable(investments),
+  }) : _accounts = List.unmodifiable(accounts.map(_copyAccount)),
+       _categories = List.unmodifiable(categories.map(_copyCategory)),
+       _transactions = List.unmodifiable(transactions.map(_copyTransaction)),
+       _recurringTransactions = List.unmodifiable(
+         recurringTransactions.map(_copyRecurringTransaction),
+       ),
+       _financialGoals = List.unmodifiable(
+         financialGoals.map(_copyFinancialGoal),
+       ),
+       _investments = List.unmodifiable(investments.map(_copyInvestment)),
        recordCounts = Map.unmodifiable(recordCounts),
        warnings = List.unmodifiable(warnings);
 
+  List<AccountModel> get accounts => _accounts.map(_copyAccount).toList();
+  List<CategoryModel> get categories => _categories.map(_copyCategory).toList();
+  List<TransactionModel> get transactions =>
+      _transactions.map(_copyTransaction).toList();
+  List<RecurringTransactionModel> get recurringTransactions =>
+      _recurringTransactions.map(_copyRecurringTransaction).toList();
+  List<FinancialGoalModel> get financialGoals =>
+      _financialGoals.map(_copyFinancialGoal).toList();
+  List<InvestmentModel> get investments =>
+      _investments.map(_copyInvestment).toList();
+
   int get totalRecordCount =>
       recordCounts.values.fold(0, (total, count) => total + count);
+
+  Map<String, dynamic> toBackupJson() {
+    final accountRecords = _accounts
+        .map((item) => item.toBackupJson())
+        .toList();
+    final categoryRecords = _categories
+        .map((item) => item.toBackupJson())
+        .toList();
+    final transactionRecords = _transactions
+        .map((item) => item.toBackupJson())
+        .toList();
+    final recurringRecords = _recurringTransactions
+        .map((item) => item.toBackupJson())
+        .toList();
+    final goalRecords = _financialGoals
+        .map((item) => item.toBackupJson())
+        .toList();
+    final investmentRecords = _investments
+        .map((item) => item.toBackupJson())
+        .toList();
+
+    return {
+      'format': 'finance-tracker-backup',
+      'schemaVersion': schemaVersion,
+      'metadata': {
+        'exportedAt': exportedAt.toUtc().toIso8601String(),
+        'appVersion': appVersion,
+        'currencyCode': currencyCode,
+      },
+      'manifest': {
+        'accounts': {'recordCount': accountRecords.length},
+        'categories': {'recordCount': categoryRecords.length},
+        'transactions': {'recordCount': transactionRecords.length},
+        'recurringTransactions': {'recordCount': recurringRecords.length},
+        'financialGoals': {'recordCount': goalRecords.length},
+        'investments': {'recordCount': investmentRecords.length},
+      },
+      'collections': {
+        'accounts': accountRecords,
+        'categories': categoryRecords,
+        'transactions': transactionRecords,
+        'recurringTransactions': recurringRecords,
+        'financialGoals': goalRecords,
+        'investments': investmentRecords,
+      },
+    };
+  }
 }
+
+AccountModel _copyAccount(AccountModel source) => AccountModel()
+  ..uuid = source.uuid
+  ..name = source.name
+  ..type = source.type
+  ..currentBalance = source.currentBalance
+  ..isArchived = source.isArchived
+  ..isDefault = source.isDefault
+  ..createdAt = source.createdAt
+  ..updatedAt = source.updatedAt
+  ..isSynced = source.isSynced
+  ..isDeleted = source.isDeleted;
+
+CategoryModel _copyCategory(CategoryModel source) => CategoryModel()
+  ..uuid = source.uuid
+  ..name = source.name
+  ..type = source.type
+  ..icon = source.icon
+  ..colorValue = source.colorValue
+  ..isDefault = source.isDefault
+  ..createdAt = source.createdAt
+  ..updatedAt = source.updatedAt
+  ..isSynced = source.isSynced
+  ..isDeleted = source.isDeleted
+  ..monthlyBudget = source.monthlyBudget;
+
+TransactionModel _copyTransaction(TransactionModel source) =>
+    TransactionModel()
+      ..uuid = source.uuid
+      ..amount = source.amount
+      ..type = source.type
+      ..transactionDate = source.transactionDate
+      ..notes = source.notes
+      ..categoryId = source.categoryId
+      ..accountId = source.accountId
+      ..toAccountId = source.toAccountId
+      ..counterpartyName = source.counterpartyName
+      ..relatedTransactionId = source.relatedTransactionId
+      ..dueDate = source.dueDate
+      ..createdAt = source.createdAt
+      ..updatedAt = source.updatedAt
+      ..isSynced = source.isSynced
+      ..isDeleted = source.isDeleted;
+
+RecurringTransactionModel _copyRecurringTransaction(
+  RecurringTransactionModel source,
+) => RecurringTransactionModel()
+  ..uuid = source.uuid
+  ..amount = source.amount
+  ..type = source.type
+  ..categoryId = source.categoryId
+  ..accountId = source.accountId
+  ..notes = source.notes
+  ..startDate = source.startDate
+  ..endDate = source.endDate
+  ..frequency = source.frequency
+  ..interval = source.interval
+  ..isActive = source.isActive
+  ..nextRunDate = source.nextRunDate
+  ..updatedAt = source.updatedAt
+  ..isDeleted = source.isDeleted
+  ..isSynced = source.isSynced;
+
+FinancialGoalModel _copyFinancialGoal(FinancialGoalModel source) =>
+    FinancialGoalModel()
+      ..uuid = source.uuid
+      ..name = source.name
+      ..description = source.description
+      ..targetAmount = source.targetAmount
+      ..currentAmount = source.currentAmount
+      ..linkedAccountId = source.linkedAccountId
+      ..targetDate = source.targetDate
+      ..createdAt = source.createdAt
+      ..updatedAt = source.updatedAt
+      ..isCompleted = source.isCompleted
+      ..isDeleted = source.isDeleted
+      ..isSynced = source.isSynced;
+
+InvestmentModel _copyInvestment(InvestmentModel source) => InvestmentModel()
+  ..uuid = source.uuid
+  ..name = source.name
+  ..type = source.type
+  ..symbol = source.symbol
+  ..notes = source.notes
+  ..quantity = source.quantity
+  ..purchasePrice = source.purchasePrice
+  ..currentPrice = source.currentPrice
+  ..purchaseDate = source.purchaseDate
+  ..createdAt = source.createdAt
+  ..updatedAt = source.updatedAt
+  ..interestRate = source.interestRate
+  ..maturityDate = source.maturityDate
+  ..maturityValue = source.maturityValue
+  ..investmentClass = source.investmentClass
+  ..isDeleted = source.isDeleted
+  ..isSynced = source.isSynced;
 
 class BackupV2Preflight {
   static ValidatedBackupRestorePlan parse(String jsonText) {
@@ -68,7 +228,11 @@ class BackupV2Preflight {
     if (!root.containsKey('format') &&
         !root.containsKey('schemaVersion') &&
         !root.containsKey('collections') &&
-        const {'accounts', 'categories', 'transactions'}.any(root.containsKey)) {
+        const {
+          'accounts',
+          'categories',
+          'transactions',
+        }.any(root.containsKey)) {
       _fail(
         r'$',
         'This older incomplete backup format cannot be used for full restoration.',
@@ -90,8 +254,11 @@ class BackupV2Preflight {
     }
 
     final metadata = _object(root['metadata'], r'$.metadata');
-    _allowedKeys(metadata, const {'exportedAt', 'appVersion', 'currencyCode'},
-        r'$.metadata');
+    _allowedKeys(metadata, const {
+      'exportedAt',
+      'appVersion',
+      'currencyCode',
+    }, r'$.metadata');
     if (!metadata.containsKey('exportedAt')) {
       _fail(r'$.metadata.exportedAt', 'Required metadata is missing.');
     }
@@ -144,15 +311,9 @@ class BackupV2Preflight {
     };
     for (final name in _collectionNames) {
       final path = '\$.manifest.$name';
-      final collectionManifest = _object(
-        manifest[name],
-        path,
-      );
+      final collectionManifest = _object(manifest[name], path);
       _keys(collectionManifest, const {'recordCount'}, path);
-      if (_integer(
-            collectionManifest['recordCount'],
-            '$path.recordCount',
-          ) !=
+      if (_integer(collectionManifest['recordCount'], '$path.recordCount') !=
           recordCounts[name]) {
         _fail(path, 'Manifest count does not match the data.');
       }
@@ -166,7 +327,8 @@ class BackupV2Preflight {
       financialGoals,
     );
 
-    return ValidatedBackupRestorePlan(
+    return ValidatedBackupRestorePlan._(
+      schemaVersion: 2,
       appVersion: appVersion,
       currencyCode: currencyCode,
       exportedAt: exportedAt,
@@ -259,7 +421,10 @@ class BackupV2Preflight {
           ..name = _nonEmptyString(item['name'], '$path.name')
           ..type = type
           ..icon = _nullableString(item['icon'], '$path.icon')
-          ..colorValue = _nullableInteger(item['colorValue'], '$path.colorValue')
+          ..colorValue = _nullableInteger(
+            item['colorValue'],
+            '$path.colorValue',
+          )
           ..isDefault = _boolean(item['isDefault'], '$path.isDefault')
           ..createdAt = _date(item['createdAt'], '$path.createdAt')
           ..updatedAt = _nullableDate(item['updatedAt'], '$path.updatedAt')
@@ -315,7 +480,10 @@ class BackupV2Preflight {
           ..type = type
           ..categoryId = _nullableString(item['categoryId'], '$path.categoryId')
           ..accountId = _uuid(item['accountId'], '$path.accountId')
-          ..toAccountId = _nullableString(item['toAccountId'], '$path.toAccountId')
+          ..toAccountId = _nullableString(
+            item['toAccountId'],
+            '$path.toAccountId',
+          )
           ..counterpartyName = _nullableString(
             item['counterpartyName'],
             '$path.counterpartyName',
@@ -419,7 +587,10 @@ class BackupV2Preflight {
       final uuid = _uuid(item['id'], '$path.id');
       _unique(ids, uuid, '$path.id');
       final targetAmount = _integer(item['targetAmount'], '$path.targetAmount');
-      final currentAmount = _integer(item['currentAmount'], '$path.currentAmount');
+      final currentAmount = _integer(
+        item['currentAmount'],
+        '$path.currentAmount',
+      );
       if (targetAmount <= 0) {
         _fail('$path.targetAmount', 'Target amount must be positive.');
       }
@@ -430,7 +601,10 @@ class BackupV2Preflight {
         FinancialGoalModel()
           ..uuid = uuid
           ..name = _nonEmptyString(item['name'], '$path.name')
-          ..description = _nullableString(item['description'], '$path.description')
+          ..description = _nullableString(
+            item['description'],
+            '$path.description',
+          )
           ..targetAmount = targetAmount
           ..currentAmount = currentAmount
           ..linkedAccountId = _nullableString(
@@ -494,12 +668,17 @@ class BackupV2Preflight {
         item['investmentClass'],
         '$path.investmentClass',
       );
-      final expectedClass = fixedReturnTypes.contains(type) ? 'fixed' : 'market';
+      final expectedClass = fixedReturnTypes.contains(type)
+          ? 'fixed'
+          : 'market';
       if (investmentClass != expectedClass) {
         _fail('$path.investmentClass', 'Investment classification is invalid.');
       }
       final quantity = _integer(item['quantity'], '$path.quantity');
-      final purchasePrice = _integer(item['purchasePrice'], '$path.purchasePrice');
+      final purchasePrice = _integer(
+        item['purchasePrice'],
+        '$path.purchasePrice',
+      );
       final currentPrice = _integer(item['currentPrice'], '$path.currentPrice');
       if (quantity <= 0) _fail('$path.quantity', 'Quantity must be positive.');
       if (purchasePrice < 0 || currentPrice < 0) {
@@ -533,7 +712,10 @@ class BackupV2Preflight {
           ..createdAt = _date(item['createdAt'], '$path.createdAt')
           ..updatedAt = _date(item['updatedAt'], '$path.updatedAt')
           ..interestRate = interestRate
-          ..maturityDate = _nullableDate(item['maturityDate'], '$path.maturityDate')
+          ..maturityDate = _nullableDate(
+            item['maturityDate'],
+            '$path.maturityDate',
+          )
           ..maturityValue = maturityValue
           ..investmentClass = investmentClass
           ..isDeleted = _boolean(item['isDeleted'], '$path.isDeleted'),
@@ -566,7 +748,10 @@ class BackupV2Preflight {
           _fail('$path.categoryId', 'A matching category is required.');
         }
         if (category.type != transaction.type) {
-          _fail('$path.categoryId', 'Category type does not match transaction.');
+          _fail(
+            '$path.categoryId',
+            'Category type does not match transaction.',
+          );
         }
         if (transaction.toAccountId != null ||
             transaction.relatedTransactionId != null) {
@@ -586,8 +771,7 @@ class BackupV2Preflight {
             transaction.relatedTransactionId != null) {
           _fail(path, 'Transfer has an incompatible relationship field.');
         }
-      } else if (transaction.type == 'borrowed' ||
-          transaction.type == 'lent') {
+      } else if (transaction.type == 'borrowed' || transaction.type == 'lent') {
         if (transaction.categoryId != null ||
             transaction.toAccountId != null ||
             transaction.relatedTransactionId != null) {
@@ -600,10 +784,7 @@ class BackupV2Preflight {
         final parentId = transaction.relatedTransactionId;
         final parent = parentId == null ? null : transactionsById[parentId];
         if (parent == null) {
-          _fail(
-            '$path.relatedTransactionId',
-            'Repayment parent is missing.',
-          );
+          _fail('$path.relatedTransactionId', 'Repayment parent is missing.');
         }
         final expectedParentType = transaction.type == 'repaymentPaid'
             ? 'borrowed'
@@ -663,7 +844,11 @@ void _keys(Map<String, dynamic> value, Set<String> required, String path) {
   _allowedKeys(value, required, path);
 }
 
-void _allowedKeys(Map<String, dynamic> value, Set<String> allowed, String path) {
+void _allowedKeys(
+  Map<String, dynamic> value,
+  Set<String> allowed,
+  String path,
+) {
   final unknown = value.keys.toSet().difference(allowed);
   if (unknown.isNotEmpty) {
     _fail(path, 'Unsupported fields are present: ${unknown.join(', ')}.');
@@ -686,11 +871,8 @@ String? _nullableString(dynamic value, String path) {
   return _string(value, path);
 }
 
-String? _optionalString(
-  Map<String, dynamic> value,
-  String key,
-  String path,
-) => value.containsKey(key) ? _nullableString(value[key], path) : null;
+String? _optionalString(Map<String, dynamic> value, String key, String path) =>
+    value.containsKey(key) ? _nullableString(value[key], path) : null;
 
 bool _boolean(dynamic value, String path) {
   if (value is! bool) _fail(path, 'Expected a boolean.');
@@ -698,7 +880,9 @@ bool _boolean(dynamic value, String path) {
 }
 
 int _integer(dynamic value, String path) {
-  if (value is! int || value < -9223372036854775808 || value > 9223372036854775807) {
+  if (value is! int ||
+      value < -9223372036854775808 ||
+      value > 9223372036854775807) {
     _fail(path, 'Expected a signed 64-bit integer.');
   }
   return value;
