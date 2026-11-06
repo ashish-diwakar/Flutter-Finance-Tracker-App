@@ -15,10 +15,62 @@ class AboutScreen extends StatefulWidget {
 class _AboutScreenState extends State<AboutScreen> {
   late final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
 
+  static const _lowerTitle = TextStyle(
+    color: Color(0xFF315F53),
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+  );
+  static const _lowerText = TextStyle(
+    color: Color(0xFF416157),
+    fontSize: 14,
+    height: 1.35,
+  );
+
+  Widget _lowerCard(Widget child) => SizedBox(
+    width: double.infinity,
+    child: Card(
+      color: const Color(0xFFF1F8F2),
+      surfaceTintColor: Colors.transparent,
+      clipBehavior: Clip.antiAlias,
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFA8CFC0)),
+      ),
+      child: child,
+    ),
+  );
+
+  Widget _sectionIcon(IconData icon) => Container(
+    width: 42,
+    height: 42,
+    decoration: BoxDecoration(
+      color: const Color(0xFFE2F0E8),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Icon(icon, color: const Color(0xFF17664F), size: 22),
+  );
+
+  Widget _actionCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required IconData trailing,
+    required VoidCallback onTap,
+  }) => _lowerCard(
+    ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      horizontalTitleGap: 12,
+      leading: _sectionIcon(icon),
+      title: Text(title, style: _lowerTitle),
+      subtitle: Text(description, style: _lowerText),
+      trailing: Icon(trailing, color: const Color(0xFF315F53), size: 20),
+      onTap: onTap,
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final content = SingleChildScrollView(
       padding: const EdgeInsets.all(20),
 
@@ -134,39 +186,21 @@ class _AboutScreenState extends State<AboutScreen> {
           // =====================================================
           // DEVELOPER
           // =====================================================
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-
-              child: Column(
+          _lowerCard(
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 children: [
-                  Icon(
-                    Icons.business_outlined,
-
-                    size: 40,
-
-                    color: theme.colorScheme.primary,
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    'Developed by',
-
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    AppConstants.appCompanyName,
-
-                    textAlign: TextAlign.center,
-
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  _sectionIcon(Icons.business_outlined),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Developed by', style: _lowerText),
+                        const SizedBox(height: 3),
+                        Text(AppConstants.appCompanyName, style: _lowerTitle),
+                      ],
                     ),
                   ),
                 ],
@@ -179,45 +213,37 @@ class _AboutScreenState extends State<AboutScreen> {
           // =====================================================
           // COMPANY WEBSITE
           // =====================================================
-          Card(
-            child: ListTile(
-              leading: Icon(Icons.language, color: theme.colorScheme.primary),
+          _actionCard(
+            icon: Icons.language,
+            title: 'Company Website',
+            description: AppConstants.appCompanyWebsite,
+            trailing: Icons.open_in_new,
+            onTap: () async {
+              final uri = Uri.parse(AppConstants.appCompanyWebsite);
 
-              title: const Text('Company Website'),
+              try {
+                final launched = await launchUrl(
+                  uri,
+                  mode: LaunchMode.externalApplication,
+                );
 
-              subtitle: Text(AppConstants.appCompanyWebsite),
-
-              trailing: const Icon(Icons.open_in_new),
-
-              onTap: () async {
-                final uri = Uri.parse(AppConstants.appCompanyWebsite);
-
-                try {
-                  final launched = await launchUrl(
-                    uri,
-                    mode: LaunchMode.externalApplication,
-                  );
-
-                  if (!launched && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Unable to open the website.'),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (!context.mounted) {
-                    return;
-                  }
-
+                if (!launched && context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Unable to open the website.'),
                     ),
                   );
                 }
-              },
-            ),
+              } catch (e) {
+                if (!context.mounted) {
+                  return;
+                }
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Unable to open the website.')),
+                );
+              }
+            },
           ),
 
           const SizedBox(height: 16),
@@ -225,48 +251,38 @@ class _AboutScreenState extends State<AboutScreen> {
           // =====================================================
           // OPEN SOURCE LICENSES
           // =====================================================
-          Card(
-            child: ListTile(
-              leading: Icon(
-                Icons.article_outlined,
-                color: theme.colorScheme.primary,
-              ),
-
-              title: const Text('Open Source Licenses'),
-
-              subtitle: const Text(
+          _actionCard(
+            icon: Icons.article_outlined,
+            title: 'Open Source Licenses',
+            description:
                 'View licenses for third-party software used by this app.',
-              ),
+            trailing: Icons.chevron_right,
+            onTap: () {
+              showLicensePage(
+                context: context,
 
-              trailing: const Icon(Icons.chevron_right),
+                applicationName: AppConstants.appName,
 
-              onTap: () {
-                showLicensePage(
-                  context: context,
+                applicationVersion: AppConstants.appVersion,
 
-                  applicationName: AppConstants.appName,
+                applicationIcon: Padding(
+                  padding: const EdgeInsets.all(12),
 
-                  applicationVersion: AppConstants.appVersion,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
 
-                  applicationIcon: Padding(
-                    padding: const EdgeInsets.all(12),
-
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-
-                      child: Image.asset(
-                        'assets/branding/app_icon.png',
-                        width: 56,
-                        height: 56,
-                      ),
+                    child: Image.asset(
+                      'assets/branding/app_icon.png',
+                      width: 56,
+                      height: 56,
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
 
           // =====================================================
           // COPYRIGHT
@@ -277,22 +293,18 @@ class _AboutScreenState extends State<AboutScreen> {
 
             textAlign: TextAlign.center,
 
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            style: _lowerText,
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
-          Text(
+          const Text(
             'All rights reserved.',
-
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            textAlign: TextAlign.center,
+            style: _lowerText,
           ),
 
-          const SizedBox(height: 60),
+          SizedBox(height: 16 + MediaQuery.viewPaddingOf(context).bottom),
         ],
       ),
     );
