@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/aurora_app_bar.dart';
 
-class PrivacyPolicyScreen extends StatelessWidget {
+class PrivacyPolicyScreen extends StatefulWidget {
   const PrivacyPolicyScreen({super.key});
+
+  @override
+  State<PrivacyPolicyScreen> createState() => _PrivacyPolicyScreenState();
+}
+
+class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
+  late final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
 
   @override
   Widget build(BuildContext context) {
@@ -37,21 +45,35 @@ class PrivacyPolicyScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-                Text(
+                const Text(
                   'Privacy Policy',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  style: TextStyle(
+                    color: Color(0xFF315F53),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
 
                 const SizedBox(height: 8),
 
-                Text(
-                  '${AppConstants.appName} • '
-                  'Version ${AppConstants.appVersion}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                FutureBuilder<PackageInfo>(
+                  future: _packageInfo,
+                  builder: (context, snapshot) {
+                    final version = snapshot.data?.version.trim() ?? '';
+                    final versionLabel = version.isEmpty
+                        ? snapshot.connectionState == ConnectionState.waiting
+                              ? 'Checking app version…'
+                              : 'App version unavailable'
+                        : 'App version $version';
+                    return Text(
+                      '${AppConstants.appName} • $versionLabel',
+                      style: const TextStyle(
+                        color: Color(0xFF416157),
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 24),
@@ -258,8 +280,6 @@ class _PolicySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
 
@@ -269,8 +289,10 @@ class _PolicySection extends StatelessWidget {
         children: [
           Text(
             title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: const TextStyle(
+              color: Color(0xFF315F53),
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
             ),
           ),
 
@@ -278,8 +300,12 @@ class _PolicySection extends StatelessWidget {
 
           Text(
             content,
-            textAlign: TextAlign.justify,
-            style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+            textAlign: TextAlign.left,
+            style: const TextStyle(
+              color: Color(0xFF344B42),
+              fontSize: 15,
+              height: 1.5,
+            ),
           ),
         ],
       ),

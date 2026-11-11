@@ -3,6 +3,7 @@ import 'package:finance_tracker/features/privacy/presentation/screens/privacy_po
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 void main() {
   setUpAll(() {
@@ -20,6 +21,13 @@ void main() {
     testWidgets('Aurora policy scrolls to its footer at ${scale * 100}% text', (
       tester,
     ) async {
+      PackageInfo.setMockInitialValues(
+        appName: 'Finance Tracker',
+        packageName: 'com.example.finance_tracker',
+        version: '2.8.5',
+        buildNumber: '17',
+        buildSignature: '',
+      );
       tester.view.physicalSize = const Size(320, 640);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -53,6 +61,8 @@ void main() {
 
       expect(find.byType(AuroraAppBar), findsOneWidget);
       expect(find.text('Privacy Policy'), findsNWidgets(2));
+      expect(find.text('Finance Tracker • App version 2.8.5'), findsOneWidget);
+      expect(find.text('Finance Tracker • Version 1.0.0'), findsNothing);
       final gradient = find.byWidgetPredicate(
         (widget) =>
             widget is DecoratedBox &&
@@ -86,6 +96,26 @@ void main() {
         '12. Changes to This Privacy Policy',
         '13. Contact Us',
       ];
+      final allTexts = tester.widgetList<Text>(find.byType(Text)).toList();
+      final paragraphs = allTexts
+          .where((text) => text.textAlign == TextAlign.left)
+          .toList();
+      expect(paragraphs, hasLength(13));
+      for (var i = 0; i < headings.length; i++) {
+        final headingIndex = allTexts.indexWhere(
+          (text) => text.data == headings[i],
+        );
+        final paragraphIndex = allTexts.indexOf(paragraphs[i]);
+        expect(headingIndex, lessThan(paragraphIndex));
+        if (i + 1 < headings.length) {
+          final nextHeadingIndex = allTexts.indexWhere(
+            (text) => text.data == headings[i + 1],
+          );
+          expect(paragraphIndex, lessThan(nextHeadingIndex));
+        }
+        expect(paragraphs[i].data, isNotEmpty);
+        expect(paragraphs[i].style?.height, 1.5);
+      }
       for (final heading in headings) {
         final target = find.text(heading);
         expect(target, findsOneWidget);
@@ -115,4 +145,25 @@ void main() {
       expect(find.text('Open policy'), findsOneWidget);
     });
   }
+
+  testWidgets(
+    'unavailable package version never uses the policy or env version',
+    (tester) async {
+      PackageInfo.setMockInitialValues(
+        appName: 'Finance Tracker',
+        packageName: 'com.example.finance_tracker',
+        version: '',
+        buildNumber: '',
+        buildSignature: '',
+      );
+      await tester.pumpWidget(const MaterialApp(home: PrivacyPolicyScreen()));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Finance Tracker • App version unavailable'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Version 1.0.0'), findsNothing);
+      expect(find.text('Last updated: ${DateTime.now().year}'), findsOneWidget);
+    },
+  );
 }
