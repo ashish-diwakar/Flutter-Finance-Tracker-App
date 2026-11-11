@@ -3,6 +3,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/aurora_app_bar.dart';
+import '../../../support/presentation/support_contact_actions.dart';
 
 class PrivacyPolicyScreen extends StatefulWidget {
   const PrivacyPolicyScreen({super.key});
@@ -13,11 +14,39 @@ class PrivacyPolicyScreen extends StatefulWidget {
 
 class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   late final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
+  SupportContactActions get _contactActions => SupportContactActions(
+    supportEmail: AppConstants.appSupportEmail,
+    companyWebsite: AppConstants.appCompanyWebsiteFinanceTracker,
+  );
+
+  Widget _infoCard(Widget child) => SizedBox(
+    width: double.infinity,
+    child: Card(
+      margin: EdgeInsets.zero,
+      color: const Color(0xFFF1F8F2),
+      surfaceTintColor: Colors.transparent,
+      elevation: 1,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFA8CFC0)),
+      ),
+      child: child,
+    ),
+  );
+
+  Widget _infoIcon(IconData icon) => Container(
+    width: 42,
+    height: 42,
+    decoration: BoxDecoration(
+      color: const Color(0xFFE2F0E8),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Icon(icon, color: const Color(0xFF17664F), size: 22),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: const AuroraAppBar(title: Text('Privacy Policy')),
 
@@ -221,48 +250,161 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
 
                 const SizedBox(height: 8),
 
-                if (AppConstants.appSupportEmail.isNotEmpty)
-                  Card(
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.email_outlined,
-                        color: theme.colorScheme.primary,
+                if (AppConstants.appSupportEmail.isNotEmpty) ...[
+                  Tooltip(
+                    message: 'Copy support email address',
+                    excludeFromSemantics: true,
+                    child: Semantics(
+                      label: 'Copy support email address',
+                      button: true,
+                      child: _infoCard(
+                        InkWell(
+                          onTap: () =>
+                              _contactActions.copySupportEmail(context),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _infoIcon(Icons.email_outlined),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Support Email',
+                                        style: TextStyle(
+                                          color: Color(0xFF315F53),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        AppConstants.appSupportEmail,
+                                        softWrap: true,
+                                        style: const TextStyle(
+                                          color: Color(0xFF416157),
+                                          fontSize: 14,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox.square(
+                                  dimension: 48,
+                                  child: Icon(
+                                    Icons.copy_outlined,
+                                    color: Color(0xFF17664F),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      title: const Text('Support Email'),
-                      subtitle: Text(AppConstants.appSupportEmail),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF17664F),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () =>
+                          _contactActions.openSupportEmail(context),
+                      icon: const Icon(Icons.email_outlined),
+                      label: const Text('Email Support'),
+                    ),
+                  ),
+                ],
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-                Text(
-                  AppConstants.appCompanyName,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                _infoCard(
+                  Semantics(
+                    label:
+                        'Open company website: ${AppConstants.appCompanyWebsiteFinanceTracker}',
+                    link: true,
+                    child: InkWell(
+                      onTap:
+                          AppConstants
+                              .appCompanyWebsiteFinanceTracker
+                              .isNotEmpty
+                          ? () => _contactActions.openCompanyWebsite(context)
+                          : null,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _infoIcon(Icons.business_outlined),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    AppConstants.appCompanyName,
+                                    style: const TextStyle(
+                                      color: Color(0xFF315F53),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                if (AppConstants
+                                    .appCompanyWebsiteFinanceTracker
+                                    .isNotEmpty) ...[
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.open_in_new,
+                                    color: Color(0xFF315F53),
+                                    size: 20,
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              AppConstants.appCompanyWebsiteFinanceTracker,
+                              softWrap: true,
+                              style: const TextStyle(
+                                color: Color(0xFF416157),
+                                fontSize: 14,
+                                height: 1.4,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
 
-                const SizedBox(height: 4),
-
-                Text(
-                  AppConstants.appCompanyWebsite,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 Center(
                   child: Text(
                     'Last updated: ${DateTime.now().year}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: const TextStyle(
+                      color: Color(0xFF416157),
+                      fontSize: 14,
+                      height: 1.35,
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 60),
+                SizedBox(height: 24 + MediaQuery.viewPaddingOf(context).bottom),
               ],
             ),
           ),

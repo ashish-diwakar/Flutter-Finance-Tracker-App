@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:finance_tracker/core/widgets/aurora_app_bar.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:finance_tracker/features/support/presentation/support_contact_actions.dart';
 
 class ContactSupportScreen extends StatelessWidget {
   const ContactSupportScreen({super.key});
@@ -13,67 +12,10 @@ class ContactSupportScreen extends StatelessWidget {
 
   String get companyWebsite => AppConstants.appCompanyWebsiteFinanceTracker;
 
-  Future<void> _openSupportEmail(BuildContext context) async {
-    final emailUri = Uri(
-      scheme: 'mailto',
-      path: supportEmail,
-      query:
-          'subject=${Uri.encodeComponent('Finance Tracker - Support Request')}',
-    );
-    try {
-      final launched = await launchUrl(
-        emailUri,
-        mode: LaunchMode.externalApplication,
-      );
-      if (launched) return;
-    } on Exception {
-      // Show the same fallback when the platform declines or fails to launch.
-    }
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'No email app available. You can copy the address.',
-        ),
-        action: SnackBarAction(
-          label: 'Copy Email Address',
-          onPressed: () => _copySupportEmail(context, 'Support email copied'),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openCompanyWebsite(BuildContext context) async {
-    try {
-      final launched = await launchUrl(
-        Uri.parse(companyWebsite),
-        mode: LaunchMode.externalApplication,
-      );
-      if (launched) return;
-    } on Exception {
-      // Use the same feedback when the platform declines or fails to launch.
-    }
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Unable to open the website.')),
-    );
-  }
-
-  Future<void> _copySupportEmail(
-    BuildContext context,
-    String successMessage,
-  ) async {
-    var message = successMessage;
-    try {
-      await Clipboard.setData(ClipboardData(text: supportEmail));
-    } on Exception {
-      message = 'Unable to copy the support email.';
-    }
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
+  SupportContactActions get _contactActions => SupportContactActions(
+    supportEmail: supportEmail,
+    companyWebsite: companyWebsite,
+  );
 
   Widget _sectionCard(Widget child) => SizedBox(
     width: double.infinity,
@@ -105,9 +47,7 @@ class ContactSupportScreen extends StatelessWidget {
         side: const BorderSide(color: Color(0xFFA8CFC0)),
       ),
       child: InkWell(
-        onTap: canCopy
-            ? () => _copySupportEmail(context, 'Support email copied')
-            : null,
+        onTap: canCopy ? () => _contactActions.copySupportEmail(context) : null,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -247,7 +187,7 @@ class ContactSupportScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: () => _openSupportEmail(context),
+                onPressed: () => _contactActions.openSupportEmail(context),
                 icon: const Icon(Icons.email_outlined),
                 label: const Text('Email Support', textAlign: TextAlign.center),
               ),
@@ -317,7 +257,7 @@ class ContactSupportScreen extends StatelessWidget {
               link: true,
               child: InkWell(
                 onTap: companyWebsite.isNotEmpty
-                    ? () => _openCompanyWebsite(context)
+                    ? () => _contactActions.openCompanyWebsite(context)
                     : null,
                 child: Padding(
                   padding: const EdgeInsets.all(16),

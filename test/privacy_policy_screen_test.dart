@@ -1,19 +1,44 @@
 import 'package:finance_tracker/core/widgets/aurora_app_bar.dart';
 import 'package:finance_tracker/features/privacy/presentation/screens/privacy_policy_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+// Test-only substitute for the platform behind the public launcher API.
+// ignore: depend_on_referenced_packages
+import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
+
+class _RecordingLauncher extends UrlLauncherPlatform {
+  final launches = <(String, PreferredLaunchMode)>[];
+  bool shouldLaunch = false;
+
+  @override
+  Null get linkDelegate => null;
+
+  @override
+  Future<bool> launchUrl(String url, LaunchOptions options) async {
+    launches.add((url, options.mode));
+    return shouldLaunch;
+  }
+}
 
 void main() {
+  const email = 'support-for-finance-tracker@example-company-support.com';
+  const generalWebsite = 'https://www.example-company-software-solutions.com';
+  const website =
+      'https://www.example-company-software-solutions.com/finance-tracker';
+
   setUpAll(() {
     dotenv.testLoad(
       fileInput:
           'APP_NAME=Finance Tracker\n'
           'APP_COMPANY_NAME=Test Company\n'
           'APP_VERSION=1.0.0\n'
-          'APP_COMPANY_WEBSITE=https://example.com\n'
-          'APP_SUPPORT_EMAIL=support@example.com',
+          'APP_COMPANY_WEBSITE=$generalWebsite\n'
+          'APP_COMPANY_WEBSITE_FINANCE_TRACKER=$website\n'
+          'APP_SUPPORT_EMAIL=$email',
     );
   });
 
@@ -126,15 +151,59 @@ void main() {
 
       for (final text in [
         'Support Email',
-        'support@example.com',
+        email,
         'Test Company',
-        'https://example.com',
+        website,
         'Last updated: ${DateTime.now().year}',
       ]) {
         final target = find.text(text);
         await tester.ensureVisible(target);
         await tester.pumpAndSettle();
         expect(target.hitTestable(), findsOneWidget);
+      }
+      expect(find.text(generalWebsite), findsNothing);
+      final emailCard = find.ancestor(
+        of: find.text(email),
+        matching: find.byType(Card),
+      );
+      final companyCard = find.ancestor(
+        of: find.text(website),
+        matching: find.byType(Card),
+      );
+      expect(emailCard, findsOneWidget);
+      expect(companyCard, findsOneWidget);
+      expect(
+        tester.widget<Text>(find.text(website)).style?.decoration,
+        TextDecoration.underline,
+      );
+      expect(
+        find.descendant(
+          of: companyCard,
+          matching: find.byIcon(Icons.open_in_new),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.getRect(emailCard).left, 20);
+      expect(tester.getRect(companyCard).left, 20);
+      expect(
+        tester.getRect(emailCard).width,
+        tester.getRect(companyCard).width,
+      );
+      for (final value in [email, website]) {
+        final target = find.text(value);
+        final paragraph = tester.renderObject<RenderParagraph>(target);
+        expect(paragraph.didExceedMaxLines, isFalse);
+        final lines = paragraph
+            .getBoxesForSelection(
+              TextSelection(baseOffset: 0, extentOffset: value.length),
+            )
+            .map((box) => box.top)
+            .toSet();
+        expect(lines.length, greaterThan(1));
+        expect(
+          find.ancestor(of: target, matching: find.byType(InkWell)),
+          findsOneWidget,
+        );
       }
       final footer = find.text('Last updated: ${DateTime.now().year}');
       expect(tester.getBottomLeft(footer).dy, lessThan(640 - 24));
@@ -166,4 +235,71 @@ void main() {
       expect(find.text('Last updated: ${DateTime.now().year}'), findsOneWidget);
     },
   );
+
+  testWidgets('policy email and website use shared user-initiated actions', (
+    tester,
+  ) async {
+    PackageInfo.setMockInitialValues(
+      appName: 'Finance Tracker',
+      packageName: 'com.example.finance_tracker',
+      version: '2.8.5',
+      buildNumber: '17',
+      buildSignature: '',
+    );
+    final previousLauncher = UrlLauncherPlatform.instance;
+    final launcher = _RecordingLauncher();
+    UrlLauncherPlatform.instance = launcher;
+    addTearDown(() => UrlLauncherPlatform.instance = previousLauncher);
+    final copied = <String?>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied.add((call.arguments as Map)['text'] as String?);
+          }
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+
+    await tester.pumpWidget(const MaterialApp(home: PrivacyPolicyScreen()));
+    await tester.pumpAndSettle();
+    final emailButton = find.text('Email Support');
+    await tester.ensureVisible(emailButton);
+    await tester.tap(emailButton);
+    await tester.pumpAndSettle();
+    expect(copied, isEmpty);
+    expect(launcher.launches, hasLength(1));
+    final mailto = Uri.parse(launcher.launches.single.$1);
+    expect(mailto.scheme, 'mailto');
+    expect(mailto.path, email);
+    expect(
+      mailto.queryParameters['subject'],
+      'Finance Tracker - Support Request',
+    );
+    expect(
+      launcher.launches.single.$2,
+      PreferredLaunchMode.externalApplication,
+    );
+    expect(find.text('Copy Email Address'), findsOneWidget);
+    await tester.tap(find.text('Copy Email Address'));
+    await tester.pumpAndSettle();
+    expect(copied, [email]);
+
+    final emailText = find.text(email);
+    await tester.ensureVisible(emailText);
+    await tester.tap(emailText);
+    await tester.pump();
+    expect(copied, [email, email]);
+
+    final websiteText = find.text(website);
+    await tester.ensureVisible(websiteText);
+    await tester.tap(websiteText);
+    await tester.pump();
+    expect(launcher.launches.last, (
+      website,
+      PreferredLaunchMode.externalApplication,
+    ));
+  });
 }
