@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:finance_tracker/core/widgets/aurora_app_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactSupportScreen extends StatelessWidget {
   const ContactSupportScreen({super.key});
@@ -10,11 +11,155 @@ class ContactSupportScreen extends StatelessWidget {
 
   String get companyName => AppConstants.appCompanyName;
 
-  String get companyWebsite => AppConstants.appCompanyWebsite;
+  String get companyWebsite => AppConstants.appCompanyWebsiteFinanceTracker;
+
+  Future<void> _openSupportEmail(BuildContext context) async {
+    final emailUri = Uri(
+      scheme: 'mailto',
+      path: supportEmail,
+      query:
+          'subject=${Uri.encodeComponent('Finance Tracker - Support Request')}',
+    );
+    try {
+      final launched = await launchUrl(
+        emailUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) return;
+    } on Exception {
+      // Show the same fallback when the platform declines or fails to launch.
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          'No email app available. You can copy the address.',
+        ),
+        action: SnackBarAction(
+          label: 'Copy Email Address',
+          onPressed: () => _copySupportEmail(context, 'Support email copied'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openCompanyWebsite(BuildContext context) async {
+    try {
+      final launched = await launchUrl(
+        Uri.parse(companyWebsite),
+        mode: LaunchMode.externalApplication,
+      );
+      if (launched) return;
+    } on Exception {
+      // Use the same feedback when the platform declines or fails to launch.
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Unable to open the website.')),
+    );
+  }
+
+  Future<void> _copySupportEmail(
+    BuildContext context,
+    String successMessage,
+  ) async {
+    var message = successMessage;
+    try {
+      await Clipboard.setData(ClipboardData(text: supportEmail));
+    } on Exception {
+      message = 'Unable to copy the support email.';
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Widget _sectionCard(Widget child) => SizedBox(
+    width: double.infinity,
+    child: Card(
+      margin: EdgeInsets.zero,
+      color: const Color(0xFFF1F8F2),
+      surfaceTintColor: Colors.transparent,
+      elevation: 1,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFA8CFC0)),
+      ),
+      child: child,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final canCopy = supportEmail.isNotEmpty;
+    final emailCard = Card(
+      margin: EdgeInsets.zero,
+      color: const Color(0xFFF1F8F2),
+      surfaceTintColor: Colors.transparent,
+      elevation: 1,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFA8CFC0)),
+      ),
+      child: InkWell(
+        onTap: canCopy
+            ? () => _copySupportEmail(context, 'Support email copied')
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2F0E8),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.email_outlined,
+                  color: Color(0xFF17664F),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Email Support',
+                      style: TextStyle(
+                        color: Color(0xFF315F53),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      canCopy ? supportEmail : 'Support email not configured',
+                      style: const TextStyle(
+                        color: Color(0xFF416157),
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (canCopy)
+                const SizedBox.square(
+                  dimension: 48,
+                  child: Icon(Icons.copy_outlined, color: Color(0xFF17664F)),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
 
     final content = SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -27,21 +172,24 @@ class ContactSupportScreen extends StatelessWidget {
           // HEADER
           // =====================================================
 
-          Center(
+          const Center(
             child: Icon(
               Icons.support_agent_outlined,
-              size: 80,
-              color: theme.colorScheme.primary,
+              size: 68,
+              color: Color(0xFF17664F),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          Center(
+          const Center(
             child: Text(
               'Need Help?',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF315F53),
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -55,82 +203,53 @@ class ContactSupportScreen extends StatelessWidget {
               'about ${AppConstants.appName}, '
               'please contact us.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge,
+              style: const TextStyle(
+                color: Color(0xFF416157),
+                fontSize: 15,
+                height: 1.45,
+              ),
             ),
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
 
           // =====================================================
           // EMAIL SUPPORT
           // =====================================================
-          Card(
-            child: ListTile(
-              leading: Icon(
-                Icons.email_outlined,
-                color: theme.colorScheme.primary,
+          if (canCopy)
+            Tooltip(
+              message: 'Copy support email address',
+              excludeFromSemantics: true,
+              child: Semantics(
+                label: 'Copy support email address',
+                button: true,
+                child: emailCard,
               ),
+            )
+          else
+            emailCard,
 
-              title: const Text('Email Support'),
-
-              subtitle: Text(
-                supportEmail.isEmpty
-                    ? 'Support email not configured'
-                    : supportEmail,
-              ),
-
-              trailing: supportEmail.isEmpty
-                  ? null
-                  : const Icon(Icons.copy_outlined),
-
-              onTap: supportEmail.isEmpty
-                  ? null
-                  : () async {
-                      await Clipboard.setData(
-                        ClipboardData(text: supportEmail),
-                      );
-
-                      if (!context.mounted) {
-                        return;
-                      }
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Support email copied')),
-                      );
-                    },
-            ),
-          ),
-
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // =====================================================
           // EMAIL BUTTON
           // =====================================================
-          if (supportEmail.isNotEmpty)
+          if (canCopy)
             SizedBox(
               width: double.infinity,
 
               child: FilledButton.icon(
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: supportEmail));
-
-                  if (!context.mounted) {
-                    return;
-                  }
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Support email copied. '
-                        'Open your email application to contact support.',
-                      ),
-                    ),
-                  );
-                },
-
-                icon: const Icon(Icons.email),
-
-                label: const Text('Contact Support'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF17664F),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () => _openSupportEmail(context),
+                icon: const Icon(Icons.email_outlined),
+                label: const Text('Email Support', textAlign: TextAlign.center),
               ),
             ),
 
@@ -139,9 +258,9 @@ class ContactSupportScreen extends StatelessWidget {
           // =====================================================
           // INFORMATION TO INCLUDE
           // =====================================================
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+          _sectionCard(
+            const Padding(
+              padding: EdgeInsets.all(16),
 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,34 +268,36 @@ class ContactSupportScreen extends StatelessWidget {
                 children: [
                   Text(
                     'When contacting support',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      color: Color(0xFF315F53),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
-                  const _SupportItem(
+                  _SupportItem(
                     icon: Icons.bug_report_outlined,
                     text: 'Describe the problem clearly.',
                   ),
 
-                  const _SupportItem(
+                  _SupportItem(
                     icon: Icons.smartphone_outlined,
                     text: 'Mention your device model.',
                   ),
 
-                  const _SupportItem(
+                  _SupportItem(
                     icon: Icons.android_outlined,
                     text: 'Include your Android version.',
                   ),
 
-                  const _SupportItem(
+                  _SupportItem(
                     icon: Icons.info_outline,
                     text: 'Include the app version.',
                   ),
 
-                  const _SupportItem(
+                  _SupportItem(
                     icon: Icons.format_list_bulleted,
                     text: 'Explain the steps that caused the issue.',
                   ),
@@ -190,45 +311,76 @@ class ContactSupportScreen extends StatelessWidget {
           // =====================================================
           // COMPANY
           // =====================================================
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.business_outlined,
-                    size: 40,
-                    color: theme.colorScheme.primary,
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    companyName,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  if (companyWebsite.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-
-                    Text(
-                      companyWebsite,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+          _sectionCard(
+            Semantics(
+              label: 'Open company website: $companyWebsite',
+              link: true,
+              child: InkWell(
+                onTap: companyWebsite.isNotEmpty
+                    ? () => _openCompanyWebsite(context)
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE2F0E8),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.business_outlined,
+                          color: Color(0xFF17664F),
+                          size: 22,
+                        ),
                       ),
-                    ),
-                  ],
-                ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              companyName,
+                              style: const TextStyle(
+                                color: Color(0xFF315F53),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (companyWebsite.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                companyWebsite,
+                                style: const TextStyle(
+                                  color: Color(0xFF416157),
+                                  fontSize: 14,
+                                  height: 1.4,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (companyWebsite.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.open_in_new,
+                          color: Color(0xFF315F53),
+                          size: 20,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: 16 + MediaQuery.viewPaddingOf(context).bottom),
         ],
       ),
     );
@@ -267,8 +419,6 @@ class _SupportItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
 
@@ -276,11 +426,23 @@ class _SupportItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-          Icon(icon, size: 22, color: theme.colorScheme.primary),
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(icon, size: 20, color: const Color(0xFF17664F)),
+          ),
 
           const SizedBox(width: 12),
 
-          Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Color(0xFF416157),
+                fontSize: 15,
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );
