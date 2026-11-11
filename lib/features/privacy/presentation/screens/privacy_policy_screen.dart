@@ -173,7 +173,10 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                       'may be transferred to an application or service '
                       'you select. The handling of that information is '
                       'then subject to the privacy policy of the '
-                      'selected third-party application or service.',
+                      'selected third-party application or service.\n\n'
+                      'Exporting or sharing financial information may create temporary or cached files on your device. '
+                      'Files saved or shared with other applications or services may remain outside Finance Tracker\'s control. '
+                      'Finance Tracker does not currently add its own password protection or encryption to exported files.',
                 ),
 
                 const _PolicySection(
@@ -211,13 +214,12 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                 const _PolicySection(
                   title: '10. Data Retention and Deletion',
                   content:
-                      'Because financial records are stored locally, '
-                      'they remain on the device until they are deleted '
-                      'through the application, removed as part of an '
-                      'application data reset, or the application is '
-                      'uninstalled. Exported backup files are separate '
-                      'files and remain wherever the user has saved or '
-                      'shared them.',
+                      'Financial information is primarily stored in the application\'s local database. '
+                      'Some deletion actions may mark records as deleted or hide them from normal views without immediately removing them from the database. '
+                      'Deleted or archived records may also be included in exported backups.\n\n'
+                      'Files previously exported or shared are separate from the application\'s database and may remain where they were saved or shared. '
+                      'Clearing application data or uninstalling the application does not necessarily remove those external copies or copies retained by operating-system backup services.\n\n'
+                      'Active recurring schedules may continue generating new financial records until they are disabled or deleted.',
                 ),
 
                 _PolicySection(
@@ -395,7 +397,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
 
                 Center(
                   child: Text(
-                    'Last updated: ${DateTime.now().year}',
+                    'Last updated: ${AppConstants.privacyPolicyLastUpdated.isEmpty ? 'unavailable' : AppConstants.privacyPolicyLastUpdated}',
                     style: const TextStyle(
                       color: Color(0xFF416157),
                       fontSize: 14,

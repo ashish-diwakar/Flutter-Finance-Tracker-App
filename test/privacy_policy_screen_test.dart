@@ -25,6 +25,7 @@ class _RecordingLauncher extends UrlLauncherPlatform {
 }
 
 void main() {
+  const policyRevision = '3 March 2025';
   const email = 'support-for-finance-tracker@example-company-support.com';
   const generalWebsite = 'https://www.example-company-software-solutions.com';
   const website =
@@ -36,6 +37,7 @@ void main() {
           'APP_NAME=Finance Tracker\n'
           'APP_COMPANY_NAME=Test Company\n'
           'APP_VERSION=1.0.0\n'
+          'APP_PRIVACY_POLICY_LAST_UPDATED=$policyRevision\n'
           'APP_COMPANY_WEBSITE=$generalWebsite\n'
           'APP_COMPANY_WEBSITE_FINANCE_TRACKER=$website\n'
           'APP_SUPPORT_EMAIL=$email',
@@ -126,6 +128,19 @@ void main() {
           .where((text) => text.textAlign == TextAlign.left)
           .toList();
       expect(paragraphs, hasLength(13));
+      const exportDisclosure =
+          "Exporting or sharing financial information may create temporary or cached files on your device. Files saved or shared with other applications or services may remain outside Finance Tracker's control. Finance Tracker does not currently add its own password protection or encryption to exported files.";
+      const retentionDisclosure =
+          "Financial information is primarily stored in the application's local database. Some deletion actions may mark records as deleted or hide them from normal views without immediately removing them from the database. Deleted or archived records may also be included in exported backups.\n\n"
+          "Files previously exported or shared are separate from the application's database and may remain where they were saved or shared. Clearing application data or uninstalling the application does not necessarily remove those external copies or copies retained by operating-system backup services.\n\n"
+          'Active recurring schedules may continue generating new financial records until they are disabled or deleted.';
+      expect(paragraphs[5].data!.split('\n\n'), hasLength(2));
+      expect(paragraphs[5].data!.split('\n\n').last, exportDisclosure);
+      expect(paragraphs[9].data, retentionDisclosure);
+      expect(
+        find.textContaining('they remain on the device until they are deleted'),
+        findsNothing,
+      );
       for (var i = 0; i < headings.length; i++) {
         final headingIndex = allTexts.indexWhere(
           (text) => text.data == headings[i],
@@ -154,7 +169,7 @@ void main() {
         email,
         'Test Company',
         website,
-        'Last updated: ${DateTime.now().year}',
+        'Last updated: $policyRevision',
       ]) {
         final target = find.text(text);
         await tester.ensureVisible(target);
@@ -205,7 +220,7 @@ void main() {
           findsOneWidget,
         );
       }
-      final footer = find.text('Last updated: ${DateTime.now().year}');
+      final footer = find.text('Last updated: $policyRevision');
       expect(tester.getBottomLeft(footer).dy, lessThan(640 - 24));
       expect(tester.takeException(), isNull);
 
@@ -232,7 +247,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('Version 1.0.0'), findsNothing);
-      expect(find.text('Last updated: ${DateTime.now().year}'), findsOneWidget);
+      expect(find.text('Last updated: $policyRevision'), findsOneWidget);
     },
   );
 

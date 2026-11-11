@@ -24,5 +24,8 @@ class AppConstants {
 
   static final String appVersion = dotenv.env['APP_VERSION'] ?? '1.0.0';
 
+  static final String privacyPolicyLastUpdated =
+      (dotenv.env['APP_PRIVACY_POLICY_LAST_UPDATED'] ?? '').trim();
+
   static final String appSupportEmail = dotenv.env['APP_SUPPORT_EMAIL'] ?? '';
 }
