@@ -24,7 +24,10 @@ class _RecordingLauncher extends UrlLauncherPlatform {
 
 void main() {
   setUpAll(() {
-    dotenv.testLoad(fileInput: 'APP_VERSION=1.0.0');
+    dotenv.testLoad(
+      fileInput:
+          'APP_VERSION=1.0.0\nAPP_COMPANY_WEBSITE=https://www.diwakarsoftwaresolutions.com',
+    );
   });
 
   testWidgets('shows a neutral fallback when package info is unavailable', (

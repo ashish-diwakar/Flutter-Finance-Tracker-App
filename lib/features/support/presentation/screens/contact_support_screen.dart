@@ -80,7 +80,7 @@ class ContactSupportScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      canCopy ? supportEmail : 'Support email not configured',
+                      canCopy ? supportEmail : 'Support email unavailable',
                       style: const TextStyle(
                         color: Color(0xFF416157),
                         fontSize: 14,
@@ -253,8 +253,10 @@ class ContactSupportScreen extends StatelessWidget {
           // =====================================================
           _sectionCard(
             Semantics(
-              label: 'Open company website: $companyWebsite',
-              link: true,
+              label: companyWebsite.isEmpty
+                  ? 'Company website unavailable'
+                  : 'Open company website: $companyWebsite',
+              link: companyWebsite.isNotEmpty,
               child: InkWell(
                 onTap: companyWebsite.isNotEmpty
                     ? () => _contactActions.openCompanyWebsite(context)
@@ -290,18 +292,20 @@ class ContactSupportScreen extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            if (companyWebsite.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                companyWebsite,
-                                style: const TextStyle(
-                                  color: Color(0xFF416157),
-                                  fontSize: 14,
-                                  height: 1.4,
-                                  decoration: TextDecoration.underline,
-                                ),
+                            const SizedBox(height: 4),
+                            Text(
+                              companyWebsite.isEmpty
+                                  ? 'Company website unavailable'
+                                  : companyWebsite,
+                              style: TextStyle(
+                                color: const Color(0xFF416157),
+                                fontSize: 14,
+                                height: 1.4,
+                                decoration: companyWebsite.isEmpty
+                                    ? null
+                                    : TextDecoration.underline,
                               ),
-                            ],
+                            ),
                           ],
                         ),
                       ),

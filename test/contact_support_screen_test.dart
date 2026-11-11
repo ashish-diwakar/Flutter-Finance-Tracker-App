@@ -30,13 +30,28 @@ void main() {
   const email = 'support-for-finance-tracker@example-company-support.com';
   const website = 'https://www.diwakarsoftwaresolutions.com/finance-tracker';
 
-  setUpAll(() {
+  setUp(() {
     dotenv.testLoad(
       fileInput:
           'APP_SUPPORT_EMAIL=$email\n'
           'APP_COMPANY_WEBSITE=https://www.diwakarsoftwaresolutions.com\n'
           'APP_COMPANY_WEBSITE_FINANCE_TRACKER=$website',
     );
+  });
+
+  testWidgets('invalid configuration shows disabled contact states', (
+    tester,
+  ) async {
+    dotenv.testLoad(
+      fileInput:
+          'APP_SUPPORT_EMAIL=bad,other@example.com\nAPP_COMPANY_WEBSITE_FINANCE_TRACKER=http://example.com',
+    );
+    await tester.pumpWidget(const MaterialApp(home: ContactSupportScreen()));
+    await tester.pumpAndSettle();
+    expect(find.text('Support email unavailable'), findsOneWidget);
+    expect(find.text('Company website unavailable'), findsWidgets);
+    expect(find.byType(FilledButton), findsNothing);
+    expect(find.byIcon(Icons.open_in_new), findsNothing);
   });
 
   testWidgets('company website opens the Finance Tracker URL on tap only', (

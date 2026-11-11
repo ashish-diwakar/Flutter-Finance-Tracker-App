@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/config/release_configuration.dart';
 
 /// User-initiated contact actions shared by support and policy screens.
 class SupportContactActions {
@@ -13,9 +14,14 @@ class SupportContactActions {
   final String companyWebsite;
 
   Future<void> copySupportEmail(BuildContext context) async {
+    final email = ReleaseConfiguration.email(supportEmail);
+    if (email.isEmpty) {
+      _showUnavailable(context, 'Support email unavailable');
+      return;
+    }
     var message = 'Support email copied';
     try {
-      await Clipboard.setData(ClipboardData(text: supportEmail));
+      await Clipboard.setData(ClipboardData(text: email));
     } on Exception {
       message = 'Unable to copy the support email.';
     }
@@ -26,9 +32,14 @@ class SupportContactActions {
   }
 
   Future<void> openSupportEmail(BuildContext context) async {
+    final email = ReleaseConfiguration.email(supportEmail);
+    if (email.isEmpty) {
+      _showUnavailable(context, 'Support email unavailable');
+      return;
+    }
     final emailUri = Uri(
       scheme: 'mailto',
-      path: supportEmail,
+      path: email,
       query:
           'subject=${Uri.encodeComponent('Finance Tracker - Support Request')}',
     );
@@ -54,9 +65,14 @@ class SupportContactActions {
   }
 
   Future<void> openCompanyWebsite(BuildContext context) async {
+    final website = ReleaseConfiguration.website(companyWebsite);
+    if (website.isEmpty) {
+      _showUnavailable(context, 'Company website unavailable');
+      return;
+    }
     try {
       if (await launchUrl(
-        Uri.parse(companyWebsite),
+        Uri.parse(website),
         mode: LaunchMode.externalApplication,
       )) {
         return;
@@ -68,5 +84,12 @@ class SupportContactActions {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Unable to open the website.')),
     );
+  }
+
+  void _showUnavailable(BuildContext context, String message) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

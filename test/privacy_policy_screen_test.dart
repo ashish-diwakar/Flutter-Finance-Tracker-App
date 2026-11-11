@@ -1,3 +1,4 @@
+import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:finance_tracker/core/widgets/aurora_app_bar.dart';
 import 'package:finance_tracker/features/privacy/presentation/screens/privacy_policy_screen.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +32,7 @@ void main() {
   const website =
       'https://www.example-company-software-solutions.com/finance-tracker';
 
-  setUpAll(() {
+  setUp(() {
     dotenv.testLoad(
       fileInput:
           'APP_NAME=Finance Tracker\n'
@@ -42,6 +43,31 @@ void main() {
           'APP_COMPANY_WEBSITE_FINANCE_TRACKER=$website\n'
           'APP_SUPPORT_EMAIL=$email',
     );
+    // These existing branding fields are static finals; initialize from the
+    // normal fixture before a test swaps the contact configuration.
+    expect(AppConstants.appCompanyName, 'Test Company');
+  });
+
+  testWidgets('invalid contact and revision configuration shows unavailable', (
+    tester,
+  ) async {
+    dotenv.testLoad(
+      fileInput:
+          'APP_SUPPORT_EMAIL=  \nAPP_COMPANY_WEBSITE_FINANCE_TRACKER=javascript:bad\nAPP_PRIVACY_POLICY_LAST_UPDATED=31 February 2026',
+    );
+    addTearDown(
+      () => dotenv.testLoad(
+        fileInput:
+            'APP_NAME=Finance Tracker\nAPP_COMPANY_NAME=Test Company\nAPP_VERSION=1.0.0\nAPP_PRIVACY_POLICY_LAST_UPDATED=$policyRevision\nAPP_COMPANY_WEBSITE=$generalWebsite\nAPP_COMPANY_WEBSITE_FINANCE_TRACKER=$website\nAPP_SUPPORT_EMAIL=$email',
+      ),
+    );
+    await tester.pumpWidget(const MaterialApp(home: PrivacyPolicyScreen()));
+    await tester.pumpAndSettle();
+    expect(find.text('Support email unavailable'), findsOneWidget);
+    expect(find.text('Company website unavailable'), findsWidgets);
+    expect(find.text('Email Support'), findsNothing);
+    expect(find.text('Last updated: unavailable'), findsOneWidget);
+    expect(find.byIcon(Icons.open_in_new), findsNothing);
   });
 
   for (final scale in [1.0, 1.3]) {

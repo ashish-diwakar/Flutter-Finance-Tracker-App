@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/aurora_app_bar.dart';
+import '../../../support/presentation/support_contact_actions.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -56,7 +56,7 @@ class _AboutScreenState extends State<AboutScreen> {
     required String title,
     required String description,
     required IconData trailing,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) => _lowerCard(
     ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -64,7 +64,9 @@ class _AboutScreenState extends State<AboutScreen> {
       leading: _sectionIcon(icon),
       title: Text(title, style: _lowerTitle),
       subtitle: Text(description, style: _lowerText),
-      trailing: Icon(trailing, color: const Color(0xFF315F53), size: 20),
+      trailing: onTap == null
+          ? null
+          : Icon(trailing, color: const Color(0xFF315F53), size: 20),
       onTap: onTap,
     ),
   );
@@ -216,34 +218,16 @@ class _AboutScreenState extends State<AboutScreen> {
           _actionCard(
             icon: Icons.language,
             title: 'Company Website',
-            description: AppConstants.appCompanyWebsite,
+            description: AppConstants.appCompanyWebsite.isEmpty
+                ? 'Company website unavailable'
+                : AppConstants.appCompanyWebsite,
             trailing: Icons.open_in_new,
-            onTap: () async {
-              final uri = Uri.parse(AppConstants.appCompanyWebsite);
-
-              try {
-                final launched = await launchUrl(
-                  uri,
-                  mode: LaunchMode.externalApplication,
-                );
-
-                if (!launched && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Unable to open the website.'),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (!context.mounted) {
-                  return;
-                }
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Unable to open the website.')),
-                );
-              }
-            },
+            onTap: AppConstants.appCompanyWebsite.isEmpty
+                ? null
+                : () => SupportContactActions(
+                    supportEmail: AppConstants.appSupportEmail,
+                    companyWebsite: AppConstants.appCompanyWebsite,
+                  ).openCompanyWebsite(context),
           ),
 
           const SizedBox(height: 16),

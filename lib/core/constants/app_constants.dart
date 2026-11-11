@@ -1,4 +1,5 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../config/release_configuration.dart';
 
 class AppConstants {
   static final String appName = dotenv.env['APP_NAME'] ?? 'Finance Tracker';
@@ -15,17 +16,20 @@ class AppConstants {
           'reporting to help users make informed decisions about their '
           'finances.';
 
-  static final String appCompanyWebsite =
-      dotenv.env['APP_COMPANY_WEBSITE'] ??
-      'https://www.diwakarsoftwaresolutions.com';
+  static String get appCompanyWebsite =>
+      ReleaseConfiguration.website(dotenv.env['APP_COMPANY_WEBSITE']);
 
-  static final String appCompanyWebsiteFinanceTracker =
-      dotenv.env['APP_COMPANY_WEBSITE_FINANCE_TRACKER'] ?? '';
+  static String get appCompanyWebsiteFinanceTracker =>
+      ReleaseConfiguration.website(
+        dotenv.env['APP_COMPANY_WEBSITE_FINANCE_TRACKER'],
+      );
 
   static final String appVersion = dotenv.env['APP_VERSION'] ?? '1.0.0';
 
-  static final String privacyPolicyLastUpdated =
-      (dotenv.env['APP_PRIVACY_POLICY_LAST_UPDATED'] ?? '').trim();
+  static String get privacyPolicyLastUpdated => ReleaseConfiguration.revision(
+    dotenv.env['APP_PRIVACY_POLICY_LAST_UPDATED'],
+  );
 
-  static final String appSupportEmail = dotenv.env['APP_SUPPORT_EMAIL'] ?? '';
+  static String get appSupportEmail =>
+      ReleaseConfiguration.email(dotenv.env['APP_SUPPORT_EMAIL']);
 }

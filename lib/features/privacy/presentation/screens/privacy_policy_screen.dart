@@ -328,15 +328,23 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                       label: const Text('Email Support'),
                     ),
                   ),
-                ],
+                ] else
+                  _infoCard(
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text('Support email unavailable'),
+                    ),
+                  ),
 
                 const SizedBox(height: 16),
 
                 _infoCard(
                   Semantics(
-                    label:
-                        'Open company website: ${AppConstants.appCompanyWebsiteFinanceTracker}',
-                    link: true,
+                    label: AppConstants.appCompanyWebsiteFinanceTracker.isEmpty
+                        ? 'Company website unavailable'
+                        : 'Open company website: ${AppConstants.appCompanyWebsiteFinanceTracker}',
+                    link:
+                        AppConstants.appCompanyWebsiteFinanceTracker.isNotEmpty,
                     child: InkWell(
                       onTap:
                           AppConstants
@@ -377,13 +385,23 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              AppConstants.appCompanyWebsiteFinanceTracker,
+                              AppConstants
+                                      .appCompanyWebsiteFinanceTracker
+                                      .isEmpty
+                                  ? 'Company website unavailable'
+                                  : AppConstants
+                                        .appCompanyWebsiteFinanceTracker,
                               softWrap: true,
-                              style: const TextStyle(
-                                color: Color(0xFF416157),
+                              style: TextStyle(
+                                color: const Color(0xFF416157),
                                 fontSize: 14,
                                 height: 1.4,
-                                decoration: TextDecoration.underline,
+                                decoration:
+                                    AppConstants
+                                        .appCompanyWebsiteFinanceTracker
+                                        .isEmpty
+                                    ? null
+                                    : TextDecoration.underline,
                               ),
                             ),
                           ],
