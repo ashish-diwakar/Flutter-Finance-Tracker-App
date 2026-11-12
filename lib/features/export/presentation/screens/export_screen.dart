@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:finance_tracker/core/utils/calendar_date.dart';
 import 'package:finance_tracker/core/services/logger_service.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +14,7 @@ import '../../../../shared/providers/currency_provider.dart';
 import '../../../../shared/providers/database_provider.dart';
 import '../../data/services/csv_export_service.dart';
 import '../../data/services/pdf_export_service.dart';
+import '../../data/services/export_temporary_files.dart';
 import '../../domain/export_report_style.dart';
 
 enum ExportPeriodPreset {
@@ -227,6 +230,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       exporting = true;
     });
 
+    final temporaryFiles = ExportTemporaryFiles();
+    File? source;
     try {
       final isar = await ref.read(isarProvider.future);
 
@@ -237,11 +242,11 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         return;
       }
 
-      final service = CsvExportService(isar);
+      final service = CsvExportService(isar, temporaryFiles: temporaryFiles);
 
-      final file = await service.exportTransactions(transactions);
+      source = await service.exportTransactions(transactions);
 
-      await Share.shareXFiles([XFile(file.path)]);
+      await Share.shareXFiles([XFile(source.path)]);
 
       _showMessage('CSV exported successfully');
     } catch (e, s) {
@@ -251,6 +256,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
       _showMessage('Unable to export CSV');
     } finally {
+      if (source != null) await temporaryFiles.cleanSource(source);
       if (mounted) {
         setState(() {
           exporting = false;
@@ -275,6 +281,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       exporting = true;
     });
 
+    final temporaryFiles = ExportTemporaryFiles();
+    File? source;
     try {
       final isar = await ref.read(isarProvider.future);
 
@@ -300,9 +308,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
       final currency = ref.read(currencyProvider);
 
-      final service = PdfExportService(isar);
+      final service = PdfExportService(isar, temporaryFiles: temporaryFiles);
 
-      final file = await service.generateMonthlyReport(
+      source = await service.generateMonthlyReport(
         reportTitle: reportTitle,
         reportPeriod: selectedPeriodLabel,
         style: selectedStyle,
@@ -313,7 +321,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         balance: netIncome,
       );
 
-      await Share.shareXFiles([XFile(file.path)]);
+      await Share.shareXFiles([XFile(source.path)]);
 
       _showMessage('PDF exported successfully');
     } catch (e, s) {
@@ -323,6 +331,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
       _showMessage('Unable to export PDF: $e');
     } finally {
+      if (source != null) await temporaryFiles.cleanSource(source);
       if (mounted) {
         setState(() {
           exporting = false;

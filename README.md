@@ -1,5 +1,14 @@
 # finance_tracker
 
+## Android backup and device migration
+
+Android-managed backup and device transfer of Finance Tracker's private app
+data are intentionally disabled. Before uninstalling, resetting, clearing app
+data, or switching devices, create and safeguard a V2 JSON backup with Backup
+& Restore, then restore it deliberately. User-saved exports are separate files
+and may reside with local or cloud document providers. These Android rules do
+not remove previously stored OS backups or copies held by recipients.
+
 ## Release configuration
 
 Before building an Android APK or AAB, create the Git-ignored `.env` from

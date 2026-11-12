@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
-import 'package:path_provider/path_provider.dart';
+import 'export_temporary_files.dart';
 
 import 'package:pdf/pdf.dart';
 
@@ -23,7 +23,10 @@ import '../../domain/export_report_style.dart';
 class PdfExportService {
   final Isar isar;
 
-  PdfExportService(this.isar);
+  PdfExportService(this.isar, {ExportTemporaryFiles? temporaryFiles})
+    : _temporaryFiles = temporaryFiles ?? ExportTemporaryFiles();
+
+  final ExportTemporaryFiles _temporaryFiles;
 
   Future<File> generateMonthlyReport({
     required String reportTitle,
@@ -196,13 +199,14 @@ class PdfExportService {
 
     // =====================================================
 
-    final dir = await getTemporaryDirectory();
-
-    final file = File('${dir.path}/finance_report.pdf');
-
-    await file.writeAsBytes(await pdf.save());
-
-    return file;
+    final file = await _temporaryFiles.createSource('finance_report.pdf');
+    try {
+      await file.writeAsBytes(await pdf.save());
+      return file;
+    } catch (_) {
+      await _temporaryFiles.cleanSource(file);
+      rethrow;
+    }
   }
 
   // =======================================================
