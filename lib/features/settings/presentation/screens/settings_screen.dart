@@ -34,8 +34,13 @@ class _SettingsOption {
 class _SettingsSection extends StatelessWidget {
   final String title;
   final List<_SettingsOption> options;
+  final Widget? child;
 
-  const _SettingsSection({required this.title, required this.options});
+  const _SettingsSection({
+    required this.title,
+    this.options = const [],
+    this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +89,110 @@ class _SettingsSection extends StatelessWidget {
                 color: Color(0xFFD8E8DF),
               ),
           ],
+          ?child,
         ],
+      ),
+    );
+  }
+}
+
+class _AppLockStatus extends StatelessWidget {
+  const _AppLockStatus();
+
+  @override
+  Widget build(BuildContext context) {
+    return MergeSemantics(
+      child: Padding(
+        key: const Key('app-lock-status'),
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDDF0E5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.lock_outline,
+                    color: AuroraAppBar.inkColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'App Lock',
+                        style: TextStyle(
+                          color: AuroraAppBar.inkColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Device authentication is required to open Finance Tracker.',
+                        style: TextStyle(
+                          color: Color(0xFF435F55),
+                          fontSize: 14,
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDDF0E5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          child: Text(
+                            'On · required',
+                            style: TextStyle(
+                              color: AuroraAppBar.inkColor,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Changing this setting will be available after security integration.',
+              style: TextStyle(
+                color: Color(0xFF435F55),
+                fontSize: 14,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'App Lock protects access to the app. It does not encrypt local data or exported JSON backups.',
+              style: TextStyle(
+                color: Color(0xFF435F55),
+                fontSize: 14,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -202,6 +310,8 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 20),
+            const _SettingsSection(title: 'Security', child: _AppLockStatus()),
             const SizedBox(height: 20),
             _SettingsSection(
               title: 'Automation',
