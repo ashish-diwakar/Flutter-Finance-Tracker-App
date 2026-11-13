@@ -16,6 +16,7 @@ import '../../../about/presentation/screens/about_screen.dart';
 import '../../../about/presentation/screens/open_source_licenses_screen.dart';
 import '../../../support/presentation/screens/contact_support_screen.dart';
 import '../../../privacy/presentation/screens/privacy_policy_screen.dart';
+import '../../../security/presentation/providers/app_lock_enabled_provider.dart';
 
 class _SettingsOption {
   final IconData icon;
@@ -107,7 +108,9 @@ class _SettingsSection extends StatelessWidget {
 }
 
 class _AppLockStatus extends StatelessWidget {
-  const _AppLockStatus();
+  const _AppLockStatus({required this.enabled});
+
+  final bool? enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -129,8 +132,10 @@ class _AppLockStatus extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.lock_outline,
+                  child: Icon(
+                    enabled == false
+                        ? Icons.lock_open_outlined
+                        : Icons.lock_outline,
                     color: AuroraAppBar.inkColor,
                     size: 22,
                   ),
@@ -149,9 +154,13 @@ class _AppLockStatus extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'A fresh launch requires device authentication to enter Finance Tracker.',
-                        style: TextStyle(
+                      Text(
+                        enabled == null
+                            ? 'Checking App Lock status…'
+                            : enabled!
+                            ? 'A fresh launch requires device authentication to enter Finance Tracker.'
+                            : 'A fresh launch does not require device authentication.',
+                        style: const TextStyle(
                           color: Color(0xFF435F55),
                           fontSize: 14,
                           height: 1.35,
@@ -163,14 +172,18 @@ class _AppLockStatus extends StatelessWidget {
                           color: const Color(0xFFDDF0E5),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 5,
                           ),
                           child: Text(
-                            'On · required',
-                            style: TextStyle(
+                            enabled == null
+                                ? 'Checking…'
+                                : enabled!
+                                ? 'On · required'
+                                : 'Off',
+                            style: const TextStyle(
                               color: AuroraAppBar.inkColor,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -185,7 +198,7 @@ class _AppLockStatus extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Changing this setting will be available after security integration.',
+              'Changing this setting is not available yet.',
               style: TextStyle(
                 color: Color(0xFF435F55),
                 fontSize: 14,
@@ -194,7 +207,7 @@ class _AppLockStatus extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'App Lock limits entry to the app. It does not encrypt the local database or exported JSON backups.',
+              'When enabled, App Lock limits entry to the app. It does not encrypt the local database or exported JSON backups.',
               style: TextStyle(
                 color: Color(0xFF435F55),
                 fontSize: 14,
@@ -260,6 +273,13 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final lockEnabled = ref
+        .watch(appLockEnabledProvider)
+        .when(
+          data: (enabled) => enabled,
+          loading: () => null,
+          error: (error, stackTrace) => true,
+        );
     return Scaffold(
       appBar: const AuroraAppBar(title: Text('Settings')),
       body: DecoratedBox(
@@ -321,7 +341,10 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 20),
-            const _SettingsSection(title: 'Security', child: _AppLockStatus()),
+            _SettingsSection(
+              title: 'Security',
+              child: _AppLockStatus(enabled: lockEnabled),
+            ),
             const SizedBox(height: 20),
             _SettingsSection(
               title: 'Automation',

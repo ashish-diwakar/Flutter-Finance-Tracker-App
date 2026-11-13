@@ -6,11 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/database/isar_service.dart';
 import 'core/services/logger_service.dart';
-import 'features/security/presentation/screens/app_lock_screen.dart';
+import 'features/security/presentation/screens/app_entry_gate.dart';
 import 'core/services/notification_service.dart';
 
-final navigatorKey =
-    GlobalKey<NavigatorState>();
+final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,9 +23,7 @@ Future<void> main() async {
     // ENVIRONMENT
     // =====================================================
 
-    await dotenv.load(
-      fileName: '.env',
-    );
+    await dotenv.load(fileName: '.env');
 
     // =====================================================
     // NOTIFICATIONS
@@ -44,17 +41,9 @@ Future<void> main() async {
     // START APP
     // =====================================================
 
-    runApp(
-      const ProviderScope(
-        child: FinanceTrackerApp(),
-      ),
-    );
+    runApp(const ProviderScope(child: FinanceTrackerApp()));
   } catch (e, stack) {
-    LoggerService.exception(
-      'Application Startup Failed',
-      e,
-      stack,
-    );
+    LoggerService.exception('Application Startup Failed', e, stack);
 
     runApp(
       MaterialApp(
@@ -64,44 +53,27 @@ Future<void> main() async {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 72,
-                    color: Colors.red,
-                  ),
+                  const Icon(Icons.error_outline, size: 72, color: Colors.red),
 
-                  const SizedBox(
-                    height: 24,
-                  ),
+                  const SizedBox(height: 24),
 
                   const Text(
                     'Application failed to start',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
 
-                  const SizedBox(
-                    height: 12,
-                  ),
+                  const SizedBox(height: 12),
 
                   const Text(
                     'Please restart the application.',
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(
-                    height: 24,
-                  ),
+                  const SizedBox(height: 24),
 
-                  SelectableText(
-                    e.toString(),
-                    textAlign: TextAlign.center,
-                  ),
+                  SelectableText(e.toString(), textAlign: TextAlign.center),
                 ],
               ),
             ),
@@ -112,66 +84,43 @@ Future<void> main() async {
   }
 }
 
-class FinanceTrackerApp
-    extends StatelessWidget {
-  const FinanceTrackerApp({
-    super.key,
-  });
+class FinanceTrackerApp extends StatelessWidget {
+  const FinanceTrackerApp({super.key});
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      title:
-          AppConstants.appName,
+      title: AppConstants.appName,
 
-      navigatorKey:
-          navigatorKey,
+      navigatorKey: navigatorKey,
 
       theme: ThemeData(
         useMaterial3: true,
 
-        colorSchemeSeed:
-            Colors.green,
+        colorSchemeSeed: Colors.green,
 
-        brightness:
-            Brightness.light,
+        brightness: Brightness.light,
 
-        scaffoldBackgroundColor:
-            Colors.grey.shade50,
+        scaffoldBackgroundColor: Colors.grey.shade50,
 
-        appBarTheme:
-            const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-        ),
+        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
 
-        cardTheme:
-            CardThemeData(
+        cardTheme: CardThemeData(
           elevation: 1,
 
-          shape:
-              RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
 
-        inputDecorationTheme:
-            InputDecorationTheme(
-          border:
-              OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(12),
-          ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
 
-      home:
-          const AppLockScreen(),
+      home: const AppEntryGate(),
     );
   }
 }
