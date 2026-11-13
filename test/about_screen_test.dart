@@ -1,5 +1,5 @@
 import 'package:finance_tracker/core/constants/app_constants.dart';
-import 'package:finance_tracker/core/widgets/aurora_app_bar.dart';
+import 'package:finance_tracker/features/about/presentation/screens/open_source_licenses_screen.dart';
 import 'package:finance_tracker/features/about/presentation/screens/about_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -137,7 +137,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(launcher.launches, isEmpty);
-    expect(find.byType(LicensePage), findsNothing);
+    expect(find.byType(OpenSourceLicensesScreen), findsNothing);
     final website = find.widgetWithText(ListTile, 'Company Website');
     await tester.ensureVisible(website);
     await tester.tap(website);
@@ -153,7 +153,7 @@ void main() {
     await tester.ensureVisible(licenses);
     await tester.tap(licenses);
     await tester.pumpAndSettle();
-    expect(find.byType(LicensePage), findsOneWidget);
+    expect(find.byType(OpenSourceLicensesScreen), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.byType(AboutScreen), findsOneWidget);
@@ -162,7 +162,7 @@ void main() {
 
   for (final scale in [1.0, 1.3]) {
     testWidgets(
-      'stock licenses retain details and Back at ${scale}x text scale',
+      'registry licenses retain details and Back at ${scale}x text scale',
       (tester) async {
         PackageInfo.setMockInitialValues(
           appName: 'Finance Tracker',
@@ -193,23 +193,10 @@ void main() {
         await tester.tap(entry);
         await tester.pumpAndSettle();
 
-        final page = tester.widget<LicensePage>(find.byType(LicensePage));
-        expect(page.applicationName, AppConstants.appName);
-        expect(page.applicationVersion, '9.8.7');
-        expect(page.applicationVersion, isNot(AppConstants.appVersion));
-        expect(find.text('Licenses'), findsOneWidget);
+        expect(find.text('Version 9.8.7'), findsOneWidget);
+        expect(find.text('Open Source Licenses'), findsOneWidget);
         expect(find.text('Powered by Flutter'), findsOneWidget);
         expect(find.text('Aurora test package'), findsOneWidget);
-        final licenseTheme = Theme.of(tester.element(find.byType(LicensePage)));
-        expect(
-          licenseTheme.appBarTheme.toolbarHeight,
-          AuroraAppBar.toolbarHeight,
-        );
-        expect(licenseTheme.appBarTheme.centerTitle, isTrue);
-        expect(
-          licenseTheme.appBarTheme.backgroundColor,
-          AuroraAppBar.surfaceColor,
-        );
 
         await tester.tap(find.text('Aurora test package'));
         await tester.pumpAndSettle();
@@ -229,7 +216,7 @@ void main() {
         await tester.pageBack();
         await tester.pumpAndSettle();
         expect(find.byType(AboutScreen), findsOneWidget);
-        expect(find.byType(LicensePage), findsNothing);
+        expect(find.byType(OpenSourceLicensesScreen), findsNothing);
         expect(tester.takeException(), isNull);
       },
     );

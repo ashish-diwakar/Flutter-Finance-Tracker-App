@@ -1,4 +1,3 @@
-import 'package:finance_tracker/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,6 +13,7 @@ import 'currency_settings_screen.dart';
 import '../../../../shared/providers/currency_provider.dart';
 import '../../../goals/presentation/screens/manage_goals_screen.dart';
 import '../../../about/presentation/screens/about_screen.dart';
+import '../../../about/presentation/screens/open_source_licenses_screen.dart';
 import '../../../support/presentation/screens/contact_support_screen.dart';
 import '../../../privacy/presentation/screens/privacy_policy_screen.dart';
 
@@ -142,9 +142,6 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appName = AppConstants.appName;
-    final appVersion = AppConstants.appVersion;
-
     return Scaffold(
       appBar: const AuroraAppBar(title: Text('Settings')),
       body: DecoratedBox(
@@ -336,10 +333,11 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Open Source Licenses',
                   description: 'Third-party software licenses',
                   onTap: () {
-                    showLicensePage(
-                      context: context,
-                      applicationName: appName,
-                      applicationVersion: appVersion,
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const OpenSourceLicensesScreen(),
+                      ),
                     );
                   },
                 ),

@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/aurora_app_bar.dart';
 import '../../../support/presentation/support_contact_actions.dart';
+import 'open_source_licenses_screen.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -71,80 +72,9 @@ class _AboutScreenState extends State<AboutScreen> {
     ),
   );
 
-  Future<void> _openLicenses() async {
-    var version = 'Version unavailable';
-    try {
-      final installedVersion = (await _packageInfo).version.trim();
-      if (installedVersion.isNotEmpty) version = installedVersion;
-    } catch (_) {
-      // The license registry remains available if platform metadata fails.
-    }
-    if (!mounted) return;
-
-    final baseTheme = Theme.of(context);
-    const ink = AuroraAppBar.inkColor;
-    const surface = AuroraAppBar.surfaceColor;
-    final licenseTheme = baseTheme.copyWith(
-      scaffoldBackgroundColor: surface,
-      cardColor: surface,
-      dividerColor: ink.withValues(alpha: 0.2),
-      highlightColor: ink.withValues(alpha: 0.08),
-      colorScheme: baseTheme.colorScheme.copyWith(
-        primary: ink,
-        onSurface: ink,
-        surface: surface,
-      ),
-      appBarTheme: baseTheme.appBarTheme.copyWith(
-        toolbarHeight: AuroraAppBar.toolbarHeight,
-        centerTitle: true,
-        backgroundColor: surface,
-        foregroundColor: ink,
-        titleTextStyle: AuroraAppBar.titleTextStyle,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        shadowColor: Colors.transparent,
-        systemOverlayStyle: AuroraAppBar.statusBarStyle,
-      ),
-      textTheme: baseTheme.textTheme.copyWith(
-        headlineSmall: baseTheme.textTheme.headlineSmall?.copyWith(
-          color: ink,
-          fontWeight: FontWeight.w600,
-        ),
-        titleMedium: baseTheme.textTheme.titleMedium?.copyWith(
-          color: ink,
-          fontWeight: FontWeight.w600,
-        ),
-        bodyMedium: baseTheme.textTheme.bodyMedium?.copyWith(color: ink),
-        bodySmall: baseTheme.textTheme.bodySmall?.copyWith(
-          color: ink,
-          fontSize: 14,
-          height: 1.45,
-        ),
-      ),
-    );
-
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => Theme(
-          data: licenseTheme,
-          child: LicensePage(
-            applicationName: AppConstants.appName,
-            applicationVersion: version,
-            applicationIcon: Padding(
-              padding: const EdgeInsets.all(12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  'assets/branding/app_icon.png',
-                  width: 56,
-                  height: 56,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+  void _openLicenses() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const OpenSourceLicensesScreen()),
     );
   }
 
