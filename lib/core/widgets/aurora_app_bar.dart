@@ -2,6 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AuroraAppBar extends StatelessWidget implements PreferredSizeWidget {
+  static const toolbarHeight = 64.0;
+  static const surfaceColor = Color(0xFFF8FCFA);
+  static const inkColor = Color(0xFF315F53);
+  static const titleTextStyle = TextStyle(
+    color: inkColor,
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+  );
+  static const statusBarStyle = SystemUiOverlayStyle.dark;
+
   final Widget title;
   final List<Widget> actions;
   final Widget? leading;
@@ -16,7 +26,7 @@ class AuroraAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Size get preferredSize => const Size.fromHeight(toolbarHeight);
 
   @override
   Widget build(BuildContext context) {
@@ -26,19 +36,15 @@ class AuroraAppBar extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: 16,
       leading: leading,
       automaticallyImplyLeading: automaticallyImplyLeading,
-      backgroundColor: const Color(0xFFF8FCFA),
-      foregroundColor: const Color(0xFF315F53),
+      backgroundColor: surfaceColor,
+      foregroundColor: inkColor,
       elevation: 0,
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.transparent,
-      systemOverlayStyle: SystemUiOverlayStyle.dark,
+      systemOverlayStyle: statusBarStyle,
       title: DefaultTextStyle(
-        style: const TextStyle(
-          color: Color(0xFF315F53),
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
+        style: titleTextStyle,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         child: title,

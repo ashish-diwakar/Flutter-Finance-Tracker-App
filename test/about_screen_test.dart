@@ -1,5 +1,7 @@
 import 'package:finance_tracker/core/constants/app_constants.dart';
+import 'package:finance_tracker/core/widgets/aurora_app_bar.dart';
 import 'package:finance_tracker/features/about/presentation/screens/about_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -28,6 +30,11 @@ void main() {
       fileInput:
           'APP_VERSION=1.0.0\nAPP_COMPANY_WEBSITE=https://www.diwakarsoftwaresolutions.com',
     );
+    LicenseRegistry.addLicense(() async* {
+      yield const LicenseEntryWithLineBreaks([
+        'Aurora test package',
+      ], 'First synthetic attribution.\n\nSecond synthetic attribution.');
+    });
   });
 
   testWidgets('shows a neutral fallback when package info is unavailable', (
@@ -152,4 +159,79 @@ void main() {
     expect(find.byType(AboutScreen), findsOneWidget);
     expect(launcher.launches, hasLength(1));
   });
+
+  for (final scale in [1.0, 1.3]) {
+    testWidgets(
+      'stock licenses retain details and Back at ${scale}x text scale',
+      (tester) async {
+        PackageInfo.setMockInitialValues(
+          appName: 'Finance Tracker',
+          packageName: 'com.example.finance_tracker',
+          version: '9.8.7',
+          buildNumber: '42',
+          buildSignature: '',
+        );
+        tester.view.physicalSize = const Size(320, 640);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(scale)),
+              child: child!,
+            ),
+            home: const AboutScreen(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final entry = find.widgetWithText(ListTile, 'Open Source Licenses');
+        await tester.ensureVisible(entry);
+        await tester.tap(entry);
+        await tester.pumpAndSettle();
+
+        final page = tester.widget<LicensePage>(find.byType(LicensePage));
+        expect(page.applicationName, AppConstants.appName);
+        expect(page.applicationVersion, '9.8.7');
+        expect(page.applicationVersion, isNot(AppConstants.appVersion));
+        expect(find.text('Licenses'), findsOneWidget);
+        expect(find.text('Powered by Flutter'), findsOneWidget);
+        expect(find.text('Aurora test package'), findsOneWidget);
+        final licenseTheme = Theme.of(tester.element(find.byType(LicensePage)));
+        expect(
+          licenseTheme.appBarTheme.toolbarHeight,
+          AuroraAppBar.toolbarHeight,
+        );
+        expect(licenseTheme.appBarTheme.centerTitle, isTrue);
+        expect(
+          licenseTheme.appBarTheme.backgroundColor,
+          AuroraAppBar.surfaceColor,
+        );
+
+        await tester.tap(find.text('Aurora test package'));
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining('First synthetic attribution.'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('Second synthetic attribution.'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+        expect(find.text('Aurora test package'), findsOneWidget);
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+        expect(find.byType(AboutScreen), findsOneWidget);
+        expect(find.byType(LicensePage), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 }
