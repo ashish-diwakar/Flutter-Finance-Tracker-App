@@ -78,17 +78,27 @@ class _SettingsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          for (var index = 0; index < options.length; index++) ...[
-            _SettingsOptionTile(option: options[index]),
-            if (index < options.length - 1)
-              const Divider(
-                height: 1,
-                thickness: 1,
-                indent: 56,
-                endIndent: 8,
-                color: Color(0xFFD8E8DF),
+          if (options.isNotEmpty)
+            Material(
+              type: MaterialType.transparency,
+              borderRadius: BorderRadius.circular(12),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  for (var index = 0; index < options.length; index++) ...[
+                    _SettingsOptionTile(option: options[index]),
+                    if (index < options.length - 1)
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        indent: 56,
+                        endIndent: 8,
+                        color: Color(0xFFD8E8DF),
+                      ),
+                  ],
+                ],
               ),
-          ],
+            ),
           ?child,
         ],
       ),
@@ -140,7 +150,7 @@ class _AppLockStatus extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Device authentication is required to open Finance Tracker.',
+                        'A fresh launch requires device authentication to enter Finance Tracker.',
                         style: TextStyle(
                           color: Color(0xFF435F55),
                           fontSize: 14,
@@ -184,7 +194,7 @@ class _AppLockStatus extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'App Lock protects access to the app. It does not encrypt local data or exported JSON backups.',
+              'App Lock limits entry to the app. It does not encrypt the local database or exported JSON backups.',
               style: TextStyle(
                 color: Color(0xFF435F55),
                 fontSize: 14,

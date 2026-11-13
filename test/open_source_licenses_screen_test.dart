@@ -34,17 +34,6 @@ void main() {
   testWidgets(
     'Settings shortcut opens Aurora licenses and returns to Settings',
     (tester) async {
-      // Tolerate only Settings' pre-existing decorated-ListTile diagnostic.
-      final originalErrorHandler = FlutterError.onError;
-      FlutterError.onError = (details) {
-        if (details.exceptionAsString().startsWith(
-          'ListTile background color or ink splashes may be invisible.',
-        )) {
-          return;
-        }
-        originalErrorHandler?.call(details);
-      };
-      addTearDown(() => FlutterError.onError = originalErrorHandler);
       await tester.pumpWidget(
         const ProviderScope(child: MaterialApp(home: SettingsScreen())),
       );
