@@ -14,3 +14,7 @@ final appLockEnabledProvider = FutureProvider<bool>((ref) async {
     return true;
   }
 });
+
+/// Remains set across Settings remounts until a stored Boolean is verified.
+/// This is a verification flag, not another App Lock preference value.
+final appLockVerificationRequiredProvider = StateProvider<bool>((ref) => false);

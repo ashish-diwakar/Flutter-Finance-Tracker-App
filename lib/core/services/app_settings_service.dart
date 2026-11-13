@@ -66,7 +66,7 @@ class AppSettingsService {
       final stored = prefs.get(_appLockEnabledKey);
       return AppLockPreferenceWriteResult(
         confirmed: accepted && stored == enabled,
-        observedEnabled: _resolvedAppLockValue(stored),
+        observedEnabled: _verifiedAppLockValue(stored),
       );
     } catch (_) {
       LoggerService.error('Unable to verify app lock preference after saving.');
@@ -77,12 +77,19 @@ class AppSettingsService {
     }
   }
 
-  /// Rechecks platform storage after an unverified write.
+  static bool? _verifiedAppLockValue(Object? value) {
+    if (value is bool) return value;
+    LoggerService.error('App lock preference is not a stored Boolean.');
+    return null;
+  }
+
+  /// Rechecks platform storage without applying the startup fallback.
+  /// A missing or malformed key is not proof of a saved ON value.
   static Future<bool?> reloadAppLockEnabled() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.reload();
-      return _resolvedAppLockValue(prefs.get(_appLockEnabledKey));
+      return _verifiedAppLockValue(prefs.get(_appLockEnabledKey));
     } catch (_) {
       LoggerService.error('Unable to verify app lock preference.');
       return null;

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:finance_tracker/features/security/presentation/providers/app_lock_provider.dart';
+import 'package:finance_tracker/features/security/presentation/providers/app_lock_enabled_provider.dart';
 import 'package:finance_tracker/features/security/presentation/providers/post_unlock_startup_provider.dart';
 import 'package:finance_tracker/features/security/services/app_lock_service.dart';
 import 'package:finance_tracker/features/security/services/post_unlock_startup_coordinator.dart';
@@ -53,20 +54,27 @@ class _RejectingStore extends InMemorySharedPreferencesStore {
 }
 
 class _UnverifiableStore extends InMemorySharedPreferencesStore {
-  _UnverifiableStore() : super.withData({'flutter.app_lock_enabled': false});
+  _UnverifiableStore({bool enabled = false})
+    : super.withData({'flutter.app_lock_enabled': enabled});
 
   bool failReads = false;
+  bool malformedReads = false;
+  bool malformedOnWrite = false;
+  Completer<void>? pendingWrite;
 
   @override
   Future<bool> setValue(String valueType, String key, Object value) async {
+    await pendingWrite?.future;
     final result = await super.setValue(valueType, key, value);
-    failReads = true;
+    failReads = !malformedOnWrite;
+    malformedReads = malformedOnWrite;
     return result;
   }
 
   @override
   Future<Map<String, Object>> getAll() async {
     if (failReads) throw StateError('synthetic reload failure');
+    if (malformedReads) return {'flutter.app_lock_enabled': 'invalid'};
     return super.getAll();
   }
 }
@@ -117,6 +125,29 @@ void main() {
 
   Future<bool?> stored() async =>
       (await SharedPreferences.getInstance()).getBool('app_lock_enabled');
+
+  Future<void> pumpInContainer(
+    WidgetTester tester,
+    ProviderContainer container, {
+    bool settings = true,
+  }) async {
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: settings ? const SettingsScreen() : const SizedBox(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    if (settings) {
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('app-lock-status')),
+        200,
+      );
+      await tester.pumpAndSettle();
+    }
+  }
 
   testWidgets('disable requires confirmation then authentication', (
     tester,
@@ -268,5 +299,138 @@ void main() {
       tester.widget<Switch>(find.byKey(const Key('app-lock-switch'))).value,
       isTrue,
     );
+  });
+
+  for (final initial in [true, false]) {
+    testWidgets(
+      'verified ${initial ? 'disable' : 'enable'} survives Settings remount',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({'app_lock_enabled': initial});
+        final auth = _Auth();
+        final container = ProviderContainer(
+          overrides: [
+            appLockServiceProvider.overrideWithValue(auth),
+            postUnlockStartupProvider.overrideWithValue(startup),
+          ],
+        );
+        addTearDown(container.dispose);
+        await pumpInContainer(tester, container);
+        await tester.tap(find.byKey(const Key('app-lock-switch')));
+        if (initial) {
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(find.text('Continue'));
+        }
+        await tester.pumpAndSettle();
+        expect(await stored(), !initial);
+        await pumpInContainer(tester, container, settings: false);
+        await pumpInContainer(tester, container);
+        expect(find.text(initial ? 'Off' : 'On'), findsOneWidget);
+        expect(
+          tester.widget<Switch>(find.byKey(const Key('app-lock-switch'))).value,
+          !initial,
+        );
+        expect(container.read(appLockVerificationRequiredProvider), isFalse);
+      },
+    );
+
+    testWidgets(
+      'unverified ${initial ? 'disable' : 'enable'} survives remount and strict rechecks',
+      (tester) async {
+        SharedPreferences.setMockInitialValues({'app_lock_enabled': initial});
+        final original = SharedPreferencesStorePlatform.instance;
+        addTearDown(() {
+          SharedPreferencesStorePlatform.instance = original;
+          SharedPreferences.setMockInitialValues({});
+        });
+        final auth = _Auth();
+        final container = ProviderContainer(
+          overrides: [
+            appLockServiceProvider.overrideWithValue(auth),
+            postUnlockStartupProvider.overrideWithValue(startup),
+          ],
+        );
+        addTearDown(container.dispose);
+        await pumpInContainer(tester, container);
+        final store = _UnverifiableStore(enabled: initial);
+        SharedPreferencesStorePlatform.instance = store;
+        await tester.tap(find.byKey(const Key('app-lock-switch')));
+        if (initial) {
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(find.text('Continue'));
+        }
+        await tester.pumpAndSettle();
+        expect(container.read(appLockVerificationRequiredProvider), isTrue);
+        await pumpInContainer(tester, container, settings: false);
+        await pumpInContainer(tester, container);
+        expect(find.text('Unverified'), findsOneWidget);
+        expect(find.byKey(const Key('app-lock-switch')), findsNothing);
+        // The previously cached Boolean must not replace the warning.
+        expect(container.read(appLockEnabledProvider).valueOrNull, initial);
+        await tester.tap(find.text('Check status'));
+        await tester.pumpAndSettle();
+        expect(find.text('Unverified'), findsOneWidget);
+        store.failReads = false;
+        store.malformedReads = true;
+        await tester.tap(find.text('Check status'));
+        await tester.pumpAndSettle();
+        expect(find.text('Unverified'), findsOneWidget);
+        store.malformedReads = false;
+        await tester.tap(find.text('Check status'));
+        await tester.pumpAndSettle();
+        expect(find.text(initial ? 'Off' : 'On'), findsOneWidget);
+        expect(
+          tester.widget<Switch>(find.byKey(const Key('app-lock-switch'))).value,
+          !initial,
+        );
+        expect(container.read(appLockVerificationRequiredProvider), isFalse);
+      },
+    );
+  }
+
+  testWidgets(
+    'late write completion after Settings disposal remains unverified',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({'app_lock_enabled': false});
+      final original = SharedPreferencesStorePlatform.instance;
+      addTearDown(() {
+        SharedPreferencesStorePlatform.instance = original;
+        SharedPreferences.setMockInitialValues({});
+      });
+      final auth = _Auth();
+      final container = ProviderContainer(
+        overrides: [appLockServiceProvider.overrideWithValue(auth)],
+      );
+      addTearDown(container.dispose);
+      await pumpInContainer(tester, container);
+      final store = _UnverifiableStore()..pendingWrite = Completer<void>();
+      SharedPreferencesStorePlatform.instance = store;
+      await tester.tap(find.byKey(const Key('app-lock-switch')));
+      await tester.pump();
+      expect(container.read(appLockVerificationRequiredProvider), isTrue);
+      await pumpInContainer(tester, container, settings: false);
+      store.pendingWrite!.complete();
+      await tester.pump();
+      await pumpInContainer(tester, container);
+      expect(find.text('Unverified'), findsOneWidget);
+      expect(find.byKey(const Key('app-lock-switch')), findsNothing);
+    },
+  );
+
+  testWidgets('malformed direct readback cannot verify a write', (
+    tester,
+  ) async {
+    final original = SharedPreferencesStorePlatform.instance;
+    addTearDown(() {
+      SharedPreferencesStorePlatform.instance = original;
+      SharedPreferences.setMockInitialValues({});
+    });
+    final auth = _Auth();
+    await pumpSettings(tester, auth, enabled: false);
+    SharedPreferencesStorePlatform.instance = _UnverifiableStore()
+      ..malformedOnWrite = true;
+    await tester.tap(find.byKey(const Key('app-lock-switch')));
+    await tester.pumpAndSettle();
+    expect(find.text('Unverified'), findsOneWidget);
+    expect(find.byKey(const Key('app-lock-switch')), findsNothing);
   });
 }

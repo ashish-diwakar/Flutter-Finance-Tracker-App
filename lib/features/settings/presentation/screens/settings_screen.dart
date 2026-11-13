@@ -123,7 +123,6 @@ class _AppLockStatus extends ConsumerStatefulWidget {
 
 class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
   bool _busy = false;
-  bool _unverified = false;
   String? _message;
   AppLockService? _activeAuth;
 
@@ -138,7 +137,7 @@ class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
 
   Future<void> _change(bool requested) async {
     if (_busy ||
-        _unverified ||
+        ref.read(appLockVerificationRequiredProvider) ||
         widget.enabled == null ||
         requested == widget.enabled) {
       return;
@@ -197,11 +196,11 @@ class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
         return;
       }
       if (!mounted) return;
+      ref.read(appLockVerificationRequiredProvider.notifier).state = true;
       final result = await AppSettingsService.saveAppLockEnabled(requested);
       if (!mounted) return;
       if (result.observedEnabled == null) {
         setState(() {
-          _unverified = true;
           _message =
               'Could not verify the saved App Lock setting. Check its status before changing it again.';
         });
@@ -212,12 +211,12 @@ class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
       if (!mounted) return;
       if (current != result.observedEnabled) {
         setState(() {
-          _unverified = true;
           _message =
               'Could not verify the saved App Lock setting. Check its status before changing it again.';
         });
         return;
       }
+      ref.read(appLockVerificationRequiredProvider.notifier).state = false;
       setState(() {
         _message = result.confirmed && current == requested
             ? 'App Lock ${requested ? 'enabled' : 'disabled'}. The change takes effect on the next fresh launch.'
@@ -258,8 +257,8 @@ class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
         );
         return;
       }
+      ref.read(appLockVerificationRequiredProvider.notifier).state = false;
       setState(() {
-        _unverified = false;
         _message = 'App Lock status checked.';
       });
     } catch (_) {
@@ -276,7 +275,8 @@ class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = _unverified ? null : widget.enabled;
+    final unverified = ref.watch(appLockVerificationRequiredProvider);
+    final enabled = unverified ? null : widget.enabled;
     return Padding(
       key: const Key('app-lock-status'),
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
@@ -318,7 +318,7 @@ class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
                     const SizedBox(height: 4),
                     Text(
                       enabled == null
-                          ? _unverified
+                          ? unverified
                                 ? 'App Lock status is unverified.'
                                 : 'Checking App Lock status…'
                           : enabled
@@ -343,7 +343,7 @@ class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
                         ),
                         child: Text(
                           enabled == null
-                              ? _unverified
+                              ? unverified
                                     ? 'Unverified'
                                     : 'Checking…'
                               : enabled
@@ -361,7 +361,7 @@ class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
                 ),
               ),
               const SizedBox(width: 4),
-              if (!_unverified)
+              if (!unverified)
                 Switch.adaptive(
                   key: const Key('app-lock-switch'),
                   value: enabled ?? true,
@@ -400,7 +400,7 @@ class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
                 style: const TextStyle(color: AuroraAppBar.inkColor),
               ),
             ),
-          if (_unverified)
+          if (unverified)
             TextButton(
               onPressed: _busy ? null : _checkStatus,
               child: const Text('Check status'),
