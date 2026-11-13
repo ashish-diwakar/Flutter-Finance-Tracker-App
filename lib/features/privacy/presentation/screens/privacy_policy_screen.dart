@@ -139,12 +139,15 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                       'an account or login to use its core functionality.',
                 ),
 
-                _PolicySection(
+                const _PolicySection(
                   title: '4. Device Authentication',
                   content:
-                      '${AppConstants.appName} may use your device\'s '
-                      'biometric authentication or device passcode to '
-                      'protect access to the application. '
+                      'When App Lock is enabled, Finance Tracker requests '
+                      'device authentication on a fresh launch. Changing '
+                      'the App Lock setting also requires successful device '
+                      'authentication. App Lock does not automatically '
+                      'relock the app when returning to an already-running '
+                      'session. '
                       'The application does not receive or store your '
                       'fingerprint, face data, PIN, password, or other '
                       'biometric credentials. Authentication is handled '

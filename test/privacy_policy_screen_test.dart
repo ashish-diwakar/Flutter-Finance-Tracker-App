@@ -154,6 +154,9 @@ void main() {
           .where((text) => text.textAlign == TextAlign.left)
           .toList();
       expect(paragraphs, hasLength(13));
+      const deviceAuthDisclosure =
+          'When App Lock is enabled, Finance Tracker requests device authentication on a fresh launch. Changing the App Lock setting also requires successful device authentication. App Lock does not automatically relock the app when returning to an already-running session. The application does not receive or store your fingerprint, face data, PIN, password, or other biometric credentials. Authentication is handled by the operating system.';
+      expect(paragraphs[3].data, deviceAuthDisclosure);
       const exportDisclosure =
           "Exporting or sharing financial information may create temporary or cached files on your device. Files saved or shared with other applications or services may remain outside Finance Tracker's control. Finance Tracker does not currently add its own password protection or encryption to exported files.";
       const retentionDisclosure =
