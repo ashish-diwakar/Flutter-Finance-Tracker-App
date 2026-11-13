@@ -2,6 +2,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'logger_service.dart';
 
+class AppLockPreferenceWriteResult {
+  const AppLockPreferenceWriteResult({
+    required this.confirmed,
+    required this.observedEnabled,
+  });
+
+  final bool confirmed;
+  final bool? observedEnabled;
+}
+
 class AppSettingsService {
   static const _currencyKey = 'selected_currency';
   static const _fullSnapshotRestoreKey = 'completed_full_snapshot_restore';
@@ -12,19 +22,71 @@ class AppSettingsService {
   static Future<bool> loadAppLockEnabled() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final value = prefs.get(_appLockEnabledKey);
-      if (value == null) return true;
-      if (value is bool) return value;
-
-      LoggerService.error(
-        'Invalid app lock preference; defaulting to enabled.',
-      );
+      return _resolvedAppLockValue(prefs.get(_appLockEnabledKey));
     } catch (_) {
       LoggerService.error(
         'Unable to read app lock preference; defaulting to enabled.',
       );
+      return true;
     }
+  }
+
+  static bool _resolvedAppLockValue(Object? value) {
+    if (value == null) return true;
+    if (value is bool) return value;
+    LoggerService.error('Invalid app lock preference; defaulting to enabled.');
     return true;
+  }
+
+  /// Writes only a user-approved transition, then reloads platform storage.
+  /// A null observation means the stored state could not be verified.
+  static Future<AppLockPreferenceWriteResult> saveAppLockEnabled(
+    bool enabled,
+  ) async {
+    late SharedPreferences prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      LoggerService.error('Unable to access app lock preference storage.');
+      return const AppLockPreferenceWriteResult(
+        confirmed: false,
+        observedEnabled: null,
+      );
+    }
+
+    var accepted = false;
+    try {
+      accepted = await prefs.setBool(_appLockEnabledKey, enabled);
+    } catch (_) {
+      LoggerService.error('Unable to save app lock preference.');
+    }
+
+    try {
+      await prefs.reload();
+      final stored = prefs.get(_appLockEnabledKey);
+      return AppLockPreferenceWriteResult(
+        confirmed: accepted && stored == enabled,
+        observedEnabled: _resolvedAppLockValue(stored),
+      );
+    } catch (_) {
+      LoggerService.error('Unable to verify app lock preference after saving.');
+      return const AppLockPreferenceWriteResult(
+        confirmed: false,
+        observedEnabled: null,
+      );
+    }
+  }
+
+  /// Rechecks platform storage after an unverified write.
+  static Future<bool?> reloadAppLockEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      return _resolvedAppLockValue(prefs.get(_appLockEnabledKey));
+    } catch (_) {
+      LoggerService.error('Unable to verify app lock preference.');
+      return null;
+    }
   }
 
   static Future<bool> hasLegacyFullSnapshotRestoreMarker() async {

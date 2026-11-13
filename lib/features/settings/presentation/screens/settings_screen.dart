@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/widgets/aurora_app_bar.dart';
+import '../../../../core/services/app_settings_service.dart';
 
 import '../../../accounts/presentation/screens/manage_accounts_screen.dart';
 import '../../../backup/presentation/screens/backup_screen.dart';
@@ -17,6 +20,8 @@ import '../../../about/presentation/screens/open_source_licenses_screen.dart';
 import '../../../support/presentation/screens/contact_support_screen.dart';
 import '../../../privacy/presentation/screens/privacy_policy_screen.dart';
 import '../../../security/presentation/providers/app_lock_enabled_provider.dart';
+import '../../../security/presentation/providers/app_lock_provider.dart';
+import '../../../security/services/app_lock_service.dart';
 
 class _SettingsOption {
   final IconData icon;
@@ -107,115 +112,300 @@ class _SettingsSection extends StatelessWidget {
   }
 }
 
-class _AppLockStatus extends StatelessWidget {
+class _AppLockStatus extends ConsumerStatefulWidget {
   const _AppLockStatus({required this.enabled});
 
   final bool? enabled;
 
   @override
+  ConsumerState<_AppLockStatus> createState() => _AppLockStatusState();
+}
+
+class _AppLockStatusState extends ConsumerState<_AppLockStatus> {
+  bool _busy = false;
+  bool _unverified = false;
+  String? _message;
+  AppLockService? _activeAuth;
+
+  @override
+  void dispose() {
+    final activeAuth = _activeAuth;
+    if (activeAuth != null) {
+      unawaited(activeAuth.cancelAuthentication());
+    }
+    super.dispose();
+  }
+
+  Future<void> _change(bool requested) async {
+    if (_busy ||
+        _unverified ||
+        widget.enabled == null ||
+        requested == widget.enabled) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+    try {
+      if (!requested) {
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Turn off App Lock?'),
+            content: const Text(
+              'Future fresh launches will open without device authentication. '
+              'Anyone using your unlocked device can view Finance Tracker. '
+              'The local database and exported JSON backups are not encrypted by App Lock.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
+        );
+        if (!mounted || proceed != true) return;
+      }
+      final auth = ref.read(appLockServiceProvider);
+      if (requested) {
+        final supported = await auth.isDeviceSupported();
+        if (!mounted) return;
+        if (!supported) {
+          setState(
+            () => _message =
+                'Device authentication is unavailable. App Lock was not changed.',
+          );
+          return;
+        }
+      }
+      _activeAuth = auth;
+      final authenticated = await auth.authenticate();
+      _activeAuth = null;
+      if (!authenticated) {
+        if (mounted) {
+          setState(
+            () => _message =
+                'Authentication was not completed. App Lock was not changed.',
+          );
+        }
+        return;
+      }
+      if (!mounted) return;
+      final result = await AppSettingsService.saveAppLockEnabled(requested);
+      if (!mounted) return;
+      if (result.observedEnabled == null) {
+        setState(() {
+          _unverified = true;
+          _message =
+              'Could not verify the saved App Lock setting. Check its status before changing it again.';
+        });
+        return;
+      }
+      ref.invalidate(appLockEnabledProvider);
+      final current = await ref.read(appLockEnabledProvider.future);
+      if (!mounted) return;
+      if (current != result.observedEnabled) {
+        setState(() {
+          _unverified = true;
+          _message =
+              'Could not verify the saved App Lock setting. Check its status before changing it again.';
+        });
+        return;
+      }
+      setState(() {
+        _message = result.confirmed && current == requested
+            ? 'App Lock ${requested ? 'enabled' : 'disabled'}. The change takes effect on the next fresh launch.'
+            : 'App Lock could not be changed. The current setting is ${current ? 'on' : 'off'}.';
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _message = 'App Lock could not be changed. Please try again.',
+        );
+      }
+    } finally {
+      _activeAuth = null;
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _checkStatus() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final observed = await AppSettingsService.reloadAppLockEnabled();
+      if (!mounted) return;
+      if (observed == null) {
+        setState(
+          () => _message =
+              'Could not verify App Lock status. Try checking again.',
+        );
+        return;
+      }
+      ref.invalidate(appLockEnabledProvider);
+      final current = await ref.read(appLockEnabledProvider.future);
+      if (!mounted) return;
+      if (current != observed) {
+        setState(
+          () => _message =
+              'Could not verify App Lock status. Try checking again.',
+        );
+        return;
+      }
+      setState(() {
+        _unverified = false;
+        _message = 'App Lock status checked.';
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _message =
+              'Could not verify App Lock status. Try checking again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MergeSemantics(
-      child: Padding(
-        key: const Key('app-lock-status'),
-        padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDDF0E5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    enabled == false
-                        ? Icons.lock_open_outlined
-                        : Icons.lock_outline,
-                    color: AuroraAppBar.inkColor,
-                    size: 22,
-                  ),
+    final enabled = _unverified ? null : widget.enabled;
+    return Padding(
+      key: const Key('app-lock-status'),
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDDF0E5),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'App Lock',
-                        style: TextStyle(
-                          color: AuroraAppBar.inkColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        enabled == null
-                            ? 'Checking App Lock status…'
-                            : enabled!
-                            ? 'A fresh launch requires device authentication to enter Finance Tracker.'
-                            : 'A fresh launch does not require device authentication.',
-                        style: const TextStyle(
-                          color: Color(0xFF435F55),
-                          fontSize: 14,
-                          height: 1.35,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDDF0E5),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            enabled == null
-                                ? 'Checking…'
-                                : enabled!
-                                ? 'On · required'
-                                : 'Off',
-                            style: const TextStyle(
-                              color: AuroraAppBar.inkColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                alignment: Alignment.center,
+                child: Icon(
+                  enabled == false
+                      ? Icons.lock_open_outlined
+                      : Icons.lock_outline,
+                  color: AuroraAppBar.inkColor,
+                  size: 22,
                 ),
-              ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'App Lock',
+                      style: TextStyle(
+                        color: AuroraAppBar.inkColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      enabled == null
+                          ? _unverified
+                                ? 'App Lock status is unverified.'
+                                : 'Checking App Lock status…'
+                          : enabled
+                          ? 'A fresh launch requires device authentication to enter Finance Tracker.'
+                          : 'A fresh launch does not require device authentication.',
+                      style: const TextStyle(
+                        color: Color(0xFF435F55),
+                        fontSize: 14,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDDF0E5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        child: Text(
+                          enabled == null
+                              ? _unverified
+                                    ? 'Unverified'
+                                    : 'Checking…'
+                              : enabled
+                              ? 'On'
+                              : 'Off',
+                          style: const TextStyle(
+                            color: AuroraAppBar.inkColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              if (!_unverified)
+                Switch.adaptive(
+                  key: const Key('app-lock-switch'),
+                  value: enabled ?? true,
+                  onChanged: _busy || enabled == null ? null : _change,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Changes take effect on the next fresh launch.',
+            style: TextStyle(
+              color: Color(0xFF435F55),
+              fontSize: 14,
+              height: 1.35,
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'Changing this setting is not available yet.',
-              style: TextStyle(
-                color: Color(0xFF435F55),
-                fontSize: 14,
-                height: 1.35,
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'When enabled, App Lock limits entry to the app. It does not encrypt the local database or exported JSON backups.',
+            style: TextStyle(
+              color: Color(0xFF435F55),
+              fontSize: 14,
+              height: 1.35,
+            ),
+          ),
+          if (_busy)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: LinearProgressIndicator(),
+            ),
+          if (_message != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _message!,
+                style: const TextStyle(color: AuroraAppBar.inkColor),
               ),
             ),
-            const SizedBox(height: 6),
-            const Text(
-              'When enabled, App Lock limits entry to the app. It does not encrypt the local database or exported JSON backups.',
-              style: TextStyle(
-                color: Color(0xFF435F55),
-                fontSize: 14,
-                height: 1.35,
-              ),
+          if (_unverified)
+            TextButton(
+              onPressed: _busy ? null : _checkStatus,
+              child: const Text('Check status'),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

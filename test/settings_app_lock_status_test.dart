@@ -24,7 +24,7 @@ void main() {
   for (final enabled in [true, false]) {
     for (final scale in [1.0, 1.3]) {
       testWidgets(
-        'App Lock $enabled status stays read-only at ${scale}x text scale',
+        'App Lock $enabled status and control fit at ${scale}x text scale',
         (tester) async {
           if (!enabled) {
             SharedPreferences.setMockInitialValues({'app_lock_enabled': false});
@@ -55,7 +55,7 @@ void main() {
           await tester.pumpAndSettle();
           expect(find.text('Security'), findsOneWidget);
           expect(find.text('App Lock'), findsOneWidget);
-          expect(find.text(enabled ? 'On · required' : 'Off'), findsOneWidget);
+          expect(find.text(enabled ? 'On' : 'Off'), findsOneWidget);
           expect(
             tester
                 .widget<Icon>(
@@ -73,7 +73,7 @@ void main() {
             findsOneWidget,
           );
           expect(
-            find.text('Changing this setting is not available yet.'),
+            find.text('Changes take effect on the next fresh launch.'),
             findsOneWidget,
           );
           expect(
@@ -82,26 +82,15 @@ void main() {
             ),
             findsOneWidget,
           );
-          expect(
-            find.descendant(of: status, matching: find.byType(Switch)),
-            findsNothing,
-          );
+          final lockSwitch = find.byKey(const Key('app-lock-switch'));
+          expect(lockSwitch, findsOneWidget);
+          expect(tester.widget<Switch>(lockSwitch).value, enabled);
+          expect(tester.widget<Switch>(lockSwitch).onChanged, isNotNull);
           expect(
             find.descendant(of: status, matching: find.byType(InkWell)),
             findsNothing,
           );
-          final semantics = tester.ensureSemantics();
-          expect(
-            tester
-                .getSemantics(find.byType(MergeSemantics))
-                .getSemanticsData()
-                .hasAction(SemanticsAction.tap),
-            isFalse,
-          );
-          semantics.dispose();
-          await tester.tapAt(tester.getCenter(status));
-          await tester.pumpAndSettle();
-          expect(find.byType(SettingsScreen), findsOneWidget);
+          expect(tester.takeException(), isNull);
           expect(
             (await SharedPreferences.getInstance()).getBool('app_lock_enabled'),
             enabled ? isNull : isFalse,
